@@ -18,8 +18,13 @@
   .display { font-family: 'Bebas Neue', sans-serif; }
   .mono { font-family: 'JetBrains Mono', monospace; }
   .wrap { max-width: 560px; margin: 0 auto; padding: 18px 16px 40px; }
-  select { width:100%; font-family:'Work Sans',sans-serif; background:var(--surface); border:1px solid var(--line);
-    border-radius:8px; padding:10px 12px; color:var(--cream); font-size:14px; margin-bottom:18px; }
+  input { width:100%; font-family:'Work Sans',sans-serif; background:var(--surface); border:1px solid var(--line);
+    border-radius:8px; padding:12px 14px; color:var(--cream); font-size:15px; margin-bottom:12px; }
+  input::placeholder { color: var(--creamDim); }
+  .btn-primary { width:100%; border:none; border-radius:9px; padding:13px 12px; font-weight:700; font-size:14px;
+    cursor:pointer; color:#1B1613; background: var(--mango); font-family:'Work Sans',sans-serif; margin-top:6px; }
+  .btn-logout { background:none; border:1px solid var(--line); color:var(--creamDim); border-radius:8px;
+    padding:6px 12px; font-size:12px; cursor:pointer; font-family:'Work Sans',sans-serif; }
   .order { background: linear-gradient(155deg, var(--raised), var(--surface)); border:1px solid var(--line);
     border-radius:12px; padding:16px; margin-bottom:12px; box-shadow:0 4px 16px rgba(0,0,0,.25); }
   .order-top { display:flex; justify-content:space-between; align-items:baseline; margin-bottom:6px; }
@@ -30,6 +35,9 @@
   .empty { text-align:center; padding:30px; color:var(--creamDim); font-size:13px; border:1px dashed var(--line); border-radius:10px; }
   .refresh { text-align:center; font-size:11px; color:var(--creamDim); margin-top:16px; }
   a.back { color: var(--creamDim); font-size:12px; text-decoration:none; }
+  .error-msg { color: var(--chili); font-size:13px; margin-bottom:10px; display:none; }
+  .header-row { display:flex; justify-content:space-between; align-items:center; margin-bottom:14px; }
+  .login-box { max-width:340px; margin: 60px auto 0; }
 </style>
 </head>
 <body>
@@ -41,33 +49,93 @@
 </script>
 
 <div class="wrap">
-  <a class="back" href="index.html">← Retour à l'app client</a>
-  <div class="display" style="font-size:26px; margin-top:8px; margin-bottom:4px;">🏪 Tableau de bord restaurant</div>
-  <div style="font-size:13px; color:var(--creamDim); margin-bottom:14px;">Connecté en tant que :</div>
-  <select id="restaurant-select" onchange="loadOrders()"></select>
-  <div id="orders-list"></div>
-  <div class="refresh">Actualisation automatique toutes les 10 secondes</div>
+
+  <!-- Écran de connexion -->
+  <div id="login-screen" class="login-box">
+    <div class="display" style="font-size:30px; text-align:center; margin-bottom:4px;">🏪 Espace restaurant</div>
+    <div style="font-size:13px; color:var(--creamDim); text-align:center; margin-bottom:20px;">Connectez-vous pour gérer vos commandes</div>
+    <div id="login-error" class="error-msg"></div>
+    <input id="login-email" type="email" placeholder="Email" autocomplete="username" />
+    <input id="login-password" type="password" placeholder="Mot de passe" autocomplete="current-password" />
+    <button class="btn-primary" onclick="login()">Se connecter</button>
+    <div style="text-align:center; margin-top:16px;"><a class="back" href="index.html">← Retour à l'app client</a></div>
+  </div>
+
+  <!-- Écran tableau de bord (caché tant que non connecté) -->
+  <div id="dashboard-screen" style="display:none;">
+    <div class="header-row">
+      <div>
+        <div class="display" style="font-size:24px;">🏪 <span id="restaurant-name"></span></div>
+        <a class="back" href="index.html">← App client</a>
+      </div>
+      <button class="btn-logout" onclick="logout()">Déconnexion</button>
+    </div>
+    <div id="orders-list"></div>
+    <div class="refresh">Actualisation automatique toutes les 10 secondes</div>
+  </div>
+
 </div>
 
 <script>
 const client = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 const STATUSES = ['Reçue', 'En préparation', 'En livraison', 'Livrée'];
-let restaurants = [];
+let myRestaurant = null;
+let refreshTimer = null;
 
 function money(n) { return n.toLocaleString('fr-FR') + ' F'; }
 
-async function init() {
-  const { data } = await client.from('restaurants').select('*').order('created_at');
-  restaurants = data || [];
-  document.getElementById('restaurant-select').innerHTML = restaurants.map(r => `<option value="${r.id}">${r.name}</option>`).join('');
+async function login() {
+  const email = document.getElementById('login-email').value.trim();
+  const password = document.getElementById('login-password').value;
+  const errEl = document.getElementById('login-error');
+  errEl.style.display = 'none';
+
+  const { data, error } = await client.auth.signInWithPassword({ email, password });
+  if (error) {
+    errEl.textContent = "Email ou mot de passe incorrect.";
+    errEl.style.display = 'block';
+    return;
+  }
+  await afterLogin();
+}
+
+async function afterLogin() {
+  const { data: { user } } = await client.auth.getUser();
+  if (!user) return;
+
+  const { data: rest, error } = await client.from('restaurants').select('*').eq('owner_email', user.email).maybeSingle();
+
+  if (error || !rest) {
+    const errEl = document.getElementById('login-error');
+    errEl.textContent = "Ce compte n'est relié à aucun restaurant.";
+    errEl.style.display = 'block';
+    await client.auth.signOut();
+    return;
+  }
+
+  myRestaurant = rest;
+  document.getElementById('login-screen').style.display = 'none';
+  document.getElementById('dashboard-screen').style.display = 'block';
+  document.getElementById('restaurant-name').textContent = rest.name;
+
   loadOrders();
-  setInterval(loadOrders, 10000);
+  if (refreshTimer) clearInterval(refreshTimer);
+  refreshTimer = setInterval(loadOrders, 10000);
+}
+
+async function logout() {
+  await client.auth.signOut();
+  if (refreshTimer) clearInterval(refreshTimer);
+  myRestaurant = null;
+  document.getElementById('dashboard-screen').style.display = 'none';
+  document.getElementById('login-screen').style.display = 'block';
+  document.getElementById('login-email').value = '';
+  document.getElementById('login-password').value = '';
 }
 
 async function loadOrders() {
-  const rid = document.getElementById('restaurant-select').value;
-  const r = restaurants.find(x => x.id === rid);
-  const { data, error } = await client.from('orders').select('*').eq('restaurant_id', rid).order('created_at', { ascending: false });
+  if (!myRestaurant) return;
+  const { data, error } = await client.from('orders').select('*').eq('restaurant_id', myRestaurant.id).order('created_at', { ascending: false });
   const el = document.getElementById('orders-list');
   if (error) { el.innerHTML = '<div class="empty">Erreur de connexion.</div>'; return; }
   if (!data || data.length === 0) { el.innerHTML = '<div class="empty">Aucune commande pour le moment.</div>'; return; }
@@ -89,7 +157,7 @@ async function loadOrders() {
           ${o.items.map(i => `<div class="line-item"><span>${i.qty}× ${i.name}</span><span>${money(i.price*i.qty)}</span></div>`).join('')}
           <div class="line-item" style="font-weight:700; color:var(--cream); margin-top:4px;"><span>Total</span><span>${money(o.total)}</span></div>
         </div>
-        ${!isLast ? `<button class="btn-advance" style="background:${restaurants.find(r=>r.id===o.restaurant_id).accent};" onclick="advance('${o.id}','${STATUSES[idx+1]}')">Marquer « ${STATUSES[idx+1]} »</button>` : `<div style="text-align:center; font-size:12px; color:var(--creamDim); margin-top:8px;">Commande terminée</div>`}
+        ${!isLast ? `<button class="btn-advance" style="background:${myRestaurant.accent};" onclick="advance('${o.id}','${STATUSES[idx+1]}')">Marquer « ${STATUSES[idx+1]} »</button>` : `<div style="text-align:center; font-size:12px; color:var(--creamDim); margin-top:8px;">Commande terminée</div>`}
       </div>
     `;
   }).join('');
@@ -100,7 +168,12 @@ async function advance(orderId, newStatus) {
   loadOrders();
 }
 
-init();
+// Si déjà connecté (session existante), on saute directement au dashboard
+(async () => {
+  const { data: { session } } = await client.auth.getSession();
+  if (session) await afterLogin();
+})();
 </script>
+
 </body>
 </html>
