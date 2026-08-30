@@ -1,0 +1,330 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Maquis Express — Espace Livreur</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Work+Sans:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<style>
+  :root {
+    --bg: #1B1613; --surface: #241D18; --raised: #2C231D;
+    --mango: #E8873A; --palm: #5C8A63; --chili: #C4432B;
+    --cream: #F5EFE6; --creamDim: #B8AA98; --line: #3A3029;
+  }
+  * { box-sizing: border-box; }
+  body { margin: 0; background: var(--bg); color: var(--cream); font-family: 'Work Sans', sans-serif; min-height: 100vh; }
+  .display { font-family: 'Bebas Neue', sans-serif; }
+  .mono { font-family: 'JetBrains Mono', monospace; }
+  .wrap { max-width: 560px; margin: 0 auto; padding: 18px 16px 60px; }
+  input, select { width:100%; font-family:'Work Sans',sans-serif; background:var(--surface); border:1px solid var(--line);
+    border-radius:8px; padding:12px 14px; color:var(--cream); font-size:14px; margin-bottom:12px; }
+  input::placeholder { color: var(--creamDim); }
+  label { font-size:12.5px; color:var(--creamDim); display:block; margin-bottom:6px; }
+  .btn-primary { width:100%; border:none; border-radius:9px; padding:13px 12px; font-weight:700; font-size:14px;
+    cursor:pointer; color:#1B1613; background: var(--mango); font-family:'Work Sans',sans-serif; margin-top:6px; }
+  .btn-outline { background:none; border:1px solid var(--line); color:var(--creamDim); border-radius:8px;
+    padding:6px 12px; font-size:12px; cursor:pointer; font-family:'Work Sans',sans-serif; }
+  .btn-take { width:100%; border:none; border-radius:9px; padding:11px 12px; font-weight:700; font-size:13px;
+    cursor:pointer; color:#1B1613; background: var(--palm); margin-top:10px; font-family:'Work Sans',sans-serif; }
+  .btn-done { width:100%; border:none; border-radius:9px; padding:11px 12px; font-weight:700; font-size:13px;
+    cursor:pointer; color:var(--cream); background: var(--chili); margin-top:10px; font-family:'Work Sans',sans-serif; }
+  .btn-call { display:block; width:100%; box-sizing:border-box; text-align:center; border:1px solid var(--palm); border-radius:9px;
+    padding:10px 12px; font-weight:700; font-size:13px; color:var(--palm); background:none; margin-top:10px;
+    font-family:'Work Sans',sans-serif; text-decoration:none; }
+  .order { background: linear-gradient(155deg, var(--raised), var(--surface)); border:1px solid var(--line);
+    border-radius:12px; padding:16px; margin-bottom:12px; box-shadow:0 4px 16px rgba(0,0,0,.25); }
+  .empty { text-align:center; padding:30px; color:var(--creamDim); font-size:13px; border:1px dashed var(--line); border-radius:10px; }
+  .error-msg { color: var(--chili); font-size:13px; margin-bottom:10px; display:none; }
+  .login-box { max-width:360px; margin: 40px auto 0; }
+  a.back { color: var(--creamDim); font-size:12px; text-decoration:none; }
+  .header-row { display:flex; justify-content:space-between; align-items:center; margin-bottom:16px; }
+  .section-title { font-size:13px; font-weight:700; color: var(--mango); margin: 20px 0 10px; text-transform:uppercase; letter-spacing:0.5px; }
+  .gps-status { display:flex; align-items:center; gap:8px; font-size:12px; color:var(--creamDim); background:var(--surface);
+    border:1px solid var(--line); border-radius:8px; padding:10px 12px; margin-bottom:16px; }
+  .gps-dot { width:8px; height:8px; border-radius:50%; background:var(--line); flex-shrink:0; }
+  .gps-dot.active { background:var(--palm); animation: pulse 1.6s ease-in-out infinite; }
+  @keyframes pulse { 0%,100% { opacity:.5 } 50% { opacity:1 } }
+  .tab-switch { display:flex; background:var(--surface); border:1px solid var(--line); border-radius:10px; padding:3px; margin-bottom:16px; }
+  .tab-btn { flex:1; text-align:center; padding:9px; border-radius:8px; font-size:13px; font-weight:600; cursor:pointer; color:var(--creamDim); }
+  .tab-btn.active { background:var(--mango); color:#1B1613; }
+</style>
+</head>
+<body>
+
+<!-- ⚠️ Mêmes valeurs que dans les autres fichiers -->
+<script>
+  const SUPABASE_URL = "https://gdkcrazrejzpwzxbhpxp.supabase.co";
+  const SUPABASE_KEY = "sb_publishable_1cijZWLbC-Em1Q9o3UwpvA_VLmNtmwi";
+</script>
+
+<div class="wrap">
+
+  <!-- Écran de connexion -->
+  <div id="login-screen" class="login-box">
+    <div class="display" style="font-size:30px; text-align:center; margin-bottom:4px;">🛵 Espace Livreur</div>
+    <div style="font-size:13px; color:var(--creamDim); text-align:center; margin-bottom:20px;">Livrez pour les maquis de Tazibou</div>
+
+    <div class="tab-switch">
+      <div class="tab-btn active" id="tab-login" onclick="switchAuthTab('login')">Connexion</div>
+      <div class="tab-btn" id="tab-signup" onclick="switchAuthTab('signup')">Devenir livreur</div>
+    </div>
+    <div id="auth-error" class="error-msg"></div>
+
+    <div id="form-login">
+      <label>Téléphone</label>
+      <input id="li-phone" placeholder="07 00 00 00 00" />
+      <label>Mot de passe</label>
+      <input id="li-password" type="password" placeholder="Votre mot de passe" />
+      <button class="btn-primary" onclick="loginDriver()">Se connecter</button>
+    </div>
+
+    <div id="form-signup" style="display:none;">
+      <label>Nom complet</label>
+      <input id="su-name" placeholder="Votre nom" />
+      <label>Téléphone</label>
+      <input id="su-phone" placeholder="07 00 00 00 00" />
+      <label>Mot de passe</label>
+      <input id="su-password" type="password" placeholder="Choisissez un mot de passe" />
+      <label>Vous livrez pour</label>
+      <select id="su-restaurant">
+        <option value="">🚴 Livreur indépendant (tous restaurants)</option>
+      </select>
+      <button class="btn-primary" onclick="signupDriver()">Créer mon compte livreur</button>
+    </div>
+
+    <div style="text-align:center; margin-top:16px;"><a class="back" href="index.html">← Retour à l'app client</a></div>
+  </div>
+
+  <!-- Écran livreur -->
+  <div id="driver-screen" style="display:none;">
+    <div class="header-row">
+      <div>
+        <div class="display" style="font-size:24px;">🛵 <span id="driver-name"></span></div>
+        <span id="driver-type" style="font-size:11.5px; color:var(--creamDim);"></span>
+      </div>
+      <button class="btn-outline" onclick="logoutDriver()">Déconnexion</button>
+    </div>
+
+    <div class="gps-status">
+      <div class="gps-dot" id="gps-dot"></div>
+      <span id="gps-text">Position non partagée</span>
+    </div>
+
+    <div class="section-title">🚴 Ma livraison en cours</div>
+    <div id="current-delivery"></div>
+
+    <div class="section-title">📦 Commandes disponibles</div>
+    <div id="available-orders"></div>
+  </div>
+
+</div>
+
+<script>
+const client = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+let myDriver = null;
+let refreshTimer = null;
+let gpsWatchId = null;
+
+function money(n) { return Number(n).toLocaleString('fr-FR') + ' F'; }
+
+async function loadRestaurantOptions() {
+  const { data } = await client.from('restaurants').select('id, name').order('name');
+  const sel = document.getElementById('su-restaurant');
+  (data || []).forEach(r => {
+    const opt = document.createElement('option');
+    opt.value = r.id; opt.textContent = '🏪 ' + r.name;
+    sel.appendChild(opt);
+  });
+}
+
+function switchAuthTab(tab) {
+  document.getElementById('tab-login').classList.toggle('active', tab === 'login');
+  document.getElementById('tab-signup').classList.toggle('active', tab === 'signup');
+  document.getElementById('form-login').style.display = tab === 'login' ? 'block' : 'none';
+  document.getElementById('form-signup').style.display = tab === 'signup' ? 'block' : 'none';
+  document.getElementById('auth-error').style.display = 'none';
+}
+
+function phoneToEmail(phone) {
+  return phone.replace(/\s+/g, '') + '@maquisexpress-driver.local';
+}
+
+async function signupDriver() {
+  const name = document.getElementById('su-name').value.trim();
+  const phone = document.getElementById('su-phone').value.trim();
+  const password = document.getElementById('su-password').value;
+  const restaurantId = document.getElementById('su-restaurant').value || null;
+  const errEl = document.getElementById('auth-error');
+  errEl.style.display = 'none';
+
+  if (!name || !phone || password.length < 6) {
+    errEl.textContent = "Merci de remplir tous les champs (mot de passe : 6 caractères minimum).";
+    errEl.style.display = 'block';
+    return;
+  }
+
+  const email = phoneToEmail(phone);
+  const { data, error } = await client.auth.signUp({ email, password });
+  if (error) {
+    errEl.textContent = error.message.includes('already') ? "Ce numéro a déjà un compte livreur." : "Erreur lors de la création du compte.";
+    errEl.style.display = 'block';
+    return;
+  }
+
+  const { error: dError } = await client.from('drivers').insert({
+    auth_user_id: data.user.id, name, phone, restaurant_id: restaurantId
+  });
+  if (dError) {
+    errEl.textContent = "Erreur lors de la création du profil livreur.";
+    errEl.style.display = 'block';
+    return;
+  }
+
+  await afterLogin();
+}
+
+async function loginDriver() {
+  const phone = document.getElementById('li-phone').value.trim();
+  const password = document.getElementById('li-password').value;
+  const errEl = document.getElementById('auth-error');
+  errEl.style.display = 'none';
+
+  const email = phoneToEmail(phone);
+  const { error } = await client.auth.signInWithPassword({ email, password });
+  if (error) {
+    errEl.textContent = "Téléphone ou mot de passe incorrect.";
+    errEl.style.display = 'block';
+    return;
+  }
+  await afterLogin();
+}
+
+async function afterLogin() {
+  const { data: { user } } = await client.auth.getUser();
+  if (!user) return;
+
+  const { data: driver, error } = await client.from('drivers').select('*, restaurants(name)').eq('auth_user_id', user.id).maybeSingle();
+  if (error || !driver) {
+    const errEl = document.getElementById('auth-error');
+    errEl.textContent = "Aucun profil livreur trouvé pour ce compte.";
+    errEl.style.display = 'block';
+    await client.auth.signOut();
+    return;
+  }
+
+  myDriver = driver;
+  document.getElementById('login-screen').style.display = 'none';
+  document.getElementById('driver-screen').style.display = 'block';
+  document.getElementById('driver-name').textContent = driver.name;
+  document.getElementById('driver-type').textContent = driver.restaurants ? '🏪 ' + driver.restaurants.name : '🚴 Livreur indépendant';
+
+  refreshOrders();
+  if (refreshTimer) clearInterval(refreshTimer);
+  refreshTimer = setInterval(refreshOrders, 8000);
+}
+
+async function logoutDriver() {
+  stopGPS();
+  await client.auth.signOut();
+  if (refreshTimer) clearInterval(refreshTimer);
+  myDriver = null;
+  document.getElementById('driver-screen').style.display = 'none';
+  document.getElementById('login-screen').style.display = 'block';
+}
+
+async function refreshOrders() {
+  // Livraison en cours
+  const { data: current } = await client.from('orders').select('*, restaurants(name, accent)').eq('driver_id', myDriver.id).eq('status', 'En livraison');
+  const curEl = document.getElementById('current-delivery');
+
+  if (current && current.length > 0) {
+    startGPS();
+    curEl.innerHTML = current.map(o => `
+      <div class="order">
+        <div style="font-weight:700; font-size:15px;">${o.restaurants ? o.restaurants.name : ''}</div>
+        <div style="font-size:13px; margin-top:4px;">${o.customer_name}</div>
+        ${o.address ? `<div style="font-size:12.5px; color:var(--creamDim); margin-top:2px;">📍 ${o.address}</div>` : ''}
+        ${o.location && o.location.type === 'gps' ? `<a href="https://www.google.com/maps?q=${o.location.lat},${o.location.lng}" target="_blank" style="color:var(--palm); font-size:12px;">📍 Voir la position du client →</a>` : ''}
+        <div class="mono" style="margin-top:6px; font-weight:700;">${money(o.total)}</div>
+        <a href="tel:${o.phone}" class="btn-call">📞 Appeler le client</a>
+        <button class="btn-done" onclick="markDelivered('${o.id}')">✅ Marquer comme livrée</button>
+      </div>
+    `).join('');
+  } else {
+    stopGPS();
+    curEl.innerHTML = '<div class="empty">Aucune livraison en cours.</div>';
+  }
+
+  // Commandes disponibles
+  let query = client.from('orders').select('*, restaurants(name, accent)').eq('status', 'Prête').is('driver_id', null);
+  if (myDriver.restaurant_id) query = query.eq('restaurant_id', myDriver.restaurant_id);
+  const { data: available } = await query;
+  const availEl = document.getElementById('available-orders');
+
+  if (!available || available.length === 0) {
+    availEl.innerHTML = '<div class="empty">Aucune commande disponible pour le moment.</div>';
+    return;
+  }
+
+  availEl.innerHTML = available.map(o => `
+    <div class="order">
+      <div style="font-weight:700; font-size:15px;">${o.restaurants ? o.restaurants.name : ''}</div>
+      <div style="font-size:13px; margin-top:4px;">${o.customer_name} · ${o.phone}</div>
+      ${o.address ? `<div style="font-size:12.5px; color:var(--creamDim); margin-top:2px;">📍 ${o.address}</div>` : ''}
+      <div class="mono" style="margin-top:6px; font-weight:700;">${money(o.total)}</div>
+      <button class="btn-take" onclick="takeOrder('${o.id}')">🛵 Je prends cette livraison</button>
+    </div>
+  `).join('');
+}
+
+async function takeOrder(orderId) {
+  const { error } = await client.from('orders').update({ driver_id: myDriver.id, status: 'En livraison' }).eq('id', orderId).is('driver_id', null);
+  if (error) { alert("Cette commande vient d'être prise par un autre livreur."); }
+  refreshOrders();
+}
+
+async function markDelivered(orderId) {
+  await client.from('orders').update({ status: 'Livrée' }).eq('id', orderId);
+  refreshOrders();
+}
+
+function startGPS() {
+  const dot = document.getElementById('gps-dot');
+  const text = document.getElementById('gps-text');
+  if (gpsWatchId !== null) return;
+  if (!navigator.geolocation) { text.textContent = "GPS non disponible sur cet appareil"; return; }
+
+  dot.classList.add('active');
+  text.textContent = "Partage de votre position en cours…";
+
+  gpsWatchId = navigator.geolocation.watchPosition(
+    async (pos) => {
+      await client.from('drivers').update({
+        current_lat: pos.coords.latitude,
+        current_lng: pos.coords.longitude,
+        location_updated_at: new Date().toISOString()
+      }).eq('id', myDriver.id);
+      text.textContent = `Position partagée : ${pos.coords.latitude.toFixed(4)}, ${pos.coords.longitude.toFixed(4)}`;
+    },
+    () => { text.textContent = "Position GPS refusée — activez-la pour partager votre trajet"; dot.classList.remove('active'); },
+    { enableHighAccuracy: true, maximumAge: 5000 }
+  );
+}
+
+function stopGPS() {
+  if (gpsWatchId !== null) { navigator.geolocation.clearWatch(gpsWatchId); gpsWatchId = null; }
+  document.getElementById('gps-dot').classList.remove('active');
+  document.getElementById('gps-text').textContent = "Position non partagée";
+}
+
+(async () => {
+  await loadRestaurantOptions();
+  const { data: { session } } = await client.auth.getSession();
+  if (session) await afterLogin();
+})();
+</script>
+
+</body>
+</html>
