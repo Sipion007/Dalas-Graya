@@ -1,0 +1,266 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Maquis Express — Espace Admin</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Work+Sans:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<style>
+  :root {
+    --bg: #1B1613; --surface: #241D18; --raised: #2C231D;
+    --mango: #E8873A; --palm: #5C8A63; --chili: #C4432B;
+    --cream: #F5EFE6; --creamDim: #B8AA98; --line: #3A3029;
+  }
+  * { box-sizing: border-box; }
+  body { margin: 0; background: var(--bg); color: var(--cream); font-family: 'Work Sans', sans-serif; min-height: 100vh; }
+  .display { font-family: 'Bebas Neue', sans-serif; }
+  .mono { font-family: 'JetBrains Mono', monospace; }
+  .wrap { max-width: 700px; margin: 0 auto; padding: 18px 16px 60px; }
+  input { width:100%; font-family:'Work Sans',sans-serif; background:var(--surface); border:1px solid var(--line);
+    border-radius:8px; padding:12px 14px; color:var(--cream); font-size:15px; margin-bottom:12px; }
+  input::placeholder { color: var(--creamDim); }
+  select { width:100%; font-family:'Work Sans',sans-serif; background:var(--surface); border:1px solid var(--line);
+    border-radius:8px; padding:10px 12px; color:var(--cream); font-size:13.5px; margin-bottom:14px; }
+  .btn-primary { width:100%; border:none; border-radius:9px; padding:13px 12px; font-weight:700; font-size:14px;
+    cursor:pointer; color:#1B1613; background: var(--mango); font-family:'Work Sans',sans-serif; margin-top:6px; }
+  .btn-outline { background:none; border:1px solid var(--line); color:var(--creamDim); border-radius:8px;
+    padding:6px 12px; font-size:12px; cursor:pointer; font-family:'Work Sans',sans-serif; }
+  .error-msg { color: var(--chili); font-size:13px; margin-bottom:10px; display:none; }
+  .login-box { max-width:340px; margin: 60px auto 0; }
+  a.back { color: var(--creamDim); font-size:12px; text-decoration:none; }
+  .header-row { display:flex; justify-content:space-between; align-items:center; margin-bottom:18px; }
+
+  .stats-grid { display:grid; grid-template-columns: 1fr 1fr; gap:10px; margin-bottom:20px; }
+  .stat-card { background: linear-gradient(155deg, var(--raised), var(--surface)); border:1px solid var(--line);
+    border-radius:12px; padding:14px; }
+  .stat-label { font-size:11px; color:var(--creamDim); text-transform:uppercase; letter-spacing:0.5px; }
+  .stat-value { font-family:'Bebas Neue',sans-serif; font-size:26px; color:var(--mango); margin-top:2px; }
+
+  .section-title { font-size:13px; font-weight:700; color: var(--mango); margin: 22px 0 10px; text-transform:uppercase; letter-spacing:0.5px; }
+
+  .rank-row { display:flex; justify-content:space-between; align-items:center; background:var(--surface);
+    border:1px solid var(--line); border-radius:9px; padding:10px 13px; margin-bottom:7px; font-size:13.5px; }
+  .rank-num { color:var(--creamDim); font-size:12px; margin-right:8px; }
+
+  .order { background: linear-gradient(155deg, var(--raised), var(--surface)); border:1px solid var(--line);
+    border-radius:12px; padding:14px; margin-bottom:10px; }
+  .order-top { display:flex; justify-content:space-between; align-items:baseline; margin-bottom:5px; }
+  .badge { font-size:10.5px; font-weight:700; padding:3px 8px; border-radius:20px; }
+  .order-meta { font-size:12px; color:var(--creamDim); }
+  .empty { text-align:center; padding:30px; color:var(--creamDim); font-size:13px; border:1px dashed var(--line); border-radius:10px; }
+</style>
+</head>
+<body>
+
+<!-- ⚠️ Mêmes valeurs que dans index.html -->
+<script>
+  const SUPABASE_URL = "https://gdkcrazrejzpwzxbhpxp.supabase.co";
+  const SUPABASE_KEY = "sb_publishable_1cijZWLbC-Em1Q9o3UwpvA_VLmNtmwi";
+</script>
+
+<div class="wrap">
+
+  <!-- Écran de connexion -->
+  <div id="login-screen" class="login-box">
+    <div class="display" style="font-size:30px; text-align:center; margin-bottom:4px;">👑 Espace Admin</div>
+    <div style="font-size:13px; color:var(--creamDim); text-align:center; margin-bottom:20px;">Vue d'ensemble Maquis Express</div>
+    <div id="login-error" class="error-msg"></div>
+    <input id="login-email" type="email" placeholder="Email" autocomplete="username" />
+    <input id="login-password" type="password" placeholder="Mot de passe" autocomplete="current-password" />
+    <button class="btn-primary" onclick="login()">Se connecter</button>
+    <div style="text-align:center; margin-top:16px;"><a class="back" href="index.html">← Retour à l'app client</a></div>
+  </div>
+
+  <!-- Écran admin -->
+  <div id="admin-screen" style="display:none;">
+    <div class="header-row">
+      <div class="display" style="font-size:26px;">👑 Vue d'ensemble</div>
+      <button class="btn-outline" onclick="logout()">Déconnexion</button>
+    </div>
+
+    <select id="period-select" onchange="renderAll()">
+      <option value="today">Aujourd'hui</option>
+      <option value="week">Cette semaine</option>
+      <option value="month" selected>Ce mois</option>
+      <option value="all">Depuis le début</option>
+    </select>
+
+    <div class="stats-grid">
+      <div class="stat-card">
+        <div class="stat-label">Chiffre d'affaires</div>
+        <div class="stat-value mono" id="stat-revenue">—</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-label">Commandes</div>
+        <div class="stat-value" id="stat-orders">—</div>
+      </div>
+    </div>
+
+    <div class="section-title">💰 Chiffre d'affaires par restaurant</div>
+    <div id="revenue-by-restaurant"></div>
+
+    <div class="section-title">🔥 Plats les plus vendus</div>
+    <div id="top-dishes"></div>
+
+    <div class="section-title">📋 Historique des commandes</div>
+    <select id="restaurant-filter" onchange="renderOrdersList()">
+      <option value="">Tous les restaurants</option>
+    </select>
+    <div id="orders-list"></div>
+  </div>
+
+</div>
+
+<script>
+const client = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+let restaurants = [];
+let allOrders = [];
+
+function money(n) { return Number(n).toLocaleString('fr-FR') + ' F'; }
+
+async function login() {
+  const email = document.getElementById('login-email').value.trim();
+  const password = document.getElementById('login-password').value;
+  const errEl = document.getElementById('login-error');
+  errEl.style.display = 'none';
+
+  const { error } = await client.auth.signInWithPassword({ email, password });
+  if (error) {
+    errEl.textContent = "Email ou mot de passe incorrect.";
+    errEl.style.display = 'block';
+    return;
+  }
+  await afterLogin();
+}
+
+async function afterLogin() {
+  const { data: { user } } = await client.auth.getUser();
+  if (!user) return;
+
+  const { data: admin } = await client.from('admins').select('*').eq('email', user.email).maybeSingle();
+  if (!admin) {
+    const errEl = document.getElementById('login-error');
+    errEl.textContent = "Ce compte n'a pas les droits administrateur.";
+    errEl.style.display = 'block';
+    await client.auth.signOut();
+    return;
+  }
+
+  document.getElementById('login-screen').style.display = 'none';
+  document.getElementById('admin-screen').style.display = 'block';
+  await loadData();
+}
+
+async function logout() {
+  await client.auth.signOut();
+  document.getElementById('admin-screen').style.display = 'none';
+  document.getElementById('login-screen').style.display = 'block';
+}
+
+async function loadData() {
+  const { data: rests } = await client.from('restaurants').select('*').order('name');
+  restaurants = rests || [];
+
+  const { data: orders } = await client.from('orders').select('*').order('created_at', { ascending: false });
+  allOrders = orders || [];
+
+  const sel = document.getElementById('restaurant-filter');
+  sel.innerHTML = '<option value="">Tous les restaurants</option>' +
+    restaurants.map(r => `<option value="${r.id}">${r.name}</option>`).join('');
+
+  renderAll();
+}
+
+function getFilteredByPeriod() {
+  const period = document.getElementById('period-select').value;
+  const now = new Date();
+  return allOrders.filter(o => {
+    const d = new Date(o.created_at);
+    if (period === 'today') return d.toDateString() === now.toDateString();
+    if (period === 'week') {
+      const weekAgo = new Date(now); weekAgo.setDate(now.getDate() - 7);
+      return d >= weekAgo;
+    }
+    if (period === 'month') return d.getMonth() === now.getMonth() && d.getFullYear() === now.getFullYear();
+    return true;
+  });
+}
+
+function renderAll() {
+  const filtered = getFilteredByPeriod();
+
+  const revenue = filtered.reduce((sum, o) => sum + Number(o.total), 0);
+  document.getElementById('stat-revenue').textContent = money(revenue);
+  document.getElementById('stat-orders').textContent = filtered.length;
+
+  const byRest = {};
+  filtered.forEach(o => {
+    byRest[o.restaurant_id] = (byRest[o.restaurant_id] || 0) + Number(o.total);
+  });
+  const sortedRest = Object.entries(byRest).sort((a, b) => b[1] - a[1]);
+  const revEl = document.getElementById('revenue-by-restaurant');
+  if (sortedRest.length === 0) {
+    revEl.innerHTML = '<div class="empty">Aucune donnée pour cette période.</div>';
+  } else {
+    revEl.innerHTML = sortedRest.map(([rid, total], i) => {
+      const r = restaurants.find(x => x.id === rid);
+      return `<div class="rank-row"><span><span class="rank-num">#${i+1}</span>${r ? r.name : 'Restaurant inconnu'}</span><span class="mono">${money(total)}</span></div>`;
+    }).join('');
+  }
+
+  const dishCount = {};
+  filtered.forEach(o => {
+    (o.items || []).forEach(item => {
+      dishCount[item.name] = (dishCount[item.name] || 0) + item.qty;
+    });
+  });
+  const sortedDishes = Object.entries(dishCount).sort((a, b) => b[1] - a[1]).slice(0, 8);
+  const dishEl = document.getElementById('top-dishes');
+  if (sortedDishes.length === 0) {
+    dishEl.innerHTML = '<div class="empty">Aucune donnée pour cette période.</div>';
+  } else {
+    dishEl.innerHTML = sortedDishes.map(([name, qty], i) =>
+      `<div class="rank-row"><span><span class="rank-num">#${i+1}</span>${name}</span><span class="mono">${qty}×</span></div>`
+    ).join('');
+  }
+
+  renderOrdersList();
+}
+
+function renderOrdersList() {
+  const filtered = getFilteredByPeriod();
+  const restFilter = document.getElementById('restaurant-filter').value;
+  const list = restFilter ? filtered.filter(o => o.restaurant_id === restFilter) : filtered;
+
+  const el = document.getElementById('orders-list');
+  if (list.length === 0) {
+    el.innerHTML = '<div class="empty">Aucune commande pour cette période.</div>';
+    return;
+  }
+
+  el.innerHTML = list.slice(0, 50).map(o => {
+    const r = restaurants.find(x => x.id === o.restaurant_id);
+    const date = new Date(o.created_at).toLocaleString('fr-FR', { day:'2-digit', month:'2-digit', hour:'2-digit', minute:'2-digit' });
+    return `
+      <div class="order">
+        <div class="order-top">
+          <div class="mono" style="font-weight:700; font-size:12.5px;">#${o.id.slice(0,8).toUpperCase()}</div>
+          <div class="badge" style="background:var(--bg); color:var(--mango); border:1px solid var(--mango);">${o.status}</div>
+        </div>
+        <div class="order-meta">${r ? r.name : '—'} · ${o.customer_name} · ${date}</div>
+        <div class="mono" style="margin-top:4px; font-weight:700;">${money(o.total)}</div>
+      </div>
+    `;
+  }).join('');
+}
+
+(async () => {
+  const { data: { session } } = await client.auth.getSession();
+  if (session) await afterLogin();
+})();
+</script>
+
+</body>
+</html>
