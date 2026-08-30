@@ -7,6 +7,8 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Work+Sans:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 <style>
   :root {
     --bg: #1B1613; --surface: #241D18; --raised: #2C231D;
@@ -86,6 +88,12 @@
   .promo-card { background: linear-gradient(155deg, var(--raised), var(--surface)); border:1px solid var(--mango);
     border-radius:12px; padding:14px; margin-bottom:12px; }
   .promo-rest { font-size:11px; color:var(--mango); font-weight:700; margin-bottom:4px; }
+  #tracking-map { width:100%; height:320px; border-radius:12px; border:1px solid var(--line); margin-bottom:14px; }
+  .track-driver-box { background: linear-gradient(155deg, var(--raised), var(--surface)); border:1px solid var(--line);
+    border-radius:12px; padding:14px; margin-bottom:14px; display:flex; justify-content:space-between; align-items:center; }
+  .btn-call-track { display:inline-block; border:1px solid var(--palm); color:var(--palm); border-radius:8px;
+    padding:8px 14px; font-size:12.5px; font-weight:700; text-decoration:none; font-family:'Work Sans',sans-serif; }
+  .track-status { text-align:center; font-size:12.5px; color:var(--creamDim); margin-bottom:10px; }
 </style>
 </head>
 <body>
@@ -115,6 +123,7 @@
   <div id="view-account" style="display:none"></div>
   <div id="view-orders" style="display:none"></div>
   <div id="view-offers" style="display:none"></div>
+  <div id="view-tracking" style="display:none"></div>
 </div>
 
 <div class="footer-link"><a href="dashboard.html">Espace restaurant →</a></div>
@@ -137,9 +146,10 @@ function toast(msg) {
   setTimeout(() => t.remove(), 3200);
 }
 function show(view) {
-  ['list','menu','checkout','confirm','account','orders','offers'].forEach(v => {
+  ['list','menu','checkout','confirm','account','orders','offers','tracking'].forEach(v => {
     document.getElementById('view-' + v).style.display = (v === view) ? 'block' : 'none';
   });
+  if (view !== 'tracking') stopTracking();
   window.scrollTo({ top: 0 });
 }
 
@@ -308,6 +318,7 @@ async function renderOrders() {
     const r = restaurants.find(x => x.id === o.restaurant_id);
     const date = new Date(o.created_at).toLocaleDateString('fr-FR', { day:'2-digit', month:'2-digit', year:'numeric' });
     const canReview = o.status === 'Livrée' && !reviewedOrderIds.has(o.id);
+    const canTrack = o.status === 'En livraison' && o.driver_id;
     return `
       <div class="order-hist">
         <div class="order-hist-top">
@@ -316,6 +327,7 @@ async function renderOrders() {
         </div>
         <div style="font-size:13.5px; margin-top:4px;">${r ? r.name : '—'} · ${date}</div>
         <div class="mono" style="font-size:13px; margin-top:4px; color:var(--mango);">${money(o.total)}</div>
+        ${canTrack ? `<button class="btn-secondary" style="margin-top:8px;" onclick="trackDelivery('${o.id}')">🛵 Suivre le trajet en direct</button>` : ''}
         ${canReview ? `<button class="btn-secondary" style="margin-top:8px;" onclick='openReview(${JSON.stringify({id:o.id, restaurant_id:o.restaurant_id, rname:(r?r.name:'')}).replace(/'/g,"&apos;")})'>⭐ Noter ce restaurant</button>` : ''}
       </div>
     `;
@@ -400,6 +412,89 @@ async function renderOffers() {
       </div>
     `;
   }).join('');
+}
+
+// ---------- Suivi en direct de la livraison ----------
+
+let trackingTimer = null;
+let trackingMap = null;
+let trackingMarker = null;
+let trackingDestMarker = null;
+
+async function trackDelivery(orderId) {
+  show('tracking');
+  document.getElementById('view-tracking').innerHTML = `
+    <div class="section">
+      <button class="btn-back" onclick="show('orders'); renderOrders();">← Mes commandes</button>
+      <div class="display" style="font-size:26px; margin-bottom:10px;">🛵 Suivi en direct</div>
+      <div id="track-driver-slot"></div>
+      <div class="track-status" id="track-status">Localisation du livreur…</div>
+      <div id="tracking-map"></div>
+    </div>
+  `;
+
+  await updateTrackingView(orderId);
+  if (trackingTimer) clearInterval(trackingTimer);
+  trackingTimer = setInterval(() => updateTrackingView(orderId), 8000);
+}
+
+function stopTracking() {
+  if (trackingTimer) { clearInterval(trackingTimer); trackingTimer = null; }
+  trackingMap = null; trackingMarker = null; trackingDestMarker = null;
+}
+
+async function updateTrackingView(orderId) {
+  const { data: o, error } = await client.from('orders').select('*, drivers(name, phone, current_lat, current_lng, location_updated_at)').eq('id', orderId).maybeSingle();
+  if (error || !o) return;
+
+  const statusEl = document.getElementById('track-status');
+  const slotEl = document.getElementById('track-driver-slot');
+  if (!statusEl) return; // vue quittée entre-temps
+
+  if (o.status === 'Livrée') {
+    statusEl.textContent = "✅ Commande livrée !";
+    if (trackingTimer) { clearInterval(trackingTimer); trackingTimer = null; }
+  }
+
+  const d = o.drivers;
+  if (d) {
+    slotEl.innerHTML = `
+      <div class="track-driver-box">
+        <div>
+          <div style="font-weight:700; font-size:14.5px;">${d.name}</div>
+          <div style="font-size:12px; color:var(--creamDim);">Votre livreur</div>
+        </div>
+        <a href="tel:${d.phone}" class="btn-call-track">📞 Appeler</a>
+      </div>
+    `;
+  }
+
+  if (!d || !d.current_lat) {
+    statusEl.textContent = "En attente de la position du livreur…";
+    return;
+  }
+
+  if (o.status !== 'Livrée') {
+    const ageSec = (Date.now() - new Date(d.location_updated_at).getTime()) / 1000;
+    statusEl.textContent = ageSec < 40 ? "Position en direct" : "Dernière position connue (livreur peut-être hors ligne)";
+  }
+
+  const mapEl = document.getElementById('tracking-map');
+  if (!trackingMap) {
+    trackingMap = L.map(mapEl).setView([d.current_lat, d.current_lng], 15);
+    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+      attribution: '© OpenStreetMap'
+    }).addTo(trackingMap);
+    trackingMarker = L.marker([d.current_lat, d.current_lng]).addTo(trackingMap).bindPopup('🛵 Livreur');
+
+    if (o.location && o.location.type === 'gps') {
+      trackingDestMarker = L.marker([o.location.lat, o.location.lng]).addTo(trackingMap).bindPopup('📍 Vous');
+      trackingMap.fitBounds([[d.current_lat, d.current_lng], [o.location.lat, o.location.lng]], { padding: [30,30] });
+    }
+  } else {
+    trackingMarker.setLatLng([d.current_lat, d.current_lng]);
+    trackingMap.panTo([d.current_lat, d.current_lng]);
+  }
 }
 
 // ---------- Restaurants / menu / commande ----------
