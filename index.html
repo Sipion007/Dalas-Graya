@@ -574,7 +574,9 @@ async function placeOrder() {
   const items = Object.values(cart).map(i => ({ itemId: i.id, name: i.name, price: i.price, qty: i.qty }));
   const total = cartTotal();
 
+  const orderId = crypto.randomUUID();
   const payload = {
+    id: orderId,
     restaurant_id: currentRestaurant.id,
     customer_name: name,
     phone, address,
@@ -584,11 +586,11 @@ async function placeOrder() {
   };
   if (currentCustomer) payload.customer_id = currentCustomer.id;
 
-  const { data, error } = await client.from('orders').insert(payload).select().single();
+  const { error } = await client.from('orders').insert(payload);
 
   if (error) { toast("Erreur lors de l'envoi de la commande"); console.error(error); return; }
 
-  renderConfirmation(data);
+  renderConfirmation({ ...payload, created_at: new Date().toISOString() });
   show('confirm');
 }
 
