@@ -126,8 +126,28 @@ const client = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 let myDriver = null;
 let refreshTimer = null;
 let gpsWatchId = null;
+let knownAvailableIds = new Set();
+let audioCtx = null;
 
 function money(n) { return Number(n).toLocaleString('fr-FR') + ' F'; }
+
+function playNotificationSound() {
+  try {
+    if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+    const now = audioCtx.currentTime;
+    [0, 0.18].forEach(delay => {
+      const osc = audioCtx.createOscillator();
+      const gain = audioCtx.createGain();
+      osc.type = 'sine';
+      osc.frequency.setValueAtTime(880, now + delay);
+      gain.gain.setValueAtTime(0.0001, now + delay);
+      gain.gain.exponentialRampToValueAtTime(0.25, now + delay + 0.02);
+      gain.gain.exponentialRampToValueAtTime(0.0001, now + delay + 0.28);
+      osc.connect(gain); gain.connect(audioCtx.destination);
+      osc.start(now + delay); osc.stop(now + delay + 0.3);
+    });
+  } catch (e) { /* audio non disponible, on ignore */ }
+}
 
 async function loadRestaurantOptions() {
   const { data } = await client.from('restaurants').select('id, name').order('name');
@@ -152,6 +172,7 @@ function phoneToEmail(phone) {
 }
 
 async function signupDriver() {
+  try { if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)(); } catch(e) {}
   const name = document.getElementById('su-name').value.trim();
   const phone = document.getElementById('su-phone').value.trim();
   const password = document.getElementById('su-password').value;
@@ -186,6 +207,7 @@ async function signupDriver() {
 }
 
 async function loginDriver() {
+  try { if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)(); } catch(e) {}
   const phone = document.getElementById('li-phone').value.trim();
   const password = document.getElementById('li-password').value;
   const errEl = document.getElementById('auth-error');
@@ -238,8 +260,9 @@ async function refreshOrders() {
   // Livraison en cours
   const { data: current } = await client.from('orders').select('*, restaurants(name, accent)').eq('driver_id', myDriver.id).eq('status', 'En livraison');
   const curEl = document.getElementById('current-delivery');
+  const hasActiveDelivery = current && current.length > 0;
 
-  if (current && current.length > 0) {
+  if (hasActiveDelivery) {
     startGPS();
     curEl.innerHTML = current.map(o => `
       <div class="order">
@@ -257,16 +280,31 @@ async function refreshOrders() {
     curEl.innerHTML = '<div class="empty">Aucune livraison en cours.</div>';
   }
 
+  const availEl = document.getElementById('available-orders');
+
+  // Tant qu'une livraison est en cours, on ne montre pas les nouvelles commandes disponibles
+  if (hasActiveDelivery) {
+    availEl.innerHTML = '<div class="empty">Terminez votre livraison en cours avant d\'en prendre une nouvelle.</div>';
+    knownAvailableIds = new Set();
+    return;
+  }
+
   // Commandes disponibles
   let query = client.from('orders').select('*, restaurants(name, accent)').eq('status', 'Prête').is('driver_id', null);
   if (myDriver.restaurant_id) query = query.eq('restaurant_id', myDriver.restaurant_id);
   const { data: available } = await query;
-  const availEl = document.getElementById('available-orders');
 
   if (!available || available.length === 0) {
     availEl.innerHTML = '<div class="empty">Aucune commande disponible pour le moment.</div>';
+    knownAvailableIds = new Set();
     return;
   }
+
+  const newIds = new Set(available.map(o => o.id));
+  const hasNewOrder = [...newIds].some(id => !knownAvailableIds.has(id));
+  if (hasNewOrder && knownAvailableIds.size > 0) playNotificationSound();
+  if (knownAvailableIds.size === 0 && newIds.size > 0) playNotificationSound();
+  knownAvailableIds = newIds;
 
   availEl.innerHTML = available.map(o => `
     <div class="order">
@@ -280,6 +318,12 @@ async function refreshOrders() {
 }
 
 async function takeOrder(orderId) {
+  const { data: active } = await client.from('orders').select('id').eq('driver_id', myDriver.id).eq('status', 'En livraison');
+  if (active && active.length > 0) {
+    alert("Vous avez déjà une livraison en cours. Terminez-la avant d'en prendre une nouvelle.");
+    refreshOrders();
+    return;
+  }
   const { error } = await client.from('orders').update({ driver_id: myDriver.id, status: 'En livraison' }).eq('id', orderId).is('driver_id', null);
   if (error) { alert("Cette commande vient d'être prise par un autre livreur."); }
   refreshOrders();
