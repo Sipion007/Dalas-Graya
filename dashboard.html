@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-<title>Maquis Express — Tableau de bord restaurant</title>
+<title>Dallas Graya — Tableau de bord restaurant</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Work+Sans:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
@@ -56,21 +56,21 @@
 
   <!-- Écran de connexion -->
   <div id="login-screen" class="login-box">
-    <div class="display" style="font-size:30px; text-align:center; margin-bottom:4px;">🏪 Espace restaurant</div>
+    <div class="display" style="font-size:30px; text-align:center; margin-bottom:4px;">Espace restaurant</div>
     <div style="font-size:13px; color:var(--creamDim); text-align:center; margin-bottom:20px;">Connectez-vous pour gérer vos commandes</div>
     <div id="login-error" class="error-msg"></div>
     <input id="login-email" type="email" placeholder="Email" autocomplete="username" />
     <input id="login-password" type="password" placeholder="Mot de passe" autocomplete="current-password" />
     <button class="btn-primary" onclick="login()">Se connecter</button>
-    <div style="text-align:center; margin-top:16px;"><a class="back" href="index.html">← App client</a> · <a class="back" href="menu.html">🍽️ Mon Menu</a></div>
+    <div style="text-align:center; margin-top:16px;"><a class="back" href="index.html">← App client</a> · <a class="back" href="menu.html">Mon Menu</a></div>
   </div>
 
   <!-- Écran tableau de bord (caché tant que non connecté) -->
   <div id="dashboard-screen" style="display:none;">
     <div class="header-row">
       <div>
-        <div class="display" style="font-size:24px;">🏪 <span id="restaurant-name"></span></div>
-        <a class="back" href="index.html">← App client</a> · <a class="back" href="menu.html">🍽️ Mon Menu</a>
+        <div class="display" style="font-size:24px;"><span id="restaurant-name"></span></div>
+        <a class="back" href="index.html">← App client</a> · <a class="back" href="menu.html">Mon Menu</a>
       </div>
       <button class="btn-logout" onclick="logout()">Déconnexion</button>
     </div>
@@ -152,7 +152,7 @@ async function loadOrders() {
   el.innerHTML = data.map(o => {
     const idx = STATUSES.indexOf(o.status);
     const isLast = idx === STATUSES.length - 1;
-    const gpsLink = o.location && o.location.type === 'gps' ? `<a href="https://www.google.com/maps?q=${o.location.lat},${o.location.lng}" target="_blank" style="color:var(--palm); font-size:12px; text-decoration:none;">📍 Position GPS du client →</a>` : '';
+    const gpsLink = o.location && o.location.type === 'gps' ? `<a href="https://www.google.com/maps?q=${o.location.lat},${o.location.lng}" target="_blank" style="color:var(--palm); font-size:12px; text-decoration:none;">Position GPS du client →</a>` : '';
 
     let actionZone = '';
     if (idx < READY_IDX) {
@@ -168,11 +168,11 @@ async function loadOrders() {
             </select>
             <button class="btn-advance" style="background:${myRestaurant.accent};" onclick="assignDriver('${o.id}')">Assigner ce livreur</button>
           ` : ''}
-          <div class="waiting-note">📡 Commande visible aussi par les livreurs indépendants disponibles</div>
+          <div class="waiting-note">Commande visible aussi par les livreurs indépendants disponibles</div>
         </div>
       `;
     } else if (idx === STATUSES.indexOf('En livraison')) {
-      actionZone = `<div class="driver-info">🛵 En livraison par ${o.drivers ? o.drivers.name + ' · ' + o.drivers.phone : 'un livreur'}</div>`;
+      actionZone = `<div class="driver-info">En livraison par ${o.drivers ? o.drivers.name + ' · ' + o.drivers.phone : 'un livreur'}</div>`;
     } else if (isLast) {
       actionZone = `<div style="text-align:center; font-size:12px; color:var(--creamDim); margin-top:8px;">Commande terminée</div>`;
     }
@@ -184,7 +184,7 @@ async function loadOrders() {
           <div class="badge" style="background:${isLast ? 'var(--palm)' : 'var(--bg)'}; color:${isLast ? 'var(--cream)' : 'var(--mango)'}; border:${isLast ? 'none' : '1px solid var(--mango)'};">${o.status}</div>
         </div>
         <div style="font-size:13px; margin-bottom:2px;">${o.customer_name} · ${o.phone}</div>
-        ${o.address ? `<div style="font-size:12.5px; color:var(--creamDim); margin-bottom:6px;">📍 ${o.address}</div>` : ''}
+        ${o.address ? `<div style="font-size:12.5px; color:var(--creamDim); margin-bottom:6px;">${o.address}</div>` : ''}
         ${gpsLink}
         <div style="border-top:1px solid var(--line); padding-top:8px; margin-top:8px;">
           ${o.items.map(i => `<div class="line-item"><span>${i.qty}× ${i.name}</span><span>${money(i.price*i.qty)}</span></div>`).join('')}
