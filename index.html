@@ -185,6 +185,24 @@
 <script>
 const client = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
+// Ajoute les fonds de carte (rues / satellite) + échelle à une carte Leaflet
+function equipMap(map) {
+  const streets = L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+    attribution: '© OpenStreetMap', maxZoom: 19
+  });
+  const satellite = L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}', {
+    attribution: 'Esri, Maxar, Earthstar Geographics', maxZoom: 19
+  });
+  const satelliteLabels = L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/Reference/World_Boundaries_and_Places/MapServer/tile/{z}/{y}/{x}', {
+    maxZoom: 19, pane: 'shadowPane'
+  });
+  const hybride = L.layerGroup([satellite, satelliteLabels]);
+
+  streets.addTo(map);
+  L.control.layers({ 'Rues': streets, 'Satellite': hybride }, null, { collapsed: true }).addTo(map);
+  L.control.scale({ imperial: false }).addTo(map);
+}
+
 let restaurants = [];
 let currentRestaurant = null;
 let menuItems = [];
@@ -591,10 +609,8 @@ async function updateTrackingView(orderId) {
 
   const mapEl = document.getElementById('tracking-map');
   if (!trackingMap) {
-    trackingMap = L.map(mapEl).setView([d.current_lat, d.current_lng], 15);
-    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-      attribution: '© OpenStreetMap'
-    }).addTo(trackingMap);
+    trackingMap = L.map(mapEl).setView([d.current_lat, d.current_lng], 16);
+    equipMap(trackingMap);
     trackingMarker = L.marker([d.current_lat, d.current_lng]).addTo(trackingMap).bindPopup('Livreur');
 
     if (o.location && o.location.type === 'gps') {
