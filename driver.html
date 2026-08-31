@@ -12,6 +12,8 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Work+Sans:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 <style>
   :root {
     --bg: #1B1613; --surface: #241D18; --raised: #2C231D;
@@ -38,6 +40,7 @@
   .btn-call { display:block; width:100%; box-sizing:border-box; text-align:center; border:1px solid var(--palm); border-radius:9px;
     padding:10px 12px; font-weight:700; font-size:13px; color:var(--palm); background:none; margin-top:10px;
     font-family:'Work Sans',sans-serif; text-decoration:none; }
+  #delivery-map { width:100%; height:230px; border-radius:10px; border:1px solid var(--line); margin-top:10px; }
   .order { background: linear-gradient(155deg, var(--raised), var(--surface)); border:1px solid var(--line);
     border-radius:12px; padding:16px; margin-bottom:12px; box-shadow:0 4px 16px rgba(0,0,0,.25); }
   .empty { text-align:center; padding:30px; color:var(--creamDim); font-size:13px; border:1px dashed var(--line); border-radius:10px; }
@@ -160,6 +163,12 @@ let refreshTimer = null;
 let gpsWatchId = null;
 let knownAvailableIds = new Set();
 let audioCtx = null;
+let myCurrentPos = null;
+let deliveryMap = null;
+let deliveryDriverMarker = null;
+let deliveryCustomerMarker = null;
+let deliveryRouteLine = null;
+let currentDeliveryOrderId = null;
 
 function money(n) { return Number(n).toLocaleString('fr-FR') + ' F'; }
 
@@ -355,19 +364,29 @@ async function refreshOrders() {
 
   if (hasActiveDelivery) {
     startGPS();
-    curEl.innerHTML = current.map(o => `
-      <div class="order">
-        <div style="font-weight:700; font-size:15px;">${o.restaurants ? o.restaurants.name : ''}</div>
-        <div style="font-size:13px; margin-top:4px;">${o.customer_name}</div>
-        ${o.address ? `<div style="font-size:12.5px; color:var(--creamDim); margin-top:2px;">${o.address}</div>` : ''}
-        ${o.location && o.location.type === 'gps' ? `<a href="https://www.google.com/maps?q=${o.location.lat},${o.location.lng}" target="_blank" style="color:var(--palm); font-size:12px;">Voir la position du client →</a>` : ''}
-        <div class="mono" style="margin-top:6px; font-weight:700;">${money(o.total)}</div>
-        <a href="tel:${o.phone}" class="btn-call">Appeler le client</a>
-        <button class="btn-done" onclick="markDelivered('${o.id}')">Marquer comme livrée</button>
-      </div>
-    `).join('');
+    const o0 = current[0];
+    if (o0.id !== currentDeliveryOrderId) {
+      currentDeliveryOrderId = o0.id;
+      deliveryMap = null;
+      curEl.innerHTML = current.map(o => `
+        <div class="order">
+          <div style="font-weight:700; font-size:15px;">${o.restaurants ? o.restaurants.name : ''}</div>
+          <div style="font-size:13px; margin-top:4px;">${o.customer_name}</div>
+          ${o.address ? `<div style="font-size:12.5px; color:var(--creamDim); margin-top:2px;">${o.address}</div>` : ''}
+          <div class="mono" style="margin-top:6px; font-weight:700;">${money(o.total)}</div>
+          <a href="tel:${o.phone}" class="btn-call">Appeler le client</a>
+          <button class="btn-done" onclick="markDelivered('${o.id}')">Marquer comme livrée</button>
+          ${o.location && o.location.type === 'gps' ? '<div id="delivery-map"></div>' : ''}
+        </div>
+      `).join('');
+      if (o0.location && o0.location.type === 'gps') {
+        updateDeliveryMap(o0.location);
+      }
+    }
   } else {
     stopGPS();
+    deliveryMap = null;
+    currentDeliveryOrderId = null;
     curEl.innerHTML = '<div class="empty">Aucune livraison en cours.</div>';
   }
 
@@ -436,16 +455,41 @@ function startGPS() {
 
   gpsWatchId = navigator.geolocation.watchPosition(
     async (pos) => {
+      myCurrentPos = { lat: pos.coords.latitude, lng: pos.coords.longitude };
       await client.from('drivers').update({
         current_lat: pos.coords.latitude,
         current_lng: pos.coords.longitude,
         location_updated_at: new Date().toISOString()
       }).eq('id', myDriver.id);
       text.textContent = `Position partagée : ${pos.coords.latitude.toFixed(4)}, ${pos.coords.longitude.toFixed(4)}`;
+      if (deliveryMap && deliveryDriverMarker) {
+        deliveryDriverMarker.setLatLng([myCurrentPos.lat, myCurrentPos.lng]);
+        if (deliveryCustomerMarker) {
+          deliveryRouteLine.setLatLngs([[myCurrentPos.lat, myCurrentPos.lng], deliveryCustomerMarker.getLatLng()]);
+        }
+      }
     },
     () => { text.textContent = "Position GPS refusée — activez-la pour partager votre trajet"; dot.classList.remove('active'); },
     { enableHighAccuracy: true, maximumAge: 5000 }
   );
+}
+
+function updateDeliveryMap(destination) {
+  setTimeout(() => {
+    const mapEl = document.getElementById('delivery-map');
+    if (!mapEl) return;
+    const startPos = myCurrentPos || destination;
+
+    deliveryMap = L.map(mapEl).setView([destination.lat, destination.lng], 14);
+    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+      attribution: '© OpenStreetMap'
+    }).addTo(deliveryMap);
+
+    deliveryCustomerMarker = L.marker([destination.lat, destination.lng]).addTo(deliveryMap).bindPopup('Client');
+    deliveryDriverMarker = L.marker([startPos.lat, startPos.lng]).addTo(deliveryMap).bindPopup('Vous');
+    deliveryRouteLine = L.polyline([[startPos.lat, startPos.lng], [destination.lat, destination.lng]], { color: '#E8873A', weight: 3, dashArray: '6,6' }).addTo(deliveryMap);
+    deliveryMap.fitBounds([[startPos.lat, startPos.lng], [destination.lat, destination.lng]], { padding: [30,30] });
+  }, 30);
 }
 
 function stopGPS() {
