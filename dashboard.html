@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0" />
 <title>Dallas Graya Restaurant</title>
 <link rel="manifest" href="manifest-dashboard.json">
-<meta name="theme-color" content="#E8873A">
+<meta name="theme-color" content="#F5C04A">
 <meta name="apple-mobile-web-app-title" content="Dallas Graya">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <link rel="apple-touch-icon" href="icons/icon-192.png">
@@ -14,20 +14,20 @@
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <style>
   :root {
-    --bg: #1B1613; --surface: #241D18; --raised: #2C231D;
-    --mango: #E8873A; --palm: #5C8A63; --chili: #C4432B;
-    --cream: #F5EFE6; --creamDim: #B8AA98; --line: #3A3029;
+    --bg: #080808; --surface: #111111; --raised: #171717;
+    --mango: #F5C04A; --palm: #5C8A63; --chili: #C4432B;
+    --cream: #FFFFFF; --creamDim: #8F8F8F; --line: #242424;
   }
   * { box-sizing: border-box; }
-  body { margin: 0; background: var(--bg); color: var(--cream); font-family: 'Work Sans', sans-serif; min-height: 100vh; }
-  .display { font-family: 'Bebas Neue', sans-serif; }
+  body { margin: 0; background: var(--bg); color: var(--cream); font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; min-height: 100vh; }
+  .display { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; font-weight:700; letter-spacing:-0.5px; }
   .mono { font-family: 'JetBrains Mono', monospace; }
   .wrap { max-width: 560px; margin: 0 auto; padding: 18px 16px 90px; }
   input, select { width:100%; font-family:'Work Sans',sans-serif; background:var(--surface); border:1px solid var(--line);
     border-radius:8px; padding:12px 14px; color:var(--cream); font-size:15px; margin-bottom:12px; }
   input::placeholder { color: var(--creamDim); }
   .btn-primary { width:100%; border:none; border-radius:9px; padding:13px 12px; font-weight:700; font-size:14px;
-    cursor:pointer; color:#1B1613; background: var(--mango); font-family:'Work Sans',sans-serif; margin-top:6px; }
+    cursor:pointer; color:#080808; background: var(--mango); font-family:'Work Sans',sans-serif; margin-top:6px; }
   .btn-logout { background:none; border:1px solid var(--line); color:var(--creamDim); border-radius:8px;
     padding:6px 12px; font-size:12px; cursor:pointer; font-family:'Work Sans',sans-serif; }
   .order { background: linear-gradient(155deg, var(--raised), var(--surface)); border:1px solid var(--line);
@@ -36,7 +36,7 @@
   .badge { font-size:11px; font-weight:700; padding:3px 9px; border-radius:20px; }
   .line-item { font-family:'JetBrains Mono',monospace; font-size:12px; display:flex; justify-content:space-between; color:var(--creamDim); }
   .btn-advance { width:100%; border:none; border-radius:9px; padding:10px 12px; font-weight:700; font-size:12.5px;
-    cursor:pointer; color:#1B1613; margin-top:10px; font-family:'Work Sans',sans-serif; }
+    cursor:pointer; color:#080808; margin-top:10px; font-family:'Work Sans',sans-serif; }
   .empty { text-align:center; padding:30px; color:var(--creamDim); font-size:13px; border:1px dashed var(--line); border-radius:10px; }
   .refresh { text-align:center; font-size:11px; color:var(--creamDim); margin-top:16px; }
   a.back { color: var(--creamDim); font-size:12px; text-decoration:none; }
