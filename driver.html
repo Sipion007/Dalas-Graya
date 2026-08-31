@@ -41,6 +41,17 @@
     padding:10px 12px; font-weight:700; font-size:13px; color:var(--palm); background:none; margin-top:10px;
     font-family:'Work Sans',sans-serif; text-decoration:none; }
   #delivery-map { width:100%; height:230px; border-radius:10px; border:1px solid var(--line); margin-top:10px; }
+  .map-wrap { position:relative; margin-top:10px; }
+  .map-wrap #delivery-map { margin-top:0; }
+  .btn-fullscreen-map { position:absolute; top:8px; right:8px; z-index:10; background:rgba(27,22,19,0.85);
+    border:1px solid var(--line); color:var(--cream); border-radius:8px; padding:6px 11px; font-size:11.5px;
+    font-weight:600; cursor:pointer; font-family:'Work Sans',sans-serif; }
+  .map-fullscreen { position:fixed; inset:0; z-index:200; background:var(--bg); display:none; }
+  .map-fullscreen.open { display:block; }
+  .map-fullscreen #fs-map { width:100%; height:100%; }
+  .map-fullscreen-close { position:absolute; top:16px; right:16px; z-index:210; width:40px; height:40px;
+    border-radius:50%; background:var(--surface); border:1px solid var(--line); color:var(--cream);
+    font-size:20px; display:flex; align-items:center; justify-content:center; cursor:pointer; }
   .order { background: linear-gradient(155deg, var(--raised), var(--surface)); border:1px solid var(--line);
     border-radius:12px; padding:16px; margin-bottom:12px; box-shadow:0 4px 16px rgba(0,0,0,.25); }
   .empty { text-align:center; padding:30px; color:var(--creamDim); font-size:13px; border:1px dashed var(--line); border-radius:10px; }
@@ -157,6 +168,24 @@
 
 <script>
 const client = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+
+// Ajoute les fonds de carte (rues / satellite) + échelle à une carte Leaflet
+function equipMap(map) {
+  const streets = L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+    attribution: '© OpenStreetMap', maxZoom: 19
+  });
+  const satellite = L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}', {
+    attribution: 'Esri, Maxar, Earthstar Geographics', maxZoom: 19
+  });
+  const satelliteLabels = L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/Reference/World_Boundaries_and_Places/MapServer/tile/{z}/{y}/{x}', {
+    maxZoom: 19, pane: 'shadowPane'
+  });
+  const hybride = L.layerGroup([satellite, satelliteLabels]);
+
+  streets.addTo(map);
+  L.control.layers({ 'Rues': streets, 'Satellite': hybride }, null, { collapsed: true }).addTo(map);
+  L.control.scale({ imperial: false }).addTo(map);
+}
 const VAPID_PUBLIC_KEY = "BGBnL8TUONEP5DuzE5Rt-8ic2TxLF3q0sxX61Xi7a4BvKyFGa4qxfOrgkMidtrV8EI1WnsAhZEIg948G1kL0LZI";
 let myDriver = null;
 let refreshTimer = null;
@@ -169,6 +198,8 @@ let deliveryDriverMarker = null;
 let deliveryCustomerMarker = null;
 let deliveryRouteLine = null;
 let currentDeliveryOrderId = null;
+let deliveryDestination = null;
+let fsMap = null;
 
 function money(n) { return Number(n).toLocaleString('fr-FR') + ' F'; }
 
@@ -376,7 +407,7 @@ async function refreshOrders() {
           <div class="mono" style="margin-top:6px; font-weight:700;">${money(o.total)}</div>
           <a href="tel:${o.phone}" class="btn-call">Appeler le client</a>
           <button class="btn-done" onclick="markDelivered('${o.id}')">Marquer comme livrée</button>
-          ${o.location && o.location.type === 'gps' ? '<div id="delivery-map"></div>' : ''}
+          ${o.location && o.location.type === 'gps' ? '<div class="map-wrap"><button class="btn-fullscreen-map" onclick="openFullscreenMap()">⤢ Plein écran</button><div id="delivery-map"></div></div>' : ''}
         </div>
       `).join('');
       if (o0.location && o0.location.type === 'gps') {
@@ -387,6 +418,9 @@ async function refreshOrders() {
     stopGPS();
     deliveryMap = null;
     currentDeliveryOrderId = null;
+    deliveryDestination = null;
+    closeFullscreenMap();
+    if (fsMap) { fsMap.remove(); fsMap = null; }
     curEl.innerHTML = '<div class="empty">Aucune livraison en cours.</div>';
   }
 
@@ -468,6 +502,10 @@ function startGPS() {
           deliveryRouteLine.setLatLngs([[myCurrentPos.lat, myCurrentPos.lng], deliveryCustomerMarker.getLatLng()]);
         }
       }
+      if (fsMap && window.fsDriverMarker) {
+        window.fsDriverMarker.setLatLng([myCurrentPos.lat, myCurrentPos.lng]);
+        if (window.fsRouteLine) window.fsRouteLine.setLatLngs([[myCurrentPos.lat, myCurrentPos.lng], window.fsCustomerMarker.getLatLng()]);
+      }
     },
     () => { text.textContent = "Position GPS refusée — activez-la pour partager votre trajet"; dot.classList.remove('active'); },
     { enableHighAccuracy: true, maximumAge: 5000 }
@@ -475,21 +513,42 @@ function startGPS() {
 }
 
 function updateDeliveryMap(destination) {
+  deliveryDestination = destination;
   setTimeout(() => {
     const mapEl = document.getElementById('delivery-map');
     if (!mapEl) return;
     const startPos = myCurrentPos || destination;
 
-    deliveryMap = L.map(mapEl).setView([destination.lat, destination.lng], 14);
-    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-      attribution: '© OpenStreetMap'
-    }).addTo(deliveryMap);
+    deliveryMap = L.map(mapEl).setView([destination.lat, destination.lng], 16);
+    equipMap(deliveryMap);
 
     deliveryCustomerMarker = L.marker([destination.lat, destination.lng]).addTo(deliveryMap).bindPopup('Client');
     deliveryDriverMarker = L.marker([startPos.lat, startPos.lng]).addTo(deliveryMap).bindPopup('Vous');
     deliveryRouteLine = L.polyline([[startPos.lat, startPos.lng], [destination.lat, destination.lng]], { color: '#E8873A', weight: 3, dashArray: '6,6' }).addTo(deliveryMap);
     deliveryMap.fitBounds([[startPos.lat, startPos.lng], [destination.lat, destination.lng]], { padding: [30,30] });
   }, 30);
+}
+
+function openFullscreenMap() {
+  if (!deliveryDestination) return;
+  document.getElementById('map-fullscreen').classList.add('open');
+
+  setTimeout(() => {
+    const startPos = myCurrentPos || deliveryDestination;
+    if (!fsMap) {
+      fsMap = L.map('fs-map').setView([deliveryDestination.lat, deliveryDestination.lng], 17);
+      equipMap(fsMap);
+      window.fsCustomerMarker = L.marker([deliveryDestination.lat, deliveryDestination.lng]).addTo(fsMap).bindPopup('Client');
+      window.fsDriverMarker = L.marker([startPos.lat, startPos.lng]).addTo(fsMap).bindPopup('Vous');
+      window.fsRouteLine = L.polyline([[startPos.lat, startPos.lng], [deliveryDestination.lat, deliveryDestination.lng]], { color: '#E8873A', weight: 4, dashArray: '8,8' }).addTo(fsMap);
+    }
+    fsMap.invalidateSize();
+    fsMap.fitBounds([[startPos.lat, startPos.lng], [deliveryDestination.lat, deliveryDestination.lng]], { padding: [40,40] });
+  }, 60);
+}
+
+function closeFullscreenMap() {
+  document.getElementById('map-fullscreen').classList.remove('open');
 }
 
 function stopGPS() {
@@ -507,6 +566,11 @@ function stopGPS() {
   if (session) await afterLogin();
 })();
 </script>
+
+<div class="map-fullscreen" id="map-fullscreen">
+  <button class="map-fullscreen-close" onclick="closeFullscreenMap()">✕</button>
+  <div id="fs-map"></div>
+</div>
 
 </body>
 </html>
