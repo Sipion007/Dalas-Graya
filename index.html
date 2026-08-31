@@ -41,6 +41,8 @@
   .headline { font-size: 38px; line-height: .95; margin-bottom: 10px; }
   .headline span { color: var(--mango); }
   .tagline { font-style: italic; color: var(--creamDim); margin-bottom: 14px; }
+  .slogan { font-size: 11.5px; color: var(--mango); letter-spacing: 0.16em; text-transform: uppercase;
+    font-weight: 600; margin: 6px 0 10px; }
   .pill { display:inline-block; font-size:10.5px; background: var(--raised); border:1px solid var(--line);
     padding:6px 11px; border-radius:20px; margin-right:6px; margin-bottom:6px; }
   .list { padding: 0 16px; display:flex; flex-direction:column; gap:12px; }
@@ -102,6 +104,32 @@
   .btn-call-track { display:inline-block; border:1px solid var(--palm); color:var(--palm); border-radius:8px;
     padding:8px 14px; font-size:12.5px; font-weight:700; text-decoration:none; font-family:'Work Sans',sans-serif; }
   .track-status { text-align:center; font-size:12.5px; color:var(--creamDim); margin-bottom:10px; }
+  .bottom-nav { position:fixed; bottom:0; left:0; right:0; max-width:480px; margin:0 auto; z-index:60;
+    background:rgba(27,22,19,0.95); backdrop-filter:blur(10px); border-top:1px solid var(--line);
+    display:flex; justify-content:space-around; padding:8px 6px calc(8px + env(safe-area-inset-bottom)); }
+  .nav-item { background:none; border:none; display:flex; flex-direction:column; align-items:center; gap:3px;
+    color:var(--creamDim); cursor:pointer; font-family:'Work Sans',sans-serif; font-size:10px; font-weight:600;
+    letter-spacing:0.03em; padding:4px 10px; }
+  .nav-item svg { width:21px; height:21px; stroke:var(--creamDim); fill:none; stroke-width:1.7; }
+  .nav-item.active { color:var(--mango); }
+  .nav-item.active svg { stroke:var(--mango); }
+  .search-bar { display:flex; align-items:center; gap:8px; background:var(--surface); border:1px solid var(--line);
+    border-radius:11px; padding:12px 14px; margin-bottom:16px; }
+  .search-bar svg { width:17px; height:17px; stroke:var(--creamDim); fill:none; stroke-width:1.8; flex-shrink:0; }
+  .search-bar input { background:none; border:none; margin:0; padding:0; font-size:14px; }
+  .timeline { margin-bottom:6px; }
+  .timeline-step { display:flex; gap:12px; }
+  .timeline-dot-col { display:flex; flex-direction:column; align-items:center; }
+  .timeline-dot { width:11px; height:11px; border-radius:50%; background:var(--line); flex-shrink:0; margin-top:3px; }
+  .timeline-dot.done { background:var(--mango); }
+  .timeline-bar { width:2px; flex:1; background:var(--line); min-height:22px; }
+  .timeline-bar.done { background:var(--mango); }
+  .timeline-label { font-size:13px; padding-bottom:20px; color:var(--creamDim); }
+  .timeline-label.done { color:var(--cream); font-weight:600; }
+  .driver-badge { width:96px; height:96px; margin:0 auto 16px; border-radius:50%;
+    border:2px solid var(--mango); display:flex; align-items:center; justify-content:center;
+    background:linear-gradient(155deg, var(--raised), var(--surface)); }
+  .driver-badge svg { width:46px; height:46px; stroke:var(--mango); fill:none; stroke-width:1.6; }
 </style>
 </head>
 <body>
@@ -116,9 +144,8 @@
   <div class="topbar-left">
     <span class="dot"></span>
     <span class="display" style="font-size:21px; color:var(--mango); letter-spacing:0.08em;">DALLAS GRAYA</span>
-  </div>
-  <div class="topbar-icons">
-    <button class="topbar-text" onclick="show('offers'); renderOffers();">Offres</button>
+  </div>  <div class="topbar-icons">
+    <button class="topbar-text" onclick="setActiveNav(''); show('offers'); renderOffers();">Offres</button>
     <button class="topbar-text" onclick="openAccount()">Compte</button>
   </div>
 </div>
@@ -133,6 +160,25 @@
   <div id="view-offers" style="display:none"></div>
   <div id="view-tracking" style="display:none"></div>
 </div>
+
+<nav class="bottom-nav" id="bottom-nav">
+  <button class="nav-item active" id="nav-home" onclick="navTo('home')">
+    <svg viewBox="0 0 24 24"><path d="M3 11l9-7 9 7"/><path d="M5 10v10h14V10"/></svg>
+    <span>Accueil</span>
+  </button>
+  <button class="nav-item" id="nav-restaurants" onclick="navTo('restaurants')">
+    <svg viewBox="0 0 24 24"><path d="M7 3v7a2 2 0 0 0 4 0V3"/><path d="M9 10v11"/><path d="M17 3c-1.5 0-2.5 1.5-2.5 4s1 4 2.5 4v10"/></svg>
+    <span>Restaurants</span>
+  </button>
+  <button class="nav-item" id="nav-commandes" onclick="navTo('commandes')">
+    <svg viewBox="0 0 24 24"><rect x="5" y="3" width="14" height="18" rx="2"/><line x1="8" y1="8" x2="16" y2="8"/><line x1="8" y1="12" x2="16" y2="12"/><line x1="8" y1="16" x2="13" y2="16"/></svg>
+    <span>Commandes</span>
+  </button>
+  <button class="nav-item" id="nav-profil" onclick="navTo('profil')">
+    <svg viewBox="0 0 24 24"><circle cx="12" cy="8" r="3.4"/><path d="M5 20c1.2-4 4-6 7-6s5.8 2 7 6"/></svg>
+    <span>Profil</span>
+  </button>
+</nav>
 
 <div class="footer-link"><a href="dashboard.html">Espace restaurant →</a> &nbsp;·&nbsp; <a href="driver.html">Espace livreur →</a></div>
 
@@ -159,7 +205,33 @@ function show(view) {
     document.getElementById('view-' + v).style.display = (v === view) ? 'block' : 'none';
   });
   if (view !== 'tracking') stopTracking();
+  const nav = document.getElementById('bottom-nav');
+  nav.style.display = ['list','account','orders','offers'].includes(view) ? 'flex' : 'none';
   window.scrollTo({ top: 0 });
+}
+
+function setActiveNav(id) {
+  document.querySelectorAll('.nav-item').forEach(el => el.classList.remove('active'));
+  const el = document.getElementById('nav-' + id);
+  if (el) el.classList.add('active');
+}
+
+function navTo(dest) {
+  if (dest === 'home') {
+    setActiveNav('home');
+    show('list');
+  } else if (dest === 'restaurants') {
+    setActiveNav('restaurants');
+    show('list');
+    setTimeout(() => document.querySelector('.list')?.scrollIntoView({ behavior: 'smooth' }), 30);
+  } else if (dest === 'commandes') {
+    setActiveNav('commandes');
+    if (currentCustomer) { show('orders'); renderOrders(); }
+    else { show('account'); renderAccount(); }
+  } else if (dest === 'profil') {
+    setActiveNav('profil');
+    show('account'); renderAccount();
+  }
 }
 
 function phoneToEmail(phone) {
@@ -177,6 +249,7 @@ async function refreshCustomer() {
 }
 
 function openAccount() {
+  setActiveNav('profil');
   show('account');
   renderAccount();
 }
@@ -186,7 +259,7 @@ function renderAccount() {
   if (currentCustomer) {
     el.innerHTML = `
       <div class="section">
-        <button class="btn-back" onclick="show('list')">← Retour</button>
+        <button class="btn-back" onclick="setActiveNav('home'); show('list')">← Retour</button>
         <div class="display" style="font-size:26px; margin-bottom:14px;">Mon compte</div>
         <div class="profile-box">
           <div style="font-weight:700; font-size:16px;">${currentCustomer.name || 'Client'}</div>
@@ -202,7 +275,7 @@ function renderAccount() {
 
   el.innerHTML = `
     <div class="section">
-      <button class="btn-back" onclick="show('list')">← Retour</button>
+      <button class="btn-back" onclick="setActiveNav('home'); show('list')">← Retour</button>
       <div class="display" style="font-size:26px; margin-bottom:14px;">Mon compte</div>
       <div class="tab-switch">
         <div class="tab-btn active" id="tab-login" onclick="switchAuthTab('login')">Connexion</div>
@@ -400,7 +473,7 @@ async function renderOffers() {
   const el = document.getElementById('view-offers');
   el.innerHTML = `
     <div class="section">
-      <button class="btn-back" onclick="show('list')">← Retour</button>
+      <button class="btn-back" onclick="setActiveNav('home'); show('list')">← Retour</button>
       <div class="display" style="font-size:26px; margin-bottom:14px;">Offres du moment</div>
       <div id="offers-list"></div>
     </div>
@@ -430,14 +503,42 @@ let trackingMap = null;
 let trackingMarker = null;
 let trackingDestMarker = null;
 
+const ORDER_STEPS = ['Reçue', 'En préparation', 'Prête', 'En livraison', 'Livrée'];
+const ORDER_STEP_LABELS = { 'Reçue': 'Commande reçue', 'En préparation': 'En préparation', 'Prête': 'Prête à partir', 'En livraison': 'En route vers vous', 'Livrée': 'Livrée' };
+
+function timelineHtml(status) {
+  const idx = ORDER_STEPS.indexOf(status);
+  return `
+    <div class="timeline">
+      ${ORDER_STEPS.map((s, i) => {
+        const done = i <= idx;
+        const isLast = i === ORDER_STEPS.length - 1;
+        return `
+          <div class="timeline-step">
+            <div class="timeline-dot-col">
+              <div class="timeline-dot ${done ? 'done' : ''}"></div>
+              ${!isLast ? `<div class="timeline-bar ${i < idx ? 'done' : ''}"></div>` : ''}
+            </div>
+            <div class="timeline-label ${done ? 'done' : ''}">${ORDER_STEP_LABELS[s]}</div>
+          </div>
+        `;
+      }).join('')}
+    </div>
+  `;
+}
+
 async function trackDelivery(orderId) {
   show('tracking');
   document.getElementById('view-tracking').innerHTML = `
     <div class="section">
       <button class="btn-back" onclick="show('orders'); renderOrders();">← Mes commandes</button>
-      <div class="display" style="font-size:26px; margin-bottom:10px;">Suivi en direct</div>
+      <div class="driver-badge">
+        <svg viewBox="0 0 24 24"><circle cx="6" cy="18" r="2.6"/><circle cx="17" cy="18" r="2.6"/><path d="M6 18l3-7h4l2 4h2"/><path d="M9 11l2-4h3"/></svg>
+      </div>
+      <div class="display" style="font-size:24px; text-align:center; margin-bottom:4px;">Votre commande</div>
+      <div class="track-status" id="track-status" style="margin-bottom:18px;">Localisation du livreur…</div>
       <div id="track-driver-slot"></div>
-      <div class="track-status" id="track-status">Localisation du livreur…</div>
+      <div id="track-timeline"></div>
       <div id="tracking-map"></div>
     </div>
   `;
@@ -458,10 +559,14 @@ async function updateTrackingView(orderId) {
 
   const statusEl = document.getElementById('track-status');
   const slotEl = document.getElementById('track-driver-slot');
+  const timelineEl = document.getElementById('track-timeline');
   if (!statusEl) return; // vue quittée entre-temps
 
+  timelineEl.innerHTML = timelineHtml(o.status);
+  statusEl.textContent = ORDER_STEP_LABELS[o.status] || o.status;
+
   if (o.status === 'Livrée') {
-    statusEl.textContent = "✓ Commande livrée";
+    statusEl.textContent = "Commande livrée";
     if (trackingTimer) { clearInterval(trackingTimer); trackingTimer = null; }
   }
 
@@ -476,16 +581,12 @@ async function updateTrackingView(orderId) {
         <a href="tel:${d.phone}" class="btn-call-track">Appeler</a>
       </div>
     `;
+  } else {
+    slotEl.innerHTML = '';
   }
 
   if (!d || !d.current_lat) {
-    statusEl.textContent = "En attente de la position du livreur…";
     return;
-  }
-
-  if (o.status !== 'Livrée') {
-    const ageSec = (Date.now() - new Date(d.location_updated_at).getTime()) / 1000;
-    statusEl.textContent = ageSec < 40 ? "Position en direct" : "Dernière position connue (livreur peut-être hors ligne)";
   }
 
   const mapEl = document.getElementById('tracking-map');
@@ -521,14 +622,26 @@ function renderList() {
     <div class="hero">
       <div class="kicker">TAZIBOU · CÔTE D'IVOIRE</div>
       <div class="display headline">Les maquis de<br>votre quartier,<br><span>livrés chez vous.</span></div>
+      <div class="slogan">Vos envies, livrées à temps</div>
       <div class="tagline">Commandez vos plats préférés, payez à la réception.</div>
+      <div class="search-bar">
+        <svg viewBox="0 0 24 24"><circle cx="11" cy="11" r="7"/><line x1="21" y1="21" x2="16.5" y2="16.5"/></svg>
+        <input id="restaurant-search" placeholder="Rechercher un restaurant, une cuisine…" oninput="filterRestaurants()" />
+      </div>
       <div>
         <span class="pill mono">${restaurants.length} RESTAURANTS PARTENAIRES</span>
         <span class="pill mono">LIVRAISON LE JOUR MÊME</span>
       </div>
     </div>
-    <div class="list">
-      ${restaurants.map(r => `
+    <div class="list" id="restaurant-list">
+      ${restaurantCardsHtml(restaurants)}
+    </div>
+  `;
+}
+
+function restaurantCardsHtml(list) {
+  if (list.length === 0) return '<div class="empty">Aucun restaurant ne correspond à votre recherche.</div>';
+  return list.map(r => `
         <button class="card" onclick="openRestaurant('${r.id}')">
           <div class="emoji-box avatar" style="background:linear-gradient(155deg, ${r.accent}33, ${r.accent}14); border:1px solid ${r.accent}40; color:${r.accent}; font-size:24px;">${initial(r.name)}</div>
           <div style="flex:1; text-align:left;">
@@ -538,9 +651,15 @@ function renderList() {
             <div class="rtime mono">${r.delivery_time || ''}</div>
           </div>
         </button>
-      `).join('')}
-    </div>
-  `;
+      `).join('');
+}
+
+function filterRestaurants() {
+  const q = document.getElementById('restaurant-search').value.trim().toLowerCase();
+  const filtered = !q ? restaurants : restaurants.filter(r =>
+    (r.name || '').toLowerCase().includes(q) || (r.category || '').toLowerCase().includes(q) || (r.tagline || '').toLowerCase().includes(q)
+  );
+  document.getElementById('restaurant-list').innerHTML = restaurantCardsHtml(filtered);
 }
 
 async function openRestaurant(id) {
@@ -557,7 +676,7 @@ function renderMenu() {
   const el = document.getElementById('view-menu');
   el.innerHTML = `
     <div class="section">
-      <button class="btn-back" onclick="show('list')">← Tous les restaurants</button>
+      <button class="btn-back" onclick="setActiveNav('home'); show('list')">← Tous les restaurants</button>
       <div class="display" style="font-size:28px; color:${r.accent}">${r.name}</div>
       <div style="font-size:13px; color:var(--creamDim); margin-bottom:14px;">${r.tagline || ''}</div>
       <div id="menu-items"></div>
@@ -730,6 +849,7 @@ function renderConfirmation(order) {
 
 function resetOrder() {
   cart = {}; location_ = null; currentRestaurant = null;
+  setActiveNav('home');
   show('list');
 }
 
