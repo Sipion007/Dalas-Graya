@@ -3,7 +3,10 @@
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-<title>Maquis Express — Espace Livreur</title>
+<title>Dallas Graya — Espace Livreur</title>
+<link rel="manifest" href="manifest-driver.json">
+<meta name="theme-color" content="#E8873A">
+<link rel="apple-touch-icon" href="icons/icon-192.png">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Work+Sans:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
@@ -49,6 +52,9 @@
   .tab-switch { display:flex; background:var(--surface); border:1px solid var(--line); border-radius:10px; padding:3px; margin-bottom:16px; }
   .tab-btn { flex:1; text-align:center; padding:9px; border-radius:8px; font-size:13px; font-weight:600; cursor:pointer; color:var(--creamDim); }
   .tab-btn.active { background:var(--mango); color:#1B1613; }
+  .notif-btn { width:100%; border:none; border-radius:9px; padding:12px; font-weight:700; font-size:13px;
+    cursor:pointer; color:#1B1613; background: var(--mango); font-family:'Work Sans',sans-serif; margin-bottom:16px; }
+  .notif-ok { text-align:center; font-size:12px; color:var(--palm); margin-bottom:16px; }
 </style>
 </head>
 <body>
@@ -63,7 +69,7 @@
 
   <!-- Écran de connexion -->
   <div id="login-screen" class="login-box">
-    <div class="display" style="font-size:30px; text-align:center; margin-bottom:4px;">🛵 Espace Livreur</div>
+    <div class="display" style="font-size:30px; text-align:center; margin-bottom:4px;">Espace Livreur</div>
     <div style="font-size:13px; color:var(--creamDim); text-align:center; margin-bottom:20px;">Livrez pour les maquis de Tazibou</div>
 
     <div class="tab-switch">
@@ -89,7 +95,7 @@
       <input id="su-password" type="password" placeholder="Choisissez un mot de passe" />
       <label>Vous livrez pour</label>
       <select id="su-restaurant">
-        <option value="">🚴 Livreur indépendant (tous restaurants)</option>
+        <option value="">Livreur indépendant (tous restaurants)</option>
       </select>
       <button class="btn-primary" onclick="signupDriver()">Créer mon compte livreur</button>
     </div>
@@ -101,7 +107,7 @@
   <div id="driver-screen" style="display:none;">
     <div class="header-row">
       <div>
-        <div class="display" style="font-size:24px;">🛵 <span id="driver-name"></span></div>
+        <div class="display" style="font-size:24px;"><span id="driver-name"></span></div>
         <span id="driver-type" style="font-size:11.5px; color:var(--creamDim);"></span>
       </div>
       <button class="btn-outline" onclick="logoutDriver()">Déconnexion</button>
@@ -112,10 +118,12 @@
       <span id="gps-text">Position non partagée</span>
     </div>
 
-    <div class="section-title">🚴 Ma livraison en cours</div>
+    <div id="notif-banner"></div>
+
+    <div class="section-title">Ma livraison en cours</div>
     <div id="current-delivery"></div>
 
-    <div class="section-title">📦 Commandes disponibles</div>
+    <div class="section-title">Commandes disponibles</div>
     <div id="available-orders"></div>
   </div>
 
@@ -123,6 +131,7 @@
 
 <script>
 const client = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+const VAPID_PUBLIC_KEY = "BGBnL8TUONEP5DuzE5Rt-8ic2TxLF3q0sxX61Xi7a4BvKyFGa4qxfOrgkMidtrV8EI1WnsAhZEIg948G1kL0LZI";
 let myDriver = null;
 let refreshTimer = null;
 let gpsWatchId = null;
@@ -154,7 +163,7 @@ async function loadRestaurantOptions() {
   const sel = document.getElementById('su-restaurant');
   (data || []).forEach(r => {
     const opt = document.createElement('option');
-    opt.value = r.id; opt.textContent = '🏪 ' + r.name;
+    opt.value = r.id; opt.textContent = r.name;
     sel.appendChild(opt);
   });
 }
@@ -240,11 +249,68 @@ async function afterLogin() {
   document.getElementById('login-screen').style.display = 'none';
   document.getElementById('driver-screen').style.display = 'block';
   document.getElementById('driver-name').textContent = driver.name;
-  document.getElementById('driver-type').textContent = driver.restaurants ? '🏪 ' + driver.restaurants.name : '🚴 Livreur indépendant';
+  document.getElementById('driver-type').textContent = driver.restaurants ? driver.restaurants.name : 'Livreur indépendant';
 
   refreshOrders();
   if (refreshTimer) clearInterval(refreshTimer);
   refreshTimer = setInterval(refreshOrders, 8000);
+
+  renderNotifBanner();
+}
+
+function urlBase64ToUint8Array(base64String) {
+  const padding = '='.repeat((4 - base64String.length % 4) % 4);
+  const base64 = (base64String + padding).replace(/-/g, '+').replace(/_/g, '/');
+  const rawData = atob(base64);
+  return Uint8Array.from([...rawData].map(c => c.charCodeAt(0)));
+}
+
+function renderNotifBanner() {
+  const el = document.getElementById('notif-banner');
+  if (!('serviceWorker' in navigator) || !('PushManager' in window)) {
+    el.innerHTML = '';
+    return;
+  }
+  if (Notification.permission === 'granted') {
+    el.innerHTML = '<div class="notif-ok">Notifications activées</div>';
+  } else {
+    el.innerHTML = '<button class="notif-btn" onclick="enableNotifications()">Activer les notifications de livraison</button>';
+  }
+}
+
+async function enableNotifications() {
+  try {
+    const reg = await navigator.serviceWorker.register('sw-driver.js');
+    const permission = await Notification.requestPermission();
+    if (permission !== 'granted') { renderNotifBanner(); return; }
+
+    const sub = await reg.pushManager.subscribe({
+      userVisibleOnly: true,
+      applicationServerKey: urlBase64ToUint8Array(VAPID_PUBLIC_KEY)
+    });
+    const subJson = sub.toJSON();
+
+    await client.from('driver_push_subscriptions').upsert({
+      driver_id: myDriver.id,
+      endpoint: subJson.endpoint,
+      p256dh: subJson.keys.p256dh,
+      auth: subJson.keys.auth
+    }, { onConflict: 'endpoint' });
+
+    renderNotifBanner();
+    toastDriver("Notifications activées !");
+  } catch (e) {
+    console.error(e);
+    alert("Impossible d'activer les notifications sur cet appareil/navigateur.");
+  }
+}
+
+function toastDriver(msg) {
+  const t = document.createElement('div');
+  t.textContent = msg;
+  t.style.cssText = 'position:fixed; bottom:20px; left:50%; transform:translateX(-50%); background:var(--palm); color:var(--cream); padding:12px 18px; border-radius:10px; font-size:13px; z-index:100;';
+  document.body.appendChild(t);
+  setTimeout(() => t.remove(), 3000);
 }
 
 async function logoutDriver() {
@@ -268,11 +334,11 @@ async function refreshOrders() {
       <div class="order">
         <div style="font-weight:700; font-size:15px;">${o.restaurants ? o.restaurants.name : ''}</div>
         <div style="font-size:13px; margin-top:4px;">${o.customer_name}</div>
-        ${o.address ? `<div style="font-size:12.5px; color:var(--creamDim); margin-top:2px;">📍 ${o.address}</div>` : ''}
-        ${o.location && o.location.type === 'gps' ? `<a href="https://www.google.com/maps?q=${o.location.lat},${o.location.lng}" target="_blank" style="color:var(--palm); font-size:12px;">📍 Voir la position du client →</a>` : ''}
+        ${o.address ? `<div style="font-size:12.5px; color:var(--creamDim); margin-top:2px;">${o.address}</div>` : ''}
+        ${o.location && o.location.type === 'gps' ? `<a href="https://www.google.com/maps?q=${o.location.lat},${o.location.lng}" target="_blank" style="color:var(--palm); font-size:12px;">Voir la position du client →</a>` : ''}
         <div class="mono" style="margin-top:6px; font-weight:700;">${money(o.total)}</div>
-        <a href="tel:${o.phone}" class="btn-call">📞 Appeler le client</a>
-        <button class="btn-done" onclick="markDelivered('${o.id}')">✅ Marquer comme livrée</button>
+        <a href="tel:${o.phone}" class="btn-call">Appeler le client</a>
+        <button class="btn-done" onclick="markDelivered('${o.id}')">Marquer comme livrée</button>
       </div>
     `).join('');
   } else {
@@ -310,9 +376,9 @@ async function refreshOrders() {
     <div class="order">
       <div style="font-weight:700; font-size:15px;">${o.restaurants ? o.restaurants.name : ''}</div>
       <div style="font-size:13px; margin-top:4px;">${o.customer_name} · ${o.phone}</div>
-      ${o.address ? `<div style="font-size:12.5px; color:var(--creamDim); margin-top:2px;">📍 ${o.address}</div>` : ''}
+      ${o.address ? `<div style="font-size:12.5px; color:var(--creamDim); margin-top:2px;">${o.address}</div>` : ''}
       <div class="mono" style="margin-top:6px; font-weight:700;">${money(o.total)}</div>
-      <button class="btn-take" onclick="takeOrder('${o.id}')">🛵 Je prends cette livraison</button>
+      <button class="btn-take" onclick="takeOrder('${o.id}')">Je prends cette livraison</button>
     </div>
   `).join('');
 }
@@ -364,6 +430,9 @@ function stopGPS() {
 }
 
 (async () => {
+  if ('serviceWorker' in navigator) {
+    navigator.serviceWorker.register('sw-driver.js').catch(() => {});
+  }
   await loadRestaurantOptions();
   const { data: { session } } = await client.auth.getSession();
   if (session) await afterLogin();
