@@ -16,24 +16,27 @@
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 <style>
   :root {
-    --bg: #1B1613; --surface: #241D18; --raised: #2C231D;
-    --mango: #E8873A; --palm: #5C8A63; --chili: #C4432B;
-    --cream: #F5EFE6; --creamDim: #B8AA98; --line: #3A3029;
+    --bg: #080808; --surface: #111111; --raised: #171717;
+    --mango: #F5C04A; --mangoDark: #D4A137; --palm: #5C8A63; --chili: #C4432B;
+    --cream: #FFFFFF; --creamDim: #8F8F8F; --line: #242424;
   }
   * { box-sizing: border-box; }
-  body { margin: 0; background: radial-gradient(circle at 15% -10%, #2E2419 0%, var(--bg) 45%), var(--bg);
-    color: var(--cream); font-family: 'Work Sans', sans-serif; min-height: 100vh; }
+  body { margin: 0; background: var(--bg);
+    color: var(--cream); font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; min-height: 100vh; }
   .display { font-family: 'Bebas Neue', sans-serif; letter-spacing: 0.02em; }
   .mono { font-family: 'JetBrains Mono', monospace; }
   .wrap { max-width: 480px; margin: 0 auto; padding-bottom: 100px; }
-  .topbar { position: sticky; top: 0; z-index: 50; background: rgba(27,22,19,0.9); backdrop-filter: blur(10px);
-    border-bottom: 1px solid var(--line); padding: 14px 16px; display:flex; align-items:center; gap:8px; justify-content:space-between; }
-  .topbar-side { background:none; border:none; color:var(--cream); cursor:pointer; padding:4px; display:flex; }
-  .topbar-side svg { width:22px; height:22px; stroke:var(--cream); fill:none; stroke-width:1.7; }
+  .topbar { position: sticky; top: 0; z-index: 50; background: rgba(8,8,8,0.92); backdrop-filter: blur(10px);
+    height:75px; padding: 0 20px; display:flex; align-items:center; gap:8px; justify-content:space-between; }
+  .topbar-side { background:none; border:none; color:var(--mango); cursor:pointer; padding:4px; display:flex; position:relative; width:42px; height:42px; align-items:center; justify-content:center; }
+  .topbar-side svg { width:23px; height:23px; stroke:var(--mango); fill:none; stroke-width:1.7; }
+  .cart-badge { position:absolute; right:2px; top:2px; width:16px; height:16px; border-radius:8px;
+    background:var(--mango); color:#080808; font-size:9px; font-weight:700; display:flex; align-items:center; justify-content:center; }
   .topbar-brand { text-align:center; flex:1; line-height:1; }
-  .brand-dallas { font-family:'Bebas Neue',sans-serif; font-size:19px; color:var(--mango); letter-spacing:0.1em; }
-  .brand-graya { font-family:'Work Sans',sans-serif; font-size:9px; font-weight:600; color:var(--cream);
-    letter-spacing:0.42em; margin-top:2px; padding-left:0.42em; }
+  .brand-dallas { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; font-weight:500; font-size:22px; color:var(--mango); letter-spacing:5px; }
+  .logo-line-row { display:flex; align-items:center; justify-content:center; gap:7px; margin-top:2px; }
+  .logo-line { width:18px; height:1px; background:var(--mango); }
+  .brand-graya { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; font-size:11px; color:var(--cream); letter-spacing:5px; }
   .side-menu { position:fixed; inset:0; z-index:90; display:none; }
   .side-menu.open { display:block; }
   .side-menu-backdrop { position:absolute; inset:0; background:rgba(0,0,0,.55); }
@@ -44,29 +47,51 @@
   .avatar { font-family:'Bebas Neue',sans-serif; display:flex; align-items:center; justify-content:center; letter-spacing:0; }
   .dot { width:8px; height:8px; border-radius:50%; background: var(--mango); animation: glow 2.4s ease-in-out infinite; }
   @keyframes glow { 0%,100% { opacity:.5 } 50% { opacity:1 } }
-  .hero { padding: 26px 16px 24px; border-bottom: 1px solid var(--line); margin-bottom: 18px; }
-  .kicker { font-size: 11px; color: var(--mango); letter-spacing: .18em; margin-bottom: 8px; }
-  .hero-title { font-family:'Poppins',sans-serif; font-weight:800; font-size:29px; line-height:1.2; color:var(--cream); margin-bottom:8px; }
-  .hero-title-accent { color: var(--mango); }
-  .hero-sub { font-size:14px; color: var(--creamDim); margin-bottom: 18px; }
-  .btn-hero-cta { width:100%; border:none; border-radius:14px; padding:16px 18px; font-weight:700; font-size:15px;
-    cursor:pointer; color:#1B1613; background: var(--mango);
-    box-shadow:0 10px 28px rgba(232,135,58,.35); margin-top:14px; font-family:'Work Sans',sans-serif; }
-  .hero-photo { margin-top:20px; height:220px; border-radius:20px;
+  .hero { padding: 20px 20px 0; margin-bottom: 0; }
+  .hero-title { font-weight:700; font-size:35px; line-height:1.05; letter-spacing:-1px; color:var(--cream); }
+  .hero-title-accent { color: var(--mango); font-weight:700; font-size:35px; letter-spacing:-1px; display:block; margin-top:-3px; }
+  .hero-sub { font-size:15px; line-height:23px; color: var(--creamDim); margin-top:14px; margin-bottom: 18px; }
+  .btn-hero-cta { width:100%; border:none; border-radius:14px; height:57px; font-weight:700; font-size:16px;
+    cursor:pointer; color:#080808; background: linear-gradient(135deg, var(--mango), #F8D36B, var(--mangoDark));
+    display:flex; align-items:center; justify-content:center; gap:12px; margin-top:13px; }
+  .hero-photo { margin-top:27px; height:285px; border-radius:22px; position:relative;
     background-image: url('images/hero-food.jpg');
     background-size: cover; background-position: center;
-    border:1px solid var(--line); overflow:hidden; }
+    background-color: var(--raised);
+    overflow:hidden; }
+  .hero-photo-gradient { position:absolute; left:0; right:0; bottom:0; height:150px;
+    background:linear-gradient(180deg, rgba(8,8,8,0), rgba(8,8,8,.25), var(--bg)); }
+  .hero-photo-info { position:absolute; bottom:17px; left:17px; right:17px; display:flex;
+    justify-content:space-between; align-items:flex-end; }
+  .hero-photo-title { color:#fff; font-size:20px; font-weight:700; }
+  .hero-photo-subtitle { color:#C0C0C0; font-size:12px; margin-top:4px; }
+  .hero-photo-price { color: var(--mango); font-size:18px; font-weight:700; text-align:right; }
+  .hero-photo-currency { color:#999; font-size:10px; display:block; }
   .pill { display:inline-block; font-size:10.5px; background: var(--raised); border:1px solid var(--line);
     padding:6px 11px; border-radius:20px; margin-right:6px; margin-bottom:6px; }
-  .list { padding: 0 16px; display:flex; flex-direction:column; gap:12px; }
-  .card { text-align:left; background: linear-gradient(155deg, var(--raised), var(--surface));
-    border:1px solid var(--line); border-radius:14px; padding:16px; cursor:pointer; color:var(--cream);
-    display:flex; gap:14px; box-shadow:0 4px 16px rgba(0,0,0,.25); width:100%; }
-  .emoji-box { width:56px; height:56px; border-radius:12px; display:flex; align-items:center; justify-content:center; font-size:28px; flex-shrink:0; }
-  .rname { font-size: 22px; font-family:'Bebas Neue',sans-serif; }
-  .rcat { font-size:12.5px; font-weight:600; margin-top:2px; }
-  .rtag { font-size:13px; color:var(--creamDim); margin-top:4px; }
-  .rtime { font-size:10.5px; color:var(--creamDim); margin-top:8px; }
+  .section-header { display:flex; align-items:center; justify-content:space-between; margin:30px 20px 16px; }
+  .section-title2 { color:var(--cream); font-size:20px; font-weight:700; }
+  .see-all { color: var(--mango); font-size:13px; }
+  .categories-row { display:flex; gap:12px; padding:0 20px 3px; overflow-x:auto; margin-bottom:10px; }
+  .category-chip { background:none; border:none; display:flex; flex-direction:column; align-items:center; width:82px; flex-shrink:0; cursor:pointer; }
+  .category-icon { width:62px; height:62px; border-radius:20px; background:var(--raised); border:1px solid #292929;
+    display:flex; align-items:center; justify-content:center; }
+  .category-icon svg { width:27px; height:27px; }
+  .category-icon.active { background:var(--mango); border-color:var(--mango); }
+  .category-label { color:#9B9B9B; font-size:12px; margin-top:8px; }
+  .category-label.active { color:var(--mango); font-weight:600; }
+  .list { padding: 0 20px; display:flex; flex-direction:column; gap:14px; }
+  .rcard2 { text-align:left; background: var(--raised); border-radius:18px; overflow:hidden; cursor:pointer; color:var(--cream);
+    width:100%; border:none; padding:0; display:block; }
+  .rcard2-img { width:100%; height:145px; object-fit:cover; display:block; }
+  .rcard2-fallback { display:flex; align-items:center; justify-content:center; font-size:40px; font-family:'Bebas Neue',sans-serif; }
+  .rcard2-info { padding:15px; display:flex; align-items:center; justify-content:space-between; gap:10px; }
+  .rcard2-name { font-size:16px; font-weight:700; }
+  .rcard2-cat { font-size:12px; color:var(--creamDim); margin-top:4px; }
+  .rcard2-meta { display:flex; align-items:center; gap:5px; margin-top:9px; font-size:11px; color:var(--creamDim); }
+  .rcard2-dot { width:3px; height:3px; border-radius:2px; background:#666; margin:0 3px; }
+  .rcard2-arrow { width:38px; height:38px; border-radius:19px; border:1px solid #383838; flex-shrink:0;
+    display:flex; align-items:center; justify-content:center; }
   .btn-back { background:none; border:none; color:var(--creamDim); display:flex; align-items:center; gap:6px; cursor:pointer; padding:0; margin-bottom:12px; font-family:'Work Sans',sans-serif; font-size:13px; }
   .item { background: var(--raised); border:1px solid var(--line); border-radius:12px; padding:12px 14px;
     display:flex; justify-content:space-between; align-items:center; gap:10px; margin-bottom:10px; }
@@ -74,7 +99,7 @@
   .qty-btn { border:none; border-radius:8px; width:30px; height:30px; cursor:pointer; display:flex; align-items:center; justify-content:center; font-size:16px; font-weight:700; }
   .cart-bar { position:fixed; bottom:0; left:0; right:0; max-width:480px; margin:0 auto; padding:12px; }
   .cart-btn { width:100%; border:none; border-radius:12px; padding:15px 18px; display:flex; justify-content:space-between;
-    align-items:center; cursor:pointer; color:#1B1613; font-weight:700; font-size:14px; box-shadow:0 10px 28px rgba(232,135,58,.4); }
+    align-items:center; cursor:pointer; color:#080808; font-weight:700; font-size:14px; box-shadow:0 10px 28px rgba(245,192,74,.3); }
   input, textarea { width:100%; font-family:'Work Sans',sans-serif; background:var(--surface); border:1px solid var(--line);
     border-radius:8px; padding:10px 12px; color:var(--cream); font-size:14px; margin-bottom:10px; }
   input::placeholder, textarea::placeholder { color: var(--creamDim); }
@@ -83,7 +108,7 @@
   .ticket { background: var(--cream); color:#2A2119; border-radius:6px; padding:20px 22px; box-shadow:0 10px 30px rgba(0,0,0,.35); }
   .ticket-line { display:flex; justify-content:space-between; font-family:'JetBrains Mono',monospace; font-size:12px; margin-bottom:4px; }
   .btn-primary { width:100%; border:none; border-radius:12px; padding:15px 18px; font-weight:700; font-size:14px;
-    cursor:pointer; color:#1B1613; background:linear-gradient(135deg,var(--mango),#D4762E); box-shadow:0 10px 28px rgba(232,135,58,.35); }
+    cursor:pointer; color:#080808; background:linear-gradient(135deg,var(--mango),#F8D36B,var(--mangoDark)); box-shadow:0 10px 28px rgba(245,192,74,.3); }
   .btn-secondary { width:100%; background:none; border:1px solid var(--line); border-radius:12px; padding:13px 18px;
     color:var(--cream); font-family:'Work Sans',sans-serif; font-size:13px; cursor:pointer; }
   .loc-btns { display:flex; gap:8px; margin-bottom:10px; }
@@ -98,7 +123,7 @@
   .error-msg { color: var(--chili); font-size:13px; margin-bottom:10px; display:none; }
   .tab-switch { display:flex; background:var(--surface); border:1px solid var(--line); border-radius:10px; padding:3px; margin-bottom:18px; }
   .tab-btn { flex:1; text-align:center; padding:9px; border-radius:8px; font-size:13px; font-weight:600; cursor:pointer; color:var(--creamDim); }
-  .tab-btn.active { background:var(--mango); color:#1B1613; }
+  .tab-btn.active { background:var(--mango); color:#080808; }
   .profile-box { background: linear-gradient(155deg, var(--raised), var(--surface)); border:1px solid var(--line);
     border-radius:14px; padding:18px; margin-bottom:16px; }
   .order-hist { background: var(--surface); border:1px solid var(--line); border-radius:12px; padding:14px; margin-bottom:10px; }
@@ -121,18 +146,19 @@
     padding:8px 14px; font-size:12.5px; font-weight:700; text-decoration:none; font-family:'Work Sans',sans-serif; }
   .track-status { text-align:center; font-size:12.5px; color:var(--creamDim); margin-bottom:10px; }
   .bottom-nav { position:fixed; bottom:0; left:0; right:0; max-width:480px; margin:0 auto; z-index:60;
-    background:rgba(27,22,19,0.95); backdrop-filter:blur(10px); border-top:1px solid var(--line);
-    display:flex; justify-content:space-around; padding:8px 6px calc(8px + env(safe-area-inset-bottom)); }
-  .nav-item { background:none; border:none; display:flex; flex-direction:column; align-items:center; gap:3px;
-    color:var(--creamDim); cursor:pointer; font-family:'Work Sans',sans-serif; font-size:10px; font-weight:600;
-    letter-spacing:0.03em; padding:4px 10px; }
-  .nav-item svg { width:21px; height:21px; stroke:var(--creamDim); fill:none; stroke-width:1.7; }
-  .nav-item.active { color:var(--mango); }
+    background:#0D0D0D; border-top:1px solid #242424; height:83px;
+    display:flex; justify-content:space-around; align-items:center; padding-bottom: env(safe-area-inset-bottom); }
+  .nav-item { background:none; border:none; display:flex; flex-direction:column; align-items:center; gap:5px;
+    color:#777; cursor:pointer; font-size:10px; min-width:70px; }
+  .nav-item svg { width:23px; height:23px; stroke:#777; fill:none; stroke-width:1.7; }
+  .nav-item.active { color:var(--mango); font-weight:600; }
   .nav-item.active svg { stroke:var(--mango); }
-  .search-bar { display:flex; align-items:center; justify-content:space-between; gap:8px; background:var(--surface); border:1px solid var(--line);
-    border-radius:14px; padding:15px 16px; margin-bottom:16px; }
-  .search-bar svg { width:17px; height:17px; stroke:var(--creamDim); fill:none; stroke-width:1.8; flex-shrink:0; }
-  .search-bar input { background:none; border:none; margin:0; padding:0; font-size:14px; }
+  .search-bar { display:flex; align-items:center; justify-content:space-between; gap:11px; background:#101010; border:1px solid #303030;
+    border-radius:14px; height:58px; padding:0 17px; margin-bottom:0; }
+  .search-bar-left { display:flex; align-items:center; gap:11px; flex:1; }
+  .search-bar svg { width:22px; height:22px; stroke:var(--mango); fill:none; stroke-width:1.8; flex-shrink:0; }
+  .search-bar .chevron { width:20px; height:20px; stroke:var(--creamDim); }
+  .search-bar input { background:none; border:none; margin:0; padding:0; font-size:15px; color:var(--creamDim); flex:1; }
   .timeline { margin-bottom:6px; }
   .timeline-step { display:flex; gap:12px; }
   .timeline-dot-col { display:flex; flex-direction:column; align-items:center; }
@@ -162,10 +188,15 @@
   </button>
   <div class="topbar-brand">
     <div class="brand-dallas">DALLAS</div>
-    <div class="brand-graya">GRAYA</div>
+    <div class="logo-line-row">
+      <div class="logo-line"></div>
+      <div class="brand-graya">GRAYA</div>
+      <div class="logo-line"></div>
+    </div>
   </div>
-  <button class="topbar-side" onclick="setActiveNav(''); show('offers'); renderOffers();" aria-label="Offres">
-    <svg viewBox="0 0 24 24"><path d="M20 12v7a1 1 0 0 1-1 1H5a1 1 0 0 1-1-1v-7"/><rect x="2" y="7" width="20" height="5" rx="1"/><line x1="12" y1="7" x2="12" y2="20"/><path d="M12 7c0-2 -1.5-3.5-3.5-3.5S5 5 5 7"/><path d="M12 7c0-2 1.5-3.5 3.5-3.5S19 5 19 7"/></svg>
+  <button class="topbar-side" onclick="goToCart()" aria-label="Panier">
+    <svg viewBox="0 0 24 24"><path d="M6 8h12l-1 12H7L6 8z"/><path d="M9 8a3 3 0 0 1 6 0"/></svg>
+    <span class="cart-badge" id="header-cart-badge" style="display:none;"></span>
   </button>
 </div>
 
@@ -660,58 +691,155 @@ async function updateTrackingView(orderId) {
 
 // ---------- Restaurants / menu / commande ----------
 
+let restaurantCoverMap = {};
+let restaurantRatingMap = {};
+let featuredDish = null;
+let selectedCategory = null;
+const CATEGORY_CHIPS = [
+  { key: null, label: 'Plats', icon: 'plate' },
+  { key: 'fast', label: 'Fast-food', icon: 'burger' },
+  { key: 'pizza', label: 'Pizza', icon: 'pizza' },
+  { key: 'africain', label: 'Africain', icon: 'bowl' },
+  { key: 'boisson', label: 'Boissons', icon: 'cup' },
+];
+const CATEGORY_ICONS = {
+  plate: '<circle cx="12" cy="12" r="8"/><circle cx="12" cy="12" r="3"/>',
+  burger: '<path d="M4 11h16M4 15h16"/><path d="M5 11a7 5 0 0 1 14 0"/><path d="M4 15a1 2 0 0 0 16 0"/>',
+  pizza: '<path d="M4 5l16 5-9 11L4 5z"/><circle cx="10" cy="10" r="1"/><circle cx="13" cy="14" r="1"/>',
+  bowl: '<path d="M4 12h16a8 6 0 0 1-16 0z"/><path d="M8 12V8m4 4V6m4 6V8"/>',
+  cup: '<path d="M7 3h10l-1 13a2 2 0 0 1-2 2H10a2 2 0 0 1-2-2L7 3z"/><path d="M9 8h6"/>'
+};
+
 async function loadRestaurants() {
   const { data, error } = await client.from('restaurants').select('*').order('created_at');
   if (error) { document.getElementById('view-list').innerHTML = '<div class="empty">Erreur de connexion à la base.</div>'; return; }
   restaurants = data;
+
+  const { data: photos } = await client.from('menu_items').select('restaurant_id, name, price, photo_url').not('photo_url', 'is', null).order('created_at');
+  (photos || []).forEach(p => { if (!restaurantCoverMap[p.restaurant_id]) restaurantCoverMap[p.restaurant_id] = p; });
+  if (photos && photos.length > 0) featuredDish = photos[0];
+
+  const { data: revs } = await client.from('reviews').select('restaurant_id, rating');
+  const grouped = {};
+  (revs || []).forEach(r => { (grouped[r.restaurant_id] = grouped[r.restaurant_id] || []).push(r.rating); });
+  Object.keys(grouped).forEach(id => {
+    const arr = grouped[id];
+    restaurantRatingMap[id] = { avg: (arr.reduce((a,b)=>a+b,0)/arr.length).toFixed(1), count: arr.length };
+  });
+
   renderList();
 }
 
 function renderList() {
   const el = document.getElementById('view-list');
+  const featuredRestaurant = featuredDish ? restaurants.find(r => r.id === featuredDish.restaurant_id) : null;
   el.innerHTML = `
     <div class="hero">
-      <div class="hero-title">Vos envies,<br><span class="hero-title-accent">livrées à temps</span></div>
+      <div class="hero-title">Vos envies,<span class="hero-title-accent">livrées à temps</span></div>
       <div class="hero-sub">Commandez vos plats préférés en quelques clics.</div>
-      <div class="search-bar search-bar-loc">
-        <input id="restaurant-search" placeholder="Où livrons-nous ?" oninput="filterRestaurants()" />
-        <svg viewBox="0 0 24 24"><path d="M12 21s-7-6.2-7-11a7 7 0 0 1 14 0c0 4.8-7 11-7 11z"/><circle cx="12" cy="10" r="2.4"/></svg>
+      <div class="search-bar">
+        <div class="search-bar-left">
+          <svg viewBox="0 0 24 24"><path d="M12 21s-7-6.2-7-11a7 7 0 0 1 14 0c0 4.8-7 11-7 11z"/><circle cx="12" cy="10" r="2.4"/></svg>
+          <input id="restaurant-search" placeholder="Où livrons-nous ?" oninput="filterRestaurants()" />
+        </div>
+        <svg class="chevron" viewBox="0 0 24 24" fill="none"><path d="M9 6l6 6-6 6" stroke="currentColor" stroke-width="1.8"/></svg>
       </div>
-      <button class="btn-hero-cta" onclick="navTo('restaurants')">Commander maintenant</button>
-      <div class="hero-photo"></div>
+      <button class="btn-hero-cta" onclick="navTo('restaurants')">
+        <span>Commander maintenant</span>
+        <svg viewBox="0 0 24 24" width="19" height="19" stroke="#080808" stroke-width="2" fill="none"><path d="M5 12h14M13 6l6 6-6 6"/></svg>
+      </button>
+
+      <div class="hero-photo" style="${featuredDish ? `background-image:linear-gradient(180deg, rgba(8,8,8,0) 40%, rgba(8,8,8,.25) 60%, var(--bg) 100%), url('${featuredDish.photo_url}');` : ''}" ${featuredRestaurant ? `onclick="openRestaurant('${featuredRestaurant.id}')" role="button"` : ''}>
+        ${featuredDish ? `
+          <div class="hero-photo-info">
+            <div>
+              <div class="hero-photo-title">${featuredDish.name}</div>
+              <div class="hero-photo-subtitle">${featuredRestaurant ? featuredRestaurant.name : ''}</div>
+            </div>
+            <div class="hero-photo-price">${Number(featuredDish.price).toLocaleString('fr-FR')}<span class="hero-photo-currency">FCFA</span></div>
+          </div>
+        ` : ''}
+      </div>
+    </div>
+
+    <div class="section-header">
+      <div class="section-title2">Catégories</div>
+    </div>
+    <div class="categories-row" id="categories-row"></div>
+
+    <div class="section-header">
+      <div class="section-title2">Restaurants populaires</div>
     </div>
     <div class="list" id="restaurant-list">
       ${restaurantCardsHtml(restaurants)}
     </div>
   `;
+  renderCategoryChips();
+}
+
+function renderCategoryChips() {
+  const el = document.getElementById('categories-row');
+  el.innerHTML = CATEGORY_CHIPS.map(c => `
+    <button class="category-chip" onclick="selectCategory(${c.key ? `'${c.key}'` : 'null'})">
+      <div class="category-icon ${selectedCategory === c.key ? 'active' : ''}">
+        <svg viewBox="0 0 24 24" stroke="${selectedCategory === c.key ? '#080808' : 'var(--mango)'}" stroke-width="1.6" fill="none">${CATEGORY_ICONS[c.icon]}</svg>
+      </div>
+      <div class="category-label ${selectedCategory === c.key ? 'active' : ''}">${c.label}</div>
+    </button>
+  `).join('');
+}
+
+function selectCategory(key) {
+  selectedCategory = key;
+  renderCategoryChips();
+  filterRestaurants();
 }
 
 function restaurantCardsHtml(list) {
   if (list.length === 0) return '<div class="empty">Aucun restaurant ne correspond à votre recherche.</div>';
-  return list.map(r => `
-        <button class="card" onclick="openRestaurant('${r.id}')">
-          <div class="emoji-box avatar" style="background:linear-gradient(155deg, ${r.accent}33, ${r.accent}14); border:1px solid ${r.accent}40; color:${r.accent}; font-size:24px;">${initial(r.name)}</div>
-          <div style="flex:1; text-align:left;">
-            <div class="rname">${r.name}</div>
-            <div class="rcat" style="color:${r.accent}">${r.category || ''}</div>
-            <div class="rtag">${r.tagline || ''}</div>
-            <div class="rtime mono">${r.delivery_time || ''}</div>
+  return list.map(r => {
+    const cover = restaurantCoverMap[r.id];
+    const rating = restaurantRatingMap[r.id];
+    return `
+        <button class="rcard2" onclick="openRestaurant('${r.id}')">
+          ${cover ? `<img class="rcard2-img" src="${cover.photo_url}" alt="${r.name}" />` : `<div class="rcard2-img rcard2-fallback avatar" style="background:linear-gradient(155deg, ${r.accent}33, ${r.accent}14); color:${r.accent};">${initial(r.name)}</div>`}
+          <div class="rcard2-info">
+            <div style="flex:1; text-align:left;">
+              <div class="rcard2-name">${r.name}</div>
+              <div class="rcard2-cat">${r.category || ''}</div>
+              <div class="rcard2-meta">
+                ${rating ? `<svg viewBox="0 0 24 24" width="14" height="14" fill="var(--mango)"><path d="M12 2l3 7h7l-5.5 4.5L18.5 21 12 16.5 5.5 21 7.5 13.5 2 9h7z"/></svg><span>${rating.avg}</span><span class="rcard2-dot"></span>` : ''}
+                <svg viewBox="0 0 24 24" width="14" height="14" stroke="var(--creamDim)" stroke-width="1.6" fill="none"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 3"/></svg>
+                <span>${r.delivery_time || ''}</span>
+              </div>
+            </div>
+            <div class="rcard2-arrow">
+              <svg viewBox="0 0 24 24" width="18" height="18" stroke="var(--mango)" stroke-width="1.8" fill="none"><path d="M9 6l6 6-6 6"/></svg>
+            </div>
           </div>
         </button>
-      `).join('');
+      `;
+  }).join('');
 }
 
 function filterRestaurants() {
   const q = document.getElementById('restaurant-search').value.trim().toLowerCase();
-  const filtered = !q ? restaurants : restaurants.filter(r =>
-    (r.name || '').toLowerCase().includes(q) || (r.category || '').toLowerCase().includes(q) || (r.tagline || '').toLowerCase().includes(q)
-  );
+  let filtered = restaurants;
+  if (selectedCategory) {
+    filtered = filtered.filter(r => (r.category || '').toLowerCase().includes(selectedCategory));
+  }
+  if (q) {
+    filtered = filtered.filter(r =>
+      (r.name || '').toLowerCase().includes(q) || (r.category || '').toLowerCase().includes(q) || (r.tagline || '').toLowerCase().includes(q)
+    );
+  }
   document.getElementById('restaurant-list').innerHTML = restaurantCardsHtml(filtered);
 }
 
 async function openRestaurant(id) {
   currentRestaurant = restaurants.find(r => r.id === id);
   cart = {};
+  updateHeaderCartBadge();
   const { data } = await client.from('menu_items').select('*').eq('restaurant_id', id);
   menuItems = data || [];
   renderMenu();
@@ -746,12 +874,12 @@ function renderMenuItems() {
           <div class="mono" style="font-size:13px; color:${r.accent}; margin-top:6px;">${money(item.price)}</div>
         </div>
         ${!inCart ? `
-          <button class="qty-btn" style="background:${r.accent}; color:#1B1613;" onclick="addItem('${item.id}')">+</button>
+          <button class="qty-btn" style="background:${r.accent}; color:#080808;" onclick="addItem('${item.id}')">+</button>
         ` : `
           <div style="display:flex; align-items:center; gap:8px;">
             <button class="qty-btn" style="background:var(--bg); border:1px solid var(--line); color:var(--cream);" onclick="removeItem('${item.id}')">−</button>
             <span class="mono" style="min-width:14px; text-align:center;">${inCart.qty}</span>
-            <button class="qty-btn" style="background:${r.accent}; color:#1B1613;" onclick="addItem('${item.id}')">+</button>
+            <button class="qty-btn" style="background:${r.accent}; color:#080808;" onclick="addItem('${item.id}')">+</button>
           </div>
         `}
       </div>
@@ -764,16 +892,31 @@ function addItem(id) {
   const item = menuItems.find(i => i.id === id);
   if (cart[id]) cart[id].qty++; else cart[id] = { ...item, qty: 1 };
   renderMenuItems();
+  updateHeaderCartBadge();
 }
 function removeItem(id) {
   if (!cart[id]) return;
   cart[id].qty--;
   if (cart[id].qty <= 0) delete cart[id];
   renderMenuItems();
+  updateHeaderCartBadge();
 }
 
 function cartTotal() { return Object.values(cart).reduce((s,i) => s + i.qty * i.price, 0); }
 function cartCount() { return Object.values(cart).reduce((s,i) => s + i.qty, 0); }
+
+function updateHeaderCartBadge() {
+  const badge = document.getElementById('header-cart-badge');
+  if (!badge) return;
+  const n = cartCount();
+  badge.style.display = n > 0 ? 'flex' : 'none';
+  badge.textContent = n;
+}
+
+function goToCart() {
+  if (cartCount() > 0) { show('checkout'); renderCheckout(); }
+  else { navTo('restaurants'); }
+}
 
 function renderCartBar() {
   const bar = document.getElementById('cart-bar');
@@ -896,6 +1039,7 @@ function renderConfirmation(order) {
 
 function resetOrder() {
   cart = {}; location_ = null; currentRestaurant = null;
+  updateHeaderCartBadge();
   setActiveNav('home');
   show('list');
 }
