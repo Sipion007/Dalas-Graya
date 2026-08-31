@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-<title>Maquis Express — Espace Admin</title>
+<title>Dallas Graya — Espace Admin</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Work+Sans:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
@@ -64,8 +64,8 @@
 
   <!-- Écran de connexion -->
   <div id="login-screen" class="login-box">
-    <div class="display" style="font-size:30px; text-align:center; margin-bottom:4px;">👑 Espace Admin</div>
-    <div style="font-size:13px; color:var(--creamDim); text-align:center; margin-bottom:20px;">Vue d'ensemble Maquis Express</div>
+    <div class="display" style="font-size:30px; text-align:center; margin-bottom:4px;">Espace Admin</div>
+    <div style="font-size:13px; color:var(--creamDim); text-align:center; margin-bottom:20px;">Vue d'ensemble Dallas Graya</div>
     <div id="login-error" class="error-msg"></div>
     <input id="login-email" type="email" placeholder="Email" autocomplete="username" />
     <input id="login-password" type="password" placeholder="Mot de passe" autocomplete="current-password" />
@@ -76,7 +76,7 @@
   <!-- Écran admin -->
   <div id="admin-screen" style="display:none;">
     <div class="header-row">
-      <div class="display" style="font-size:26px;">👑 Vue d'ensemble</div>
+      <div class="display" style="font-size:26px;">Vue d'ensemble</div>
       <button class="btn-outline" onclick="logout()">Déconnexion</button>
     </div>
 
@@ -98,13 +98,13 @@
       </div>
     </div>
 
-    <div class="section-title">💰 Chiffre d'affaires par restaurant</div>
+    <div class="section-title">Chiffre d'affaires par restaurant</div>
     <div id="revenue-by-restaurant"></div>
 
-    <div class="section-title">🔥 Plats les plus vendus</div>
+    <div class="section-title">Plats les plus vendus</div>
     <div id="top-dishes"></div>
 
-    <div class="section-title">📋 Historique des commandes</div>
+    <div class="section-title">Historique des commandes</div>
     <select id="restaurant-filter" onchange="renderOrdersList()">
       <option value="">Tous les restaurants</option>
     </select>
