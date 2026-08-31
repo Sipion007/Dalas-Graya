@@ -43,6 +43,9 @@
   #delivery-map { width:100%; height:230px; border-radius:10px; border:1px solid var(--line); margin-top:10px; }
   .map-wrap { position:relative; margin-top:10px; }
   .map-wrap #delivery-map { margin-top:0; }
+  .leaflet-control-layers { background:var(--surface) !important; color:var(--cream) !important; border:1px solid var(--line) !important; }
+  .leaflet-control-layers-toggle { filter:invert(1) brightness(0.9); }
+  .leaflet-control-scale-line { background:rgba(27,22,19,0.75) !important; color:var(--cream) !important; border-color:var(--creamDim) !important; }
   .btn-fullscreen-map { position:absolute; top:8px; right:8px; z-index:10; background:rgba(27,22,19,0.85);
     border:1px solid var(--line); color:var(--cream); border-radius:8px; padding:6px 11px; font-size:11.5px;
     font-weight:600; cursor:pointer; font-family:'Work Sans',sans-serif; }
@@ -52,6 +55,10 @@
   .map-fullscreen-close { position:absolute; top:16px; right:16px; z-index:210; width:40px; height:40px;
     border-radius:50%; background:var(--surface); border:1px solid var(--line); color:var(--cream);
     font-size:20px; display:flex; align-items:center; justify-content:center; cursor:pointer; }
+  .nav-banner { position:absolute; top:16px; left:16px; right:66px; z-index:205; background:var(--mango);
+    color:#1B1613; border-radius:12px; padding:12px 16px; box-shadow:0 8px 24px rgba(0,0,0,.4); }
+  .nav-distance { font-family:'Bebas Neue',sans-serif; font-size:22px; line-height:1; }
+  .nav-instruction { font-size:14px; font-weight:600; margin-top:4px; }
   .order { background: linear-gradient(155deg, var(--raised), var(--surface)); border:1px solid var(--line);
     border-radius:12px; padding:16px; margin-bottom:12px; box-shadow:0 4px 16px rgba(0,0,0,.25); }
   .empty { text-align:center; padding:30px; color:var(--creamDim); font-size:13px; border:1px dashed var(--line); border-radius:10px; }
@@ -175,16 +182,119 @@ function equipMap(map) {
     attribution: '© OpenStreetMap', maxZoom: 19
   });
   const satellite = L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}', {
-    attribution: 'Esri, Maxar, Earthstar Geographics', maxZoom: 19
+    attribution: 'Esri, Maxar, Earthstar Geographics', maxZoom: 19, maxNativeZoom: 16
   });
   const satelliteLabels = L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/Reference/World_Boundaries_and_Places/MapServer/tile/{z}/{y}/{x}', {
-    maxZoom: 19, pane: 'shadowPane'
+    maxZoom: 19, maxNativeZoom: 16, pane: 'shadowPane'
   });
   const hybride = L.layerGroup([satellite, satelliteLabels]);
 
   streets.addTo(map);
-  L.control.layers({ 'Rues': streets, 'Satellite': hybride }, null, { collapsed: true }).addTo(map);
+  L.control.layers({ 'Rues (recommandé)': streets, 'Satellite': hybride }, null, { collapsed: true }).addTo(map);
   L.control.scale({ imperial: false }).addTo(map);
+}
+
+// ---------- Navigation : itinéraire réel + instructions vocales ----------
+
+let currentRouteCoords = null;
+let currentRouteSteps = [];
+let upcomingStepIndex = 1;
+let announcedSteps = new Set();
+
+function modifierFr(mod) {
+  const map = {
+    'left': 'à gauche', 'right': 'à droite',
+    'slight left': 'légèrement à gauche', 'slight right': 'légèrement à droite',
+    'sharp left': 'fortement à gauche', 'sharp right': 'fortement à droite',
+    'straight': 'tout droit', 'uturn': 'en faisant demi-tour'
+  };
+  return map[mod] || '';
+}
+
+function maneuverToFrench(step) {
+  const m = step.maneuver;
+  const name = step.name;
+  switch (m.type) {
+    case 'depart': return `Départ${name ? ' vers ' + name : ''}`;
+    case 'arrive': return 'Vous arrivez à destination';
+    case 'turn': return `Tournez ${modifierFr(m.modifier)}`;
+    case 'continue': return m.modifier === 'straight' ? 'Continuez tout droit' : `Continuez ${modifierFr(m.modifier)}`;
+    case 'new name': return `Continuez sur ${name || 'la route'}`;
+    case 'merge': return `Rejoignez la voie ${modifierFr(m.modifier)}`;
+    case 'fork': return `Restez ${modifierFr(m.modifier) || 'sur la voie'}`;
+    case 'end of road': return `Au bout de la route, tournez ${modifierFr(m.modifier)}`;
+    case 'roundabout': case 'rotary': return `Au rond-point, prenez la sortie${m.exit ? ' n°' + m.exit : ''}`;
+    default: return name ? `Continuez sur ${name}` : 'Continuez tout droit';
+  }
+}
+
+function haversine(a, b) {
+  const R = 6371000;
+  const dLat = (b.lat - a.lat) * Math.PI / 180;
+  const dLng = (b.lng - a.lng) * Math.PI / 180;
+  const la1 = a.lat * Math.PI / 180, la2 = b.lat * Math.PI / 180;
+  const h = Math.sin(dLat/2)**2 + Math.cos(la1)*Math.cos(la2)*Math.sin(dLng/2)**2;
+  return 2 * R * Math.asin(Math.sqrt(h));
+}
+
+function formatDistance(m) {
+  return m >= 1000 ? (m/1000).toFixed(1) + ' km' : Math.round(m/10)*10 + ' m';
+}
+
+function speakInstruction(text) {
+  try {
+    if (!('speechSynthesis' in window)) return;
+    const u = new SpeechSynthesisUtterance(text);
+    u.lang = 'fr-FR';
+    u.rate = 1.0;
+    window.speechSynthesis.speak(u);
+  } catch (e) {}
+}
+
+async function fetchRoute(start, dest) {
+  try {
+    const url = `https://router.project-osrm.org/route/v1/driving/${start.lng},${start.lat};${dest.lng},${dest.lat}?overview=full&geometries=geojson&steps=true`;
+    const res = await fetch(url);
+    const data = await res.json();
+    if (!data.routes || !data.routes[0]) return null;
+
+    const route = data.routes[0];
+    const coords = route.geometry.coordinates.map(c => [c[1], c[0]]);
+    const steps = route.legs[0].steps.map(s => ({
+      instruction: maneuverToFrench(s),
+      location: { lat: s.maneuver.location[1], lng: s.maneuver.location[0] },
+      distance: s.distance
+    }));
+    return { coords, steps, duration: route.duration, distance: route.distance };
+  } catch (e) {
+    return null;
+  }
+}
+
+function updateNavigationBanner() {
+  const banner = document.getElementById('nav-banner');
+  if (!banner || !myCurrentPos || currentRouteSteps.length === 0) return;
+
+  if (upcomingStepIndex >= currentRouteSteps.length) {
+    banner.innerHTML = `<div class="nav-instruction">Vous êtes arrivé chez le client</div>`;
+    return;
+  }
+
+  const step = currentRouteSteps[upcomingStepIndex];
+  const dist = haversine(myCurrentPos, step.location);
+
+  banner.innerHTML = `
+    <div class="nav-distance">${formatDistance(dist)}</div>
+    <div class="nav-instruction">${step.instruction}</div>
+  `;
+
+  if (dist < 45 && !announcedSteps.has(upcomingStepIndex)) {
+    speakInstruction(step.instruction);
+    announcedSteps.add(upcomingStepIndex);
+  }
+  if (dist < 15) {
+    upcomingStepIndex++;
+  }
 }
 const VAPID_PUBLIC_KEY = "BGBnL8TUONEP5DuzE5Rt-8ic2TxLF3q0sxX61Xi7a4BvKyFGa4qxfOrgkMidtrV8EI1WnsAhZEIg948G1kL0LZI";
 let myDriver = null;
@@ -419,6 +529,10 @@ async function refreshOrders() {
     deliveryMap = null;
     currentDeliveryOrderId = null;
     deliveryDestination = null;
+    currentRouteCoords = null;
+    currentRouteSteps = [];
+    upcomingStepIndex = 1;
+    announcedSteps = new Set();
     closeFullscreenMap();
     if (fsMap) { fsMap.remove(); fsMap = null; }
     curEl.innerHTML = '<div class="empty">Aucune livraison en cours.</div>';
@@ -498,14 +612,17 @@ function startGPS() {
       text.textContent = `Position partagée : ${pos.coords.latitude.toFixed(4)}, ${pos.coords.longitude.toFixed(4)}`;
       if (deliveryMap && deliveryDriverMarker) {
         deliveryDriverMarker.setLatLng([myCurrentPos.lat, myCurrentPos.lng]);
-        if (deliveryCustomerMarker) {
+        if (deliveryCustomerMarker && !currentRouteCoords) {
           deliveryRouteLine.setLatLngs([[myCurrentPos.lat, myCurrentPos.lng], deliveryCustomerMarker.getLatLng()]);
         }
       }
       if (fsMap && window.fsDriverMarker) {
         window.fsDriverMarker.setLatLng([myCurrentPos.lat, myCurrentPos.lng]);
-        if (window.fsRouteLine) window.fsRouteLine.setLatLngs([[myCurrentPos.lat, myCurrentPos.lng], window.fsCustomerMarker.getLatLng()]);
+        if (window.fsRouteLine && !currentRouteCoords) {
+          window.fsRouteLine.setLatLngs([[myCurrentPos.lat, myCurrentPos.lng], window.fsCustomerMarker.getLatLng()]);
+        }
       }
+      updateNavigationBanner();
     },
     () => { text.textContent = "Position GPS refusée — activez-la pour partager votre trajet"; dot.classList.remove('active'); },
     { enableHighAccuracy: true, maximumAge: 5000 }
@@ -514,7 +631,12 @@ function startGPS() {
 
 function updateDeliveryMap(destination) {
   deliveryDestination = destination;
-  setTimeout(() => {
+  currentRouteCoords = null;
+  currentRouteSteps = [];
+  upcomingStepIndex = 1;
+  announcedSteps = new Set();
+
+  setTimeout(async () => {
     const mapEl = document.getElementById('delivery-map');
     if (!mapEl) return;
     const startPos = myCurrentPos || destination;
@@ -526,6 +648,18 @@ function updateDeliveryMap(destination) {
     deliveryDriverMarker = L.marker([startPos.lat, startPos.lng]).addTo(deliveryMap).bindPopup('Vous');
     deliveryRouteLine = L.polyline([[startPos.lat, startPos.lng], [destination.lat, destination.lng]], { color: '#E8873A', weight: 3, dashArray: '6,6' }).addTo(deliveryMap);
     deliveryMap.fitBounds([[startPos.lat, startPos.lng], [destination.lat, destination.lng]], { padding: [30,30] });
+
+    const route = await fetchRoute(startPos, destination);
+    if (route) {
+      currentRouteCoords = route.coords;
+      currentRouteSteps = route.steps;
+      deliveryRouteLine.setLatLngs(route.coords);
+      deliveryRouteLine.setStyle({ dashArray: null, weight: 4 });
+      if (fsMap && window.fsRouteLine) {
+        window.fsRouteLine.setLatLngs(route.coords);
+        window.fsRouteLine.setStyle({ dashArray: null, weight: 5 });
+      }
+    }
   }, 30);
 }
 
@@ -540,10 +674,12 @@ function openFullscreenMap() {
       equipMap(fsMap);
       window.fsCustomerMarker = L.marker([deliveryDestination.lat, deliveryDestination.lng]).addTo(fsMap).bindPopup('Client');
       window.fsDriverMarker = L.marker([startPos.lat, startPos.lng]).addTo(fsMap).bindPopup('Vous');
-      window.fsRouteLine = L.polyline([[startPos.lat, startPos.lng], [deliveryDestination.lat, deliveryDestination.lng]], { color: '#E8873A', weight: 4, dashArray: '8,8' }).addTo(fsMap);
+      const initialLine = currentRouteCoords || [[startPos.lat, startPos.lng], [deliveryDestination.lat, deliveryDestination.lng]];
+      window.fsRouteLine = L.polyline(initialLine, { color: '#E8873A', weight: 5, dashArray: currentRouteCoords ? null : '8,8' }).addTo(fsMap);
     }
     fsMap.invalidateSize();
     fsMap.fitBounds([[startPos.lat, startPos.lng], [deliveryDestination.lat, deliveryDestination.lng]], { padding: [40,40] });
+    updateNavigationBanner();
   }, 60);
 }
 
@@ -569,6 +705,7 @@ function stopGPS() {
 
 <div class="map-fullscreen" id="map-fullscreen">
   <button class="map-fullscreen-close" onclick="closeFullscreenMap()">✕</button>
+  <div class="nav-banner" id="nav-banner"></div>
   <div id="fs-map"></div>
 </div>
 
