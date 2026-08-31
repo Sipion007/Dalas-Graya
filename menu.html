@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-<title>Maquis Express — Mon Menu</title>
+<title>Dallas Graya — Mon Menu</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Work+Sans:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
@@ -32,6 +32,7 @@
   .dish img { width:64px; height:64px; border-radius:10px; object-fit:cover; background:var(--bg); flex-shrink:0; }
   .dish-emoji { width:64px; height:64px; border-radius:10px; background:var(--bg); flex-shrink:0;
     display:flex; align-items:center; justify-content:center; font-size:28px; }
+  .avatar { font-family:'Bebas Neue',sans-serif; }
   .dish-info { flex:1; min-width:0; }
   .dish-actions { display:flex; gap:8px; margin-top:8px; }
   .header-row { display:flex; justify-content:space-between; align-items:center; margin-bottom:14px; }
@@ -60,7 +61,7 @@
 
   <!-- Écran de connexion -->
   <div id="login-screen" class="login-box">
-    <div class="display" style="font-size:30px; text-align:center; margin-bottom:4px;">🍽️ Mon Menu</div>
+    <div class="display" style="font-size:30px; text-align:center; margin-bottom:4px;">Mon Menu</div>
     <div style="font-size:13px; color:var(--creamDim); text-align:center; margin-bottom:20px;">Connectez-vous pour gérer vos plats</div>
     <div id="login-error" class="error-msg"></div>
     <input id="login-email" type="email" placeholder="Email" autocomplete="username" />
@@ -73,19 +74,18 @@
   <div id="menu-screen" style="display:none;">
     <div class="header-row">
       <div>
-        <div class="display" style="font-size:24px;">🍽️ <span id="restaurant-name"></span></div>
+        <div class="display" style="font-size:24px;"><span id="restaurant-name"></span></div>
         <a class="back" href="dashboard.html">← Tableau de bord</a>
       </div>
       <button class="btn-outline" onclick="logout()">Déconnexion</button>
     </div>
 
     <div class="form-box">
-      <div class="form-title" id="form-title">➕ Ajouter un plat</div>
+      <div class="form-title" id="form-title">Ajouter un plat</div>
       <div id="form-status" class="status-msg"></div>
       <input id="dish-name" type="text" placeholder="Nom du plat" />
       <textarea id="dish-desc" placeholder="Description (optionnel)" rows="2"></textarea>
       <input id="dish-price" type="number" placeholder="Prix (en F CFA)" />
-      <input id="dish-emoji" type="text" placeholder="Emoji (ex: 🍛)" maxlength="4" />
       <div class="photo-row">
         <input id="dish-photo" type="file" accept="image/*" />
       </div>
@@ -165,7 +165,7 @@ async function loadDishes() {
 
   el.innerHTML = data.map(d => `
     <div class="dish">
-      ${d.photo_url ? `<img src="${d.photo_url}" alt="${d.name}" />` : `<div class="dish-emoji">${d.emoji || '🍽️'}</div>`}
+      ${d.photo_url ? `<img src="${d.photo_url}" alt="${d.name}" />` : `<div class="dish-emoji avatar" style="color:var(--mango); font-size:22px;">${(d.name||'?').trim().charAt(0).toUpperCase()}</div>`}
       <div class="dish-info">
         <div style="font-weight:700; font-size:14.5px;">${d.name}</div>
         ${d.description ? `<div style="font-size:12.5px; color:var(--creamDim); margin-top:2px;">${d.description}</div>` : ''}
@@ -181,11 +181,10 @@ async function loadDishes() {
 
 function editDish(d) {
   editingDishId = d.id;
-  document.getElementById('form-title').textContent = '✏️ Modifier le plat';
+  document.getElementById('form-title').textContent = 'Modifier le plat';
   document.getElementById('dish-name').value = d.name || '';
   document.getElementById('dish-desc').value = d.description || '';
   document.getElementById('dish-price').value = d.price || '';
-  document.getElementById('dish-emoji').value = d.emoji || '';
   document.getElementById('save-btn').textContent = 'Enregistrer les modifications';
   document.getElementById('cancel-edit-btn').style.display = 'inline-block';
   window.scrollTo({ top: 0, behavior: 'smooth' });
@@ -193,11 +192,10 @@ function editDish(d) {
 
 function cancelEdit() {
   editingDishId = null;
-  document.getElementById('form-title').textContent = '➕ Ajouter un plat';
+  document.getElementById('form-title').textContent = 'Ajouter un plat';
   document.getElementById('dish-name').value = '';
   document.getElementById('dish-desc').value = '';
   document.getElementById('dish-price').value = '';
-  document.getElementById('dish-emoji').value = '';
   document.getElementById('dish-photo').value = '';
   document.getElementById('save-btn').textContent = 'Ajouter le plat';
   document.getElementById('cancel-edit-btn').style.display = 'none';
@@ -223,7 +221,6 @@ async function saveDish() {
   const name = document.getElementById('dish-name').value.trim();
   const description = document.getElementById('dish-desc').value.trim();
   const price = parseInt(document.getElementById('dish-price').value, 10);
-  const emoji = document.getElementById('dish-emoji').value.trim();
 
   if (!name || !price) {
     showStatus("Merci de remplir au moins le nom et le prix.", false);
@@ -233,7 +230,7 @@ async function saveDish() {
   document.getElementById('save-btn').textContent = 'Enregistrement...';
   const photoUrl = await uploadPhotoIfAny();
 
-  const payload = { name, description, price, emoji };
+  const payload = { name, description, price };
   if (photoUrl) payload.photo_url = photoUrl;
 
   let error;
