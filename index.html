@@ -44,6 +44,13 @@
     border-right:1px solid var(--line); padding:20px 18px; display:flex; flex-direction:column; gap:4px; }
   .side-menu-item { background:none; border:none; text-align:left; color:var(--cream); font-family:'Work Sans',sans-serif;
     font-size:15px; padding:13px 4px; border-bottom:1px solid var(--line); cursor:pointer; text-decoration:none; }
+  .install-banner { position:sticky; top:75px; z-index:45; background:var(--raised); border-bottom:1px solid var(--line);
+    padding:10px 16px; display:flex; align-items:center; gap:10px; max-width:480px; margin:0 auto; }
+  .install-banner-text { flex:1; display:flex; flex-direction:column; font-size:11.5px; color:var(--creamDim); line-height:1.4; }
+  .install-banner-text strong { color:var(--cream); font-size:13px; }
+  .install-banner-btn { background:var(--mango); color:#080808; border:none; border-radius:8px; padding:9px 14px;
+    font-weight:700; font-size:12.5px; cursor:pointer; white-space:nowrap; }
+  .install-banner-close { background:none; border:none; color:var(--creamDim); font-size:16px; cursor:pointer; padding:4px; }
   .avatar { font-family:'Bebas Neue',sans-serif; display:flex; align-items:center; justify-content:center; letter-spacing:0; }
   .dot { width:8px; height:8px; border-radius:50%; background: var(--mango); animation: glow 2.4s ease-in-out infinite; }
   @keyframes glow { 0%,100% { opacity:.5 } 50% { opacity:1 } }
@@ -214,6 +221,15 @@
     <a class="side-menu-item" href="dashboard.html">Espace restaurant</a>
     <a class="side-menu-item" href="driver.html">Espace livreur</a>
   </div>
+</div>
+
+<div class="install-banner" id="install-banner" style="display:none;">
+  <div class="install-banner-text">
+    <strong>Installez Dallas Graya</strong>
+    <span id="install-banner-sub">Accédez à l'app en un clic depuis votre écran d'accueil</span>
+  </div>
+  <button class="install-banner-btn" id="install-banner-btn" onclick="handleInstallClick()">Installer</button>
+  <button class="install-banner-close" onclick="dismissInstallBanner()">✕</button>
 </div>
 
 <div class="wrap" id="app">
@@ -1044,9 +1060,56 @@ function resetOrder() {
   show('list');
 }
 
+// ---------- Installation de l'app (bannière) ----------
+
+let deferredInstallPrompt = null;
+
+function isStandalone() {
+  return window.matchMedia('(display-mode: standalone)').matches || window.navigator.standalone === true;
+}
+function isIOS() {
+  return /iPhone|iPad|iPod/i.test(navigator.userAgent);
+}
+
+window.addEventListener('beforeinstallprompt', (e) => {
+  e.preventDefault();
+  deferredInstallPrompt = e;
+  showInstallBanner('android');
+});
+
+function showInstallBanner(platform) {
+  if (isStandalone()) return;
+  if (localStorage.getItem('installBannerDismissed') === 'true') return;
+  const banner = document.getElementById('install-banner');
+  const sub = document.getElementById('install-banner-sub');
+  const btn = document.getElementById('install-banner-btn');
+  if (platform === 'ios') {
+    sub.textContent = "Appuyez sur Partager, puis « Sur l'écran d'accueil »";
+    btn.style.display = 'none';
+  } else {
+    sub.textContent = "Accédez à l'app en un clic depuis votre écran d'accueil";
+    btn.style.display = 'inline-block';
+  }
+  banner.style.display = 'flex';
+}
+
+async function handleInstallClick() {
+  if (!deferredInstallPrompt) return;
+  deferredInstallPrompt.prompt();
+  await deferredInstallPrompt.userChoice;
+  deferredInstallPrompt = null;
+  dismissInstallBanner();
+}
+
+function dismissInstallBanner() {
+  document.getElementById('install-banner').style.display = 'none';
+  localStorage.setItem('installBannerDismissed', 'true');
+}
+
 (async () => {
   await loadRestaurants();
   await refreshCustomer();
+  if (isIOS() && !isStandalone()) showInstallBanner('ios');
 })();
 </script>
 </body>
