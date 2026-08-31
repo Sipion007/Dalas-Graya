@@ -244,6 +244,7 @@ function formatDistance(m) {
 function speakInstruction(text) {
   try {
     if (!('speechSynthesis' in window)) return;
+    window.speechSynthesis.cancel();
     const u = new SpeechSynthesisUtterance(text);
     u.lang = 'fr-FR';
     u.rate = 1.0;
@@ -353,8 +354,19 @@ function phoneToEmail(phone) {
   return phone.replace(/\s+/g, '') + '@maquisexpress-driver.local';
 }
 
+function primeSpeech() {
+  try {
+    if (!('speechSynthesis' in window)) return;
+    window.speechSynthesis.cancel();
+    const u = new SpeechSynthesisUtterance(' ');
+    u.volume = 0.01;
+    window.speechSynthesis.speak(u);
+  } catch (e) {}
+}
+
 async function signupDriver() {
   try { if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)(); } catch(e) {}
+  primeSpeech();
   const name = document.getElementById('su-name').value.trim();
   const phone = document.getElementById('su-phone').value.trim();
   const password = document.getElementById('su-password').value;
@@ -390,6 +402,7 @@ async function signupDriver() {
 
 async function loginDriver() {
   try { if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)(); } catch(e) {}
+  primeSpeech();
   const phone = document.getElementById('li-phone').value.trim();
   const password = document.getElementById('li-password').value;
   const errEl = document.getElementById('auth-error');
