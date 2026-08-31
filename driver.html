@@ -151,6 +151,8 @@
       <span id="gps-text">Position non partagée</span>
     </div>
 
+    <button class="btn-outline" style="width:100%; margin-bottom:16px;" onclick="testVoice()">Tester la voix</button>
+
     <div id="notif-banner"></div>
 
     <div class="section-title" id="section-en-cours">Ma livraison en cours</div>
@@ -250,6 +252,22 @@ function speakInstruction(text) {
     u.rate = 1.0;
     window.speechSynthesis.speak(u);
   } catch (e) {}
+}
+
+function testVoice() {
+  if (!('speechSynthesis' in window)) {
+    alert("La synthèse vocale n'est pas disponible sur ce navigateur.");
+    return;
+  }
+  const voices = window.speechSynthesis.getVoices();
+  const frVoice = voices.find(v => v.lang.startsWith('fr'));
+  window.speechSynthesis.cancel();
+  const u = new SpeechSynthesisUtterance("Ceci est un test de la voix de navigation Dallas Graya");
+  u.lang = 'fr-FR';
+  if (frVoice) u.voice = frVoice;
+  u.onend = () => toastDriver("Test terminé sans erreur (" + voices.length + " voix détectées)");
+  u.onerror = (e) => toastDriver("Erreur de voix : " + e.error);
+  window.speechSynthesis.speak(u);
 }
 
 async function fetchRoute(start, dest) {
