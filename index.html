@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-<title>Maquis Express — Tazibou</title>
+<title>Dallas Graya — Tazibou</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Work+Sans:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
@@ -24,8 +24,11 @@
   .topbar { position: sticky; top: 0; z-index: 50; background: rgba(27,22,19,0.9); backdrop-filter: blur(10px);
     border-bottom: 1px solid var(--line); padding: 14px 16px; display:flex; align-items:center; gap:8px; justify-content:space-between; }
   .topbar-left { display:flex; align-items:center; gap:8px; }
-  .topbar-icons { display:flex; align-items:center; gap:14px; }
-  .topbar-icon { background:none; border:none; color:var(--creamDim); font-size:19px; cursor:pointer; padding:2px; position:relative; }
+  .topbar-icons { display:flex; align-items:center; gap:20px; }
+  .topbar-text { background:none; border:none; color:var(--creamDim); font-family:'Work Sans',sans-serif; font-size:11.5px;
+    letter-spacing:0.12em; text-transform:uppercase; font-weight:600; cursor:pointer; padding:4px 0; }
+  .topbar-text:hover { color:var(--mango); }
+  .avatar { font-family:'Bebas Neue',sans-serif; display:flex; align-items:center; justify-content:center; letter-spacing:0; }
   .dot { width:8px; height:8px; border-radius:50%; background: var(--mango); animation: glow 2.4s ease-in-out infinite; }
   @keyframes glow { 0%,100% { opacity:.5 } 50% { opacity:1 } }
   .hero { padding: 30px 16px 24px; border-bottom: 1px solid var(--line); margin-bottom: 18px; }
@@ -107,11 +110,11 @@
 <div class="topbar">
   <div class="topbar-left">
     <span class="dot"></span>
-    <span class="display" style="font-size:21px; color:var(--mango);">MAQUIS EXPRESS</span>
+    <span class="display" style="font-size:21px; color:var(--mango); letter-spacing:0.08em;">DALLAS GRAYA</span>
   </div>
   <div class="topbar-icons">
-    <button class="topbar-icon" onclick="show('offers'); renderOffers();" title="Offres">🎁</button>
-    <button class="topbar-icon" onclick="openAccount()" title="Mon compte">👤</button>
+    <button class="topbar-text" onclick="show('offers'); renderOffers();">Offres</button>
+    <button class="topbar-text" onclick="openAccount()">Compte</button>
   </div>
 </div>
 
@@ -139,6 +142,7 @@ let location_ = null;
 let currentCustomer = null; // { id, phone, name, auth_user_id }
 
 function money(n) { return n.toLocaleString('fr-FR') + ' F'; }
+function initial(name) { return (name || '?').trim().charAt(0).toUpperCase(); }
 function toast(msg) {
   const t = document.createElement('div');
   t.className = 'toast'; t.textContent = msg;
@@ -178,13 +182,13 @@ function renderAccount() {
     el.innerHTML = `
       <div class="section">
         <button class="btn-back" onclick="show('list')">← Retour</button>
-        <div class="display" style="font-size:26px; margin-bottom:14px;">👤 Mon compte</div>
+        <div class="display" style="font-size:26px; margin-bottom:14px;">Mon compte</div>
         <div class="profile-box">
           <div style="font-weight:700; font-size:16px;">${currentCustomer.name || 'Client'}</div>
           <div class="mono" style="font-size:13px; color:var(--creamDim); margin-top:2px;">${currentCustomer.phone}</div>
         </div>
-        <button class="btn-secondary" style="margin-bottom:10px;" onclick="show('orders'); renderOrders();">📦 Mes commandes</button>
-        <button class="btn-secondary" style="margin-bottom:10px;" onclick="show('offers'); renderOffers();">🎁 Offres</button>
+        <button class="btn-secondary" style="margin-bottom:10px;" onclick="show('orders'); renderOrders();">Mes commandes</button>
+        <button class="btn-secondary" style="margin-bottom:10px;" onclick="show('offers'); renderOffers();">Offres</button>
         <button class="btn-secondary" onclick="logoutCustomer()">Déconnexion</button>
       </div>
     `;
@@ -194,7 +198,7 @@ function renderAccount() {
   el.innerHTML = `
     <div class="section">
       <button class="btn-back" onclick="show('list')">← Retour</button>
-      <div class="display" style="font-size:26px; margin-bottom:14px;">👤 Mon compte</div>
+      <div class="display" style="font-size:26px; margin-bottom:14px;">Mon compte</div>
       <div class="tab-switch">
         <div class="tab-btn active" id="tab-login" onclick="switchAuthTab('login')">Connexion</div>
         <div class="tab-btn" id="tab-signup" onclick="switchAuthTab('signup')">Créer un compte</div>
@@ -299,7 +303,7 @@ async function renderOrders() {
   el.innerHTML = `
     <div class="section">
       <button class="btn-back" onclick="show('account'); renderAccount();">← Mon compte</button>
-      <div class="display" style="font-size:26px; margin-bottom:14px;">📦 Mes commandes</div>
+      <div class="display" style="font-size:26px; margin-bottom:14px;">Mes commandes</div>
       <div id="orders-hist-list"></div>
     </div>
   `;
@@ -327,8 +331,8 @@ async function renderOrders() {
         </div>
         <div style="font-size:13.5px; margin-top:4px;">${r ? r.name : '—'} · ${date}</div>
         <div class="mono" style="font-size:13px; margin-top:4px; color:var(--mango);">${money(o.total)}</div>
-        ${canTrack ? `<button class="btn-secondary" style="margin-top:8px;" onclick="trackDelivery('${o.id}')">🛵 Suivre le trajet en direct</button>` : ''}
-        ${canReview ? `<button class="btn-secondary" style="margin-top:8px;" onclick='openReview(${JSON.stringify({id:o.id, restaurant_id:o.restaurant_id, rname:(r?r.name:'')}).replace(/'/g,"&apos;")})'>⭐ Noter ce restaurant</button>` : ''}
+        ${canTrack ? `<button class="btn-secondary" style="margin-top:8px;" onclick="trackDelivery('${o.id}')">Suivre le trajet en direct</button>` : ''}
+        ${canReview ? `<button class="btn-secondary" style="margin-top:8px;" onclick='openReview(${JSON.stringify({id:o.id, restaurant_id:o.restaurant_id, rname:(r?r.name:'')}).replace(/'/g,"&apos;")})'>Noter ce restaurant</button>` : ''}
       </div>
     `;
   }).join('');
@@ -392,7 +396,7 @@ async function renderOffers() {
   el.innerHTML = `
     <div class="section">
       <button class="btn-back" onclick="show('list')">← Retour</button>
-      <div class="display" style="font-size:26px; margin-bottom:14px;">🎁 Offres du moment</div>
+      <div class="display" style="font-size:26px; margin-bottom:14px;">Offres du moment</div>
       <div id="offers-list"></div>
     </div>
   `;
@@ -426,7 +430,7 @@ async function trackDelivery(orderId) {
   document.getElementById('view-tracking').innerHTML = `
     <div class="section">
       <button class="btn-back" onclick="show('orders'); renderOrders();">← Mes commandes</button>
-      <div class="display" style="font-size:26px; margin-bottom:10px;">🛵 Suivi en direct</div>
+      <div class="display" style="font-size:26px; margin-bottom:10px;">Suivi en direct</div>
       <div id="track-driver-slot"></div>
       <div class="track-status" id="track-status">Localisation du livreur…</div>
       <div id="tracking-map"></div>
@@ -452,7 +456,7 @@ async function updateTrackingView(orderId) {
   if (!statusEl) return; // vue quittée entre-temps
 
   if (o.status === 'Livrée') {
-    statusEl.textContent = "✅ Commande livrée !";
+    statusEl.textContent = "✓ Commande livrée";
     if (trackingTimer) { clearInterval(trackingTimer); trackingTimer = null; }
   }
 
@@ -464,7 +468,7 @@ async function updateTrackingView(orderId) {
           <div style="font-weight:700; font-size:14.5px;">${d.name}</div>
           <div style="font-size:12px; color:var(--creamDim);">Votre livreur</div>
         </div>
-        <a href="tel:${d.phone}" class="btn-call-track">📞 Appeler</a>
+        <a href="tel:${d.phone}" class="btn-call-track">Appeler</a>
       </div>
     `;
   }
@@ -485,10 +489,10 @@ async function updateTrackingView(orderId) {
     L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
       attribution: '© OpenStreetMap'
     }).addTo(trackingMap);
-    trackingMarker = L.marker([d.current_lat, d.current_lng]).addTo(trackingMap).bindPopup('🛵 Livreur');
+    trackingMarker = L.marker([d.current_lat, d.current_lng]).addTo(trackingMap).bindPopup('Livreur');
 
     if (o.location && o.location.type === 'gps') {
-      trackingDestMarker = L.marker([o.location.lat, o.location.lng]).addTo(trackingMap).bindPopup('📍 Vous');
+      trackingDestMarker = L.marker([o.location.lat, o.location.lng]).addTo(trackingMap).bindPopup('Vous');
       trackingMap.fitBounds([[d.current_lat, d.current_lng], [o.location.lat, o.location.lng]], { padding: [30,30] });
     }
   } else {
@@ -521,12 +525,12 @@ function renderList() {
     <div class="list">
       ${restaurants.map(r => `
         <button class="card" onclick="openRestaurant('${r.id}')">
-          <div class="emoji-box" style="background:linear-gradient(155deg, ${r.accent}33, ${r.accent}14); border:1px solid ${r.accent}40;">${r.emoji || '🍽️'}</div>
+          <div class="emoji-box avatar" style="background:linear-gradient(155deg, ${r.accent}33, ${r.accent}14); border:1px solid ${r.accent}40; color:${r.accent}; font-size:24px;">${initial(r.name)}</div>
           <div style="flex:1; text-align:left;">
             <div class="rname">${r.name}</div>
             <div class="rcat" style="color:${r.accent}">${r.category || ''}</div>
             <div class="rtag">${r.tagline || ''}</div>
-            <div class="rtime mono">⏱ ${r.delivery_time || ''}</div>
+            <div class="rtime mono">${r.delivery_time || ''}</div>
           </div>
         </button>
       `).join('')}
@@ -564,7 +568,7 @@ function renderMenuItems() {
     const inCart = cart[item.id];
     return `
       <div class="item">
-        ${item.photo_url ? `<img src="${item.photo_url}" style="width:48px; height:48px; border-radius:8px; object-fit:cover; flex-shrink:0;" />` : `<div class="item-emoji" style="background:${r.accent}26;">${item.emoji || '🍽️'}</div>`}
+        ${item.photo_url ? `<img src="${item.photo_url}" style="width:48px; height:48px; border-radius:8px; object-fit:cover; flex-shrink:0;" />` : `<div class="item-emoji avatar" style="background:${r.accent}26; color:${r.accent}; font-size:19px;">${initial(item.name)}</div>`}
         <div style="flex:1;">
           <div style="font-weight:600; font-size:15px;">${item.name}</div>
           <div style="font-size:12.5px; color:var(--creamDim); margin-top:2px;">${item.description || ''}</div>
@@ -607,7 +611,7 @@ function renderCartBar() {
   bar.innerHTML = `
     <div class="cart-bar">
       <button class="cart-btn" style="background:linear-gradient(135deg, ${r.accent}, ${r.accent}CC);" onclick="show('checkout'); renderCheckout();">
-        <span>🛍 Voir le panier (${cartCount()})</span>
+        <span>Voir le panier (${cartCount()})</span>
         <span class="mono">${money(cartTotal())}</span>
       </button>
     </div>
@@ -634,7 +638,7 @@ function renderCheckout() {
 
       <label>Position de livraison</label>
       <div class="loc-btns">
-        <button class="loc-btn" id="btn-gps" onclick="useGPS()">📍 Utiliser ma position</button>
+        <button class="loc-btn" id="btn-gps" onclick="useGPS()">Utiliser ma position</button>
       </div>
       <div id="loc-status" style="margin-bottom:10px;"></div>
 
@@ -652,7 +656,7 @@ function useGPS() {
   navigator.geolocation.getCurrentPosition(
     (pos) => {
       location_ = { type: 'gps', lat: pos.coords.latitude, lng: pos.coords.longitude };
-      document.getElementById('loc-status').innerHTML = `<div class="mono" style="font-size:11.5px; color:var(--palm);">📍 GPS: ${location_.lat.toFixed(4)}, ${location_.lng.toFixed(4)}</div>`;
+      document.getElementById('loc-status').innerHTML = `<div class="mono" style="font-size:11.5px; color:var(--palm);">GPS : ${location_.lat.toFixed(4)}, ${location_.lng.toFixed(4)}</div>`;
       document.getElementById('btn-gps').classList.add('active');
     },
     () => { toast("Position refusée — indiquez un repère ci-dessous"); },
@@ -692,7 +696,7 @@ async function placeOrder() {
 function renderConfirmation(order) {
   const r = currentRestaurant;
   const el = document.getElementById('view-confirm');
-  const waLink = r.whatsapp ? `https://wa.me/${r.whatsapp}?text=${encodeURIComponent('Nouvelle commande Maquis Express #' + order.id.slice(0,8) + ' — ' + order.total + ' F — ' + order.customer_name)}` : null;
+  const waLink = r.whatsapp ? `https://wa.me/${r.whatsapp}?text=${encodeURIComponent('Nouvelle commande Dallas Graya #' + order.id.slice(0,8) + ' — ' + order.total + ' F — ' + order.customer_name)}` : null;
   el.innerHTML = `
     <div class="section" style="text-align:center;">
       <div style="width:56px; height:56px; border-radius:50%; background:linear-gradient(135deg,var(--palm),#3F6B48); display:flex; align-items:center; justify-content:center; margin:0 auto 12px;">✓</div>
@@ -702,7 +706,7 @@ function renderConfirmation(order) {
     <div class="section" style="padding-top:0;">
       <div class="ticket">
         <div style="text-align:center; margin-bottom:10px;">
-          <div class="display" style="font-size:20px;">MAQUIS EXPRESS</div>
+          <div class="display" style="font-size:20px; letter-spacing:0.06em;">DALLAS GRAYA</div>
           <div class="mono" style="font-size:10px; color:#6B5F52;">TAZIBOU · TICKET DE COMMANDE</div>
         </div>
         <div style="border-top:1.5px dashed #B8AA98; border-bottom:1.5px dashed #B8AA98; padding:10px 0; margin:10px 0;">
@@ -713,7 +717,7 @@ function renderConfirmation(order) {
         ${order.items.map(i => `<div class="ticket-line"><span>${i.qty}× ${i.name}</span><span>${money(i.price*i.qty)}</span></div>`).join('')}
         <div class="ticket-line" style="border-top:1.5px dashed #B8AA98; margin-top:10px; padding-top:10px; font-weight:700;"><span>TOTAL</span><span>${money(order.total)}</span></div>
       </div>
-      ${waLink ? `<a href="${waLink}" target="_blank" style="display:block; text-align:center; margin-top:14px; background:var(--palm); color:var(--cream); padding:13px; border-radius:10px; text-decoration:none; font-weight:600; font-size:13px;">📲 Confirmer par WhatsApp</a>` : ''}
+      ${waLink ? `<a href="${waLink}" target="_blank" style="display:block; text-align:center; margin-top:14px; background:var(--palm); color:var(--cream); padding:13px; border-radius:10px; text-decoration:none; font-weight:600; font-size:13px;">Confirmer par WhatsApp</a>` : ''}
       <button class="btn-secondary" style="margin-top:12px;" onclick="resetOrder()">Commander ailleurs</button>
     </div>
   `;
