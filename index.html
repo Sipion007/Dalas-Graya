@@ -97,6 +97,12 @@
   .rcard2-cat { font-size:12px; color:var(--creamDim); margin-top:4px; }
   .rcard2-meta { display:flex; align-items:center; gap:5px; margin-top:9px; font-size:11px; color:var(--creamDim); }
   .rcard2-dot { width:3px; height:3px; border-radius:2px; background:#666; margin:0 3px; }
+  .rcard2.closed { opacity: 0.55; }
+  .status-badge { display:inline-block; font-size:10.5px; font-weight:700; padding:3px 9px; border-radius:20px; margin-top:6px; }
+  .status-open { background: rgba(92,138,99,.18); color: var(--palm); }
+  .status-closed { background: rgba(196,67,43,.16); color: var(--chili); }
+  .closed-banner { background: rgba(196,67,43,.12); border:1px solid var(--chili); color:#F0A99A;
+    border-radius:10px; padding:12px 14px; font-size:13px; margin-bottom:14px; }
   .rcard2-arrow { width:38px; height:38px; border-radius:19px; border:1px solid #383838; flex-shrink:0;
     display:flex; align-items:center; justify-content:center; }
   .btn-back { background:none; border:none; color:var(--creamDim); display:flex; align-items:center; gap:6px; cursor:pointer; padding:0; margin-bottom:12px; font-family:'Work Sans',sans-serif; font-size:13px; }
@@ -293,6 +299,30 @@ let currentCustomer = null; // { id, phone, name, auth_user_id }
 
 function money(n) { return n.toLocaleString('fr-FR') + ' F'; }
 function initial(name) { return (name || '?').trim().charAt(0).toUpperCase(); }
+
+function isRestaurantOpen(r) {
+  if (!r.opens_at || !r.closes_at) return true; // pas d'horaires définis = toujours ouvert
+  const now = new Date();
+  const nowMin = now.getHours() * 60 + now.getMinutes();
+  const toMin = (t) => { const [h, m] = t.split(':').map(Number); return h * 60 + m; };
+  const openMin = toMin(r.opens_at);
+  const closeMin = toMin(r.closes_at);
+  if (openMin <= closeMin) {
+    return nowMin >= openMin && nowMin < closeMin;
+  }
+  // horaires à cheval sur minuit (ex: 18:00 → 02:00)
+  return nowMin >= openMin || nowMin < closeMin;
+}
+
+function formatHM(t) { return t ? t.slice(0, 5) : ''; }
+
+function openStatusBadge(r) {
+  if (!r.opens_at || !r.closes_at) return '';
+  const open = isRestaurantOpen(r);
+  return open
+    ? `<span class="status-badge status-open">Ouvert</span>`
+    : `<span class="status-badge status-closed">Fermé · réouvre à ${formatHM(r.opens_at)}</span>`;
+}
 function closeSideMenu() { document.getElementById('side-menu').classList.remove('open'); }
 function toast(msg) {
   const t = document.createElement('div');
@@ -816,8 +846,9 @@ function restaurantCardsHtml(list) {
   return list.map(r => {
     const cover = restaurantCoverMap[r.id];
     const rating = restaurantRatingMap[r.id];
+    const open = isRestaurantOpen(r);
     return `
-        <button class="rcard2" onclick="openRestaurant('${r.id}')">
+        <button class="rcard2 ${open ? '' : 'closed'}" onclick="openRestaurant('${r.id}')">
           ${cover ? `<img class="rcard2-img" src="${cover.photo_url}" alt="${r.name}" />` : `<div class="rcard2-img rcard2-fallback avatar" style="background:linear-gradient(155deg, ${r.accent}33, ${r.accent}14); color:${r.accent};">${initial(r.name)}</div>`}
           <div class="rcard2-info">
             <div style="flex:1; text-align:left;">
@@ -828,6 +859,7 @@ function restaurantCardsHtml(list) {
                 <svg viewBox="0 0 24 24" width="14" height="14" stroke="var(--creamDim)" stroke-width="1.6" fill="none"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 3"/></svg>
                 <span>${r.delivery_time || ''}</span>
               </div>
+              ${openStatusBadge(r)}
             </div>
             <div class="rcard2-arrow">
               <svg viewBox="0 0 24 24" width="18" height="18" stroke="var(--mango)" stroke-width="1.8" fill="none"><path d="M9 6l6 6-6 6"/></svg>
@@ -865,11 +897,13 @@ async function openRestaurant(id) {
 function renderMenu() {
   const r = currentRestaurant;
   const el = document.getElementById('view-menu');
+  const open = isRestaurantOpen(r);
   el.innerHTML = `
     <div class="section">
       <button class="btn-back" onclick="setActiveNav('home'); show('list')">← Tous les restaurants</button>
       <div class="display" style="font-size:28px; color:${r.accent}">${r.name}</div>
-      <div style="font-size:13px; color:var(--creamDim); margin-bottom:14px;">${r.tagline || ''}</div>
+      <div style="font-size:13px; color:var(--creamDim); margin-bottom:8px;">${r.tagline || ''}</div>
+      ${!open ? `<div class="closed-banner">Ce restaurant est actuellement fermé. Horaires : ${formatHM(r.opens_at)} – ${formatHM(r.closes_at)}. Vous pouvez consulter le menu, mais la commande n'est pas possible pour le moment.</div>` : ''}
       <div id="menu-items"></div>
     </div>
     <div id="cart-bar"></div>
@@ -879,6 +913,7 @@ function renderMenu() {
 
 function renderMenuItems() {
   const r = currentRestaurant;
+  const open = isRestaurantOpen(r);
   document.getElementById('menu-items').innerHTML = menuItems.map(item => {
     const inCart = cart[item.id];
     return `
@@ -889,7 +924,7 @@ function renderMenuItems() {
           <div style="font-size:12.5px; color:var(--creamDim); margin-top:2px;">${item.description || ''}</div>
           <div class="mono" style="font-size:13px; color:${r.accent}; margin-top:6px;">${money(item.price)}</div>
         </div>
-        ${!inCart ? `
+        ${!open ? `<button class="qty-btn" style="background:var(--line); color:var(--creamDim); cursor:not-allowed;" disabled>+</button>` : !inCart ? `
           <button class="qty-btn" style="background:${r.accent}; color:#080808;" onclick="addItem('${item.id}')">+</button>
         ` : `
           <div style="display:flex; align-items:center; gap:8px;">
@@ -905,6 +940,7 @@ function renderMenuItems() {
 }
 
 function addItem(id) {
+  if (!isRestaurantOpen(currentRestaurant)) { toast("Ce restaurant est fermé pour le moment."); renderMenu(); return; }
   const item = menuItems.find(i => i.id === id);
   if (cart[id]) cart[id].qty++; else cart[id] = { ...item, qty: 1 };
   renderMenuItems();
@@ -1009,6 +1045,7 @@ function useGPS() {
 
 async function placeOrder() {
   if (!currentCustomer) { openAccount(); return; }
+  if (!isRestaurantOpen(currentRestaurant)) { toast("Ce restaurant est fermé pour le moment."); show('menu'); renderMenu(); return; }
   const name = document.getElementById('f-name').value.trim();
   const phone = document.getElementById('f-phone').value.trim();
   const address = document.getElementById('f-address').value.trim();
