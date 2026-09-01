@@ -47,6 +47,11 @@
   .driver-assign select { margin-bottom:8px; }
   .driver-info { font-size:12.5px; color:var(--palm); margin-top:8px; border-top:1px solid var(--line); padding-top:8px; }
   .waiting-note { font-size:11.5px; color:var(--creamDim); text-align:center; margin-top:6px; }
+  .hours-box { background: var(--surface); border:1px solid var(--line); border-radius:12px; padding:14px; margin-bottom:16px; }
+  .hours-title { font-size:13px; font-weight:700; color: var(--mango); margin-bottom:10px; }
+  .hours-row { display:flex; gap:10px; }
+  .hours-row input[type=time] { margin-bottom:0; }
+  .hours-hint { font-size:11px; color:var(--creamDim); margin-top:8px; line-height:1.5; }
   .bottom-nav { position:fixed; bottom:0; left:0; right:0; max-width:560px; margin:0 auto; z-index:60;
     background:rgba(27,22,19,0.95); backdrop-filter:blur(10px); border-top:1px solid var(--line);
     display:flex; justify-content:space-around; padding:8px 6px calc(8px + env(safe-area-inset-bottom)); }
@@ -89,6 +94,24 @@
       </div>
       <button class="btn-logout" onclick="logout()">Déconnexion</button>
     </div>
+
+    <div class="hours-box" id="hours-box">
+      <div class="hours-title">Horaires d'ouverture</div>
+      <div class="hours-row">
+        <div style="flex:1;">
+          <label style="font-size:11px;">Ouverture</label>
+          <input type="time" id="hours-open" />
+        </div>
+        <div style="flex:1;">
+          <label style="font-size:11px;">Fermeture</label>
+          <input type="time" id="hours-close" />
+        </div>
+      </div>
+      <div class="hours-hint">Laissez vide pour rester toujours "ouvert". Pour un maquis qui ferme après minuit (ex: 18h00 → 02h00), indiquez simplement ces deux heures.</div>
+      <button class="btn-advance" style="background:var(--mango); margin-top:10px;" onclick="saveHours()">Enregistrer les horaires</button>
+      <div id="hours-status" style="font-size:12px; color:var(--palm); margin-top:8px; display:none;">Horaires enregistrés ✓</div>
+    </div>
+
     <div id="orders-list"></div>
     <div class="refresh">Actualisation automatique toutes les 10 secondes</div>
   </div>
@@ -150,6 +173,8 @@ async function afterLogin() {
   document.getElementById('dashboard-screen').style.display = 'block';
   document.getElementById('bottom-nav').style.display = 'flex';
   document.getElementById('restaurant-name').textContent = rest.name;
+  document.getElementById('hours-open').value = rest.opens_at ? rest.opens_at.slice(0,5) : '';
+  document.getElementById('hours-close').value = rest.closes_at ? rest.closes_at.slice(0,5) : '';
 
   const { data: drivers } = await client.from('drivers').select('*').eq('restaurant_id', rest.id);
   myDrivers = drivers || [];
@@ -157,6 +182,17 @@ async function afterLogin() {
   loadOrders();
   if (refreshTimer) clearInterval(refreshTimer);
   refreshTimer = setInterval(loadOrders, 10000);
+}
+
+async function saveHours() {
+  const openVal = document.getElementById('hours-open').value || null;
+  const closeVal = document.getElementById('hours-close').value || null;
+  const { error } = await client.from('restaurants').update({ opens_at: openVal, closes_at: closeVal }).eq('id', myRestaurant.id);
+  if (error) { alert("Erreur lors de l'enregistrement des horaires."); return; }
+  myRestaurant.opens_at = openVal; myRestaurant.closes_at = closeVal;
+  const statusEl = document.getElementById('hours-status');
+  statusEl.style.display = 'block';
+  setTimeout(() => { statusEl.style.display = 'none'; }, 3000);
 }
 
 async function logout() {
