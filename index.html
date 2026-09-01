@@ -3,10 +3,10 @@
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-<title>Dallas Graya</title>
+<title>Dallas Bouff'</title>
 <link rel="manifest" href="manifest.json">
-<meta name="theme-color" content="#E8873A">
-<meta name="apple-mobile-web-app-title" content="Dallas Graya">
+<meta name="theme-color" content="#F5C04A">
+<meta name="apple-mobile-web-app-title" content="Dallas Bouff'">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <link rel="apple-touch-icon" href="icons/icon-192.png">
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -203,7 +203,7 @@
     <div class="brand-dallas">DALLAS</div>
     <div class="logo-line-row">
       <div class="logo-line"></div>
-      <div class="brand-graya">GRAYA</div>
+      <div class="brand-graya">BOUFF'</div>
       <div class="logo-line"></div>
     </div>
   </div>
@@ -231,7 +231,7 @@
 
 <div class="install-banner" id="install-banner" style="display:none;">
   <div class="install-banner-text">
-    <strong>Installez Dallas Graya</strong>
+    <strong>Installez Dallas Bouff'</strong>
     <span id="install-banner-sub">Accédez à l'app en un clic depuis votre écran d'accueil</span>
   </div>
   <button class="install-banner-btn" id="install-banner-btn" onclick="handleInstallClick()">Installer</button>
@@ -1077,7 +1077,7 @@ async function placeOrder() {
 function renderConfirmation(order) {
   const r = currentRestaurant;
   const el = document.getElementById('view-confirm');
-  const waLink = r.whatsapp ? `https://wa.me/${r.whatsapp}?text=${encodeURIComponent('Nouvelle commande Dallas Graya #' + order.id.slice(0,8) + ' — ' + order.total + ' F — ' + order.customer_name)}` : null;
+  const waLink = r.whatsapp ? `https://wa.me/${r.whatsapp}?text=${encodeURIComponent("Nouvelle commande Dallas Bouff' #" + order.id.slice(0,8) + ' — ' + order.total + ' F — ' + order.customer_name)}` : null;
   el.innerHTML = `
     <div class="section" style="text-align:center;">
       <div style="width:56px; height:56px; border-radius:50%; background:linear-gradient(135deg,var(--palm),#3F6B48); display:flex; align-items:center; justify-content:center; margin:0 auto 12px;">✓</div>
@@ -1087,7 +1087,7 @@ function renderConfirmation(order) {
     <div class="section" style="padding-top:0;">
       <div class="ticket">
         <div style="text-align:center; margin-bottom:10px;">
-          <div class="display" style="font-size:20px; letter-spacing:0.06em;">DALLAS GRAYA</div>
+          <div class="display" style="font-size:20px; letter-spacing:0.06em;">DALLAS BOUFF'</div>
           <div class="mono" style="font-size:10px; color:#6B5F52;">TAZIBOU · TICKET DE COMMANDE</div>
         </div>
         <div style="border-top:1.5px dashed #B8AA98; border-bottom:1.5px dashed #B8AA98; padding:10px 0; margin:10px 0;">
