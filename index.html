@@ -1130,7 +1130,6 @@ window.addEventListener('beforeinstallprompt', (e) => {
 
 function showInstallBanner(platform) {
   if (isStandalone()) return;
-  if (localStorage.getItem('installBannerDismissed') === 'true') return;
   const banner = document.getElementById('install-banner');
   const sub = document.getElementById('install-banner-sub');
   const btn = document.getElementById('install-banner-btn');
@@ -1154,7 +1153,6 @@ async function handleInstallClick() {
 
 function dismissInstallBanner() {
   document.getElementById('install-banner').style.display = 'none';
-  localStorage.setItem('installBannerDismissed', 'true');
 }
 
 (async () => {
