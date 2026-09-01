@@ -950,6 +950,19 @@ function renderCartBar() {
 
 function renderCheckout() {
   const el = document.getElementById('view-checkout');
+
+  if (!currentCustomer) {
+    el.innerHTML = `
+      <div class="section">
+        <button class="btn-back" onclick="show('menu')">← Retour au menu</button>
+        <div class="display" style="font-size:26px; margin-bottom:10px;">Un compte est nécessaire</div>
+        <div style="font-size:14px; color:var(--creamDim); margin-bottom:20px;">Connectez-vous ou créez un compte pour valider votre commande.</div>
+        <button class="btn-primary" onclick="openAccount()">Se connecter / Créer un compte</button>
+      </div>
+    `;
+    return;
+  }
+
   el.innerHTML = `
     <div class="section">
       <button class="btn-back" onclick="show('menu')">← Retour au menu</button>
@@ -962,9 +975,9 @@ function renderCheckout() {
       </div>
 
       <label>Nom</label>
-      <input id="f-name" placeholder="Votre nom" value="${currentCustomer ? currentCustomer.name : ''}" />
+      <input id="f-name" placeholder="Votre nom" value="${currentCustomer.name || ''}" />
       <label>Téléphone</label>
-      <input id="f-phone" placeholder="07 00 00 00 00" value="${currentCustomer ? currentCustomer.phone : ''}" />
+      <input id="f-phone" placeholder="07 00 00 00 00" value="${currentCustomer.phone || ''}" />
 
       <label>Position de livraison</label>
       <div class="loc-btns">
@@ -995,6 +1008,7 @@ function useGPS() {
 }
 
 async function placeOrder() {
+  if (!currentCustomer) { openAccount(); return; }
   const name = document.getElementById('f-name').value.trim();
   const phone = document.getElementById('f-phone').value.trim();
   const address = document.getElementById('f-address').value.trim();
