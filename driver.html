@@ -130,6 +130,11 @@
       <select id="su-restaurant">
         <option value="">Livreur indépendant (tous restaurants)</option>
       </select>
+      <label>Photo de votre visage (sera votre photo de profil)</label>
+      <input id="su-face" type="file" accept="image/*" capture="user" />
+      <label>Photo de votre pièce d'identité (CNI, passeport ou permis)</label>
+      <input id="su-id" type="file" accept="image/*" capture="environment" />
+      <div style="font-size:11.5px; color:var(--creamDim); margin:-4px 0 12px; line-height:1.45;">Pour la sécurité des clients et des livreurs, votre dossier est vérifié avant l'activation du compte. Votre pièce d'identité est stockée de façon privée et n'est visible que par l'administrateur.</div>
       <button class="btn-primary" onclick="signupDriver()">Créer mon compte livreur</button>
     </div>
 
@@ -140,7 +145,10 @@
   <div id="driver-screen" style="display:none;">
     <div class="header-row">
       <div>
-        <div class="display" style="font-size:24px;"><span id="driver-name"></span></div>
+        <div style="display:flex; align-items:center; gap:10px;">
+          <img id="driver-photo" alt="" style="width:44px; height:44px; border-radius:50%; object-fit:cover; border:1px solid var(--line); display:none;" />
+          <div class="display" style="font-size:24px;"><span id="driver-name"></span></div>
+        </div>
         <span id="driver-type" style="font-size:11.5px; color:var(--creamDim);"></span>
       </div>
       <button class="btn-outline" onclick="logoutDriver()">Déconnexion</button>
@@ -382,6 +390,25 @@ function primeSpeech() {
   } catch (e) {}
 }
 
+function compressImage(file) {
+  return new Promise((resolve, reject) => {
+    const img = new Image();
+    const url = URL.createObjectURL(file);
+    img.onload = () => {
+      const max = 1280;
+      const ratio = Math.min(1, max / Math.max(img.width, img.height));
+      const c = document.createElement('canvas');
+      c.width = Math.round(img.width * ratio);
+      c.height = Math.round(img.height * ratio);
+      c.getContext('2d').drawImage(img, 0, 0, c.width, c.height);
+      URL.revokeObjectURL(url);
+      c.toBlob(b => b ? resolve(b) : reject(new Error('compress')), 'image/jpeg', 0.82);
+    };
+    img.onerror = () => { URL.revokeObjectURL(url); reject(new Error('image')); };
+    img.src = url;
+  });
+}
+
 async function signupDriver() {
   try { if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)(); } catch(e) {}
   primeSpeech();
@@ -389,11 +416,18 @@ async function signupDriver() {
   const phone = document.getElementById('su-phone').value.trim();
   const password = document.getElementById('su-password').value;
   const restaurantId = document.getElementById('su-restaurant').value || null;
+  const faceFile = document.getElementById('su-face').files[0];
+  const idFile = document.getElementById('su-id').files[0];
   const errEl = document.getElementById('auth-error');
   errEl.style.display = 'none';
 
   if (!name || !phone || password.length < 6) {
     errEl.textContent = "Merci de remplir tous les champs (mot de passe : 6 caractères minimum).";
+    errEl.style.display = 'block';
+    return;
+  }
+  if (!faceFile || !idFile) {
+    errEl.textContent = "La photo de votre visage et celle de votre pièce d'identité sont obligatoires.";
     errEl.style.display = 'block';
     return;
   }
@@ -406,8 +440,27 @@ async function signupDriver() {
     return;
   }
 
+  let facePhotoUrl = null, idPath = null;
+  try {
+    const uid = data.user.id;
+    const faceBlob = await compressImage(faceFile);
+    const idBlob = await compressImage(idFile);
+    const facePath = uid + '/visage-' + Date.now() + '.jpg';
+    idPath = uid + '/piece-' + Date.now() + '.jpg';
+    const up1 = await client.storage.from('driver-photos').upload(facePath, faceBlob, { contentType: 'image/jpeg' });
+    if (up1.error) throw up1.error;
+    const up2 = await client.storage.from('driver-ids').upload(idPath, idBlob, { contentType: 'image/jpeg' });
+    if (up2.error) throw up2.error;
+    facePhotoUrl = client.storage.from('driver-photos').getPublicUrl(facePath).data.publicUrl;
+  } catch (e) {
+    errEl.textContent = "Impossible d'envoyer vos photos. Vérifiez votre connexion et réessayez.";
+    errEl.style.display = 'block';
+    return;
+  }
+
   const { error: dError } = await client.from('drivers').insert({
-    auth_user_id: data.user.id, name, phone, restaurant_id: restaurantId
+    auth_user_id: data.user.id, name, phone, restaurant_id: restaurantId,
+    face_photo_url: facePhotoUrl, id_doc_path: idPath
   });
   if (dError) {
     errEl.textContent = "Erreur lors de la création du profil livreur.";
@@ -449,11 +502,22 @@ async function afterLogin() {
     return;
   }
 
+  if (driver.verification !== 'approved') {
+    const errEl = document.getElementById('auth-error');
+    errEl.textContent = driver.verification === 'rejected'
+      ? "Votre dossier n'a pas été accepté. Contactez l'administrateur."
+      : "Votre dossier est en cours de vérification. Vous pourrez livrer dès qu'il sera validé.";
+    errEl.style.display = 'block';
+    await client.auth.signOut();
+    return;
+  }
+
   myDriver = driver;
   document.getElementById('login-screen').style.display = 'none';
   document.getElementById('driver-screen').style.display = 'block';
   document.getElementById('bottom-nav').style.display = 'flex';
   document.getElementById('driver-name').textContent = driver.name;
+  if (driver.face_photo_url) { const ph = document.getElementById('driver-photo'); ph.src = driver.face_photo_url; ph.style.display = 'block'; }
   document.getElementById('driver-type').textContent = driver.restaurants ? driver.restaurants.name : 'Livreur indépendant';
 
   refreshOrders();
