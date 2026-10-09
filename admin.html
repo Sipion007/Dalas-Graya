@@ -113,6 +113,14 @@
       </div>
     </div>
 
+    <div class="section-title">Comptes sur l'application</div>
+    <div class="stats-grid" id="accounts-grid">
+      <div class="stat-card"><div class="stat-label">Clients</div><div class="stat-value" id="acc-customers">—</div><div class="stat-label" id="acc-customers-new" style="margin-top:4px;"></div></div>
+      <div class="stat-card"><div class="stat-label">Livreurs validés</div><div class="stat-value" id="acc-drivers">—</div><div class="stat-label" id="acc-drivers-pending" style="margin-top:4px;"></div></div>
+      <div class="stat-card"><div class="stat-label">Restaurants</div><div class="stat-value" id="acc-restaurants">—</div></div>
+      <div class="stat-card"><div class="stat-label">Total des comptes</div><div class="stat-value" id="acc-total">—</div></div>
+    </div>
+
     <div class="section-title">Chiffre d'affaires par restaurant</div>
     <div id="revenue-by-restaurant"></div>
 
@@ -236,7 +244,27 @@ async function setDriverStatus(driverId, status) {
   loadDrivers();
 }
 
+async function loadAccounts() {
+  const { data: cust } = await client.from('customers').select('*');
+  const customers = cust || [];
+  const weekAgo = Date.now() - 7*24*3600*1000;
+  const newCust = customers.filter(c => c.created_at && new Date(c.created_at).getTime() >= weekAgo).length;
+  const { data: drv } = await client.from('drivers').select('verification');
+  const drivers = drv || [];
+  const okDrivers = drivers.filter(d => d.verification === 'approved').length;
+  const pendingDrivers = drivers.filter(d => d.verification === 'pending').length;
+  const { data: rest } = await client.from('restaurants').select('id');
+  const nRest = (rest || []).length;
+  document.getElementById('acc-customers').textContent = customers.length;
+  document.getElementById('acc-customers-new').textContent = newCust + ' cette semaine';
+  document.getElementById('acc-drivers').textContent = okDrivers;
+  document.getElementById('acc-drivers-pending').textContent = pendingDrivers ? pendingDrivers + ' en attente' : '';
+  document.getElementById('acc-restaurants').textContent = nRest;
+  document.getElementById('acc-total').textContent = customers.length + drivers.length + nRest;
+}
+
 async function loadData() {
+  loadAccounts();
   loadDrivers();
   const { data: rests } = await client.from('restaurants').select('*').order('name');
   restaurants = rests || [];
