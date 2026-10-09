@@ -141,6 +141,11 @@ let myRestaurant = null;
 let myDrivers = [];
 let refreshTimer = null;
 
+function driverAvatar(d, size) {
+  if (d && d.face_photo_url) return `<img src="${d.face_photo_url}" alt="" style="width:${size}px; height:${size}px; border-radius:50%; object-fit:cover; border:1px solid var(--line); flex-shrink:0;">`;
+  return `<div style="width:${size}px; height:${size}px; border-radius:50%; background:var(--raised); border:1px solid var(--line); flex-shrink:0;"></div>`;
+}
+
 function money(n) { return n.toLocaleString('fr-FR') + ' F'; }
 
 async function login() {
@@ -212,7 +217,7 @@ async function logout() {
 
 async function loadOrders() {
   if (!myRestaurant) return;
-  const { data, error } = await client.from('orders').select('*, drivers(name, phone)').eq('restaurant_id', myRestaurant.id).order('created_at', { ascending: false });
+  const { data, error } = await client.from('orders').select('*, drivers(name, phone, face_photo_url)').eq('restaurant_id', myRestaurant.id).order('created_at', { ascending: false });
   const el = document.getElementById('orders-list');
   if (error) { el.innerHTML = '<div class="empty">Erreur de connexion.</div>'; return; }
   if (!data || data.length === 0) { el.innerHTML = '<div class="empty">Aucune commande pour le moment.</div>'; return; }
@@ -240,9 +245,11 @@ async function loadOrders() {
         </div>
       `;
     } else if (idx === STATUSES.indexOf('En livraison')) {
-      actionZone = `<div class="driver-info">En livraison par ${o.drivers ? o.drivers.name + ' · ' + o.drivers.phone : 'un livreur'}</div>`;
+      actionZone = `<div class="driver-info" style="display:flex; align-items:center; gap:10px;">${driverAvatar(o.drivers, 40)}<span>En livraison par ${o.drivers ? o.drivers.name + ' · ' + o.drivers.phone : 'un livreur'}</span></div>`;
     } else if (isLast) {
-      actionZone = `<div style="text-align:center; font-size:12px; color:var(--creamDim); margin-top:8px;">Commande terminée</div>`;
+      actionZone = o.drivers
+        ? `<div class="driver-info" style="display:flex; align-items:center; gap:10px; color:var(--creamDim);">${driverAvatar(o.drivers, 40)}<span>Livrée par ${o.drivers.name} · ${o.drivers.phone}</span></div>`
+        : `<div style="text-align:center; font-size:12px; color:var(--creamDim); margin-top:8px;">Commande terminée</div>`;
     }
 
     return `
