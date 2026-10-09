@@ -119,6 +119,9 @@
     <div class="section-title">Plats les plus vendus</div>
     <div id="top-dishes"></div>
 
+    <div class="section-title" id="section-livreurs">Livreurs</div>
+    <div id="drivers-list"></div>
+
     <div class="section-title" id="section-historique">Historique des commandes</div>
     <select id="restaurant-filter" onchange="renderOrdersList()">
       <option value="">Tous les restaurants</option>
@@ -132,6 +135,10 @@
   <button class="nav-item active" onclick="document.getElementById('section-vue').scrollIntoView({behavior:'smooth'})">
     <svg viewBox="0 0 24 24"><path d="M3 3v18h18"/><path d="M7 15l4-6 3 3 5-7"/></svg>
     <span>Vue d'ensemble</span>
+  </button>
+  <button class="nav-item" onclick="document.getElementById('section-livreurs').scrollIntoView({behavior:'smooth'})">
+    <svg viewBox="0 0 24 24"><circle cx="12" cy="8" r="4"/><path d="M4 21c0-4 4-7 8-7s8 3 8 7"/></svg>
+    <span>Livreurs</span>
   </button>
   <button class="nav-item" onclick="document.getElementById('section-historique').scrollIntoView({behavior:'smooth'})">
     <svg viewBox="0 0 24 24"><rect x="5" y="3" width="14" height="18" rx="2"/><line x1="8" y1="8" x2="16" y2="8"/><line x1="8" y1="12" x2="16" y2="12"/><line x1="8" y1="16" x2="13" y2="16"/></svg>
@@ -187,7 +194,50 @@ async function logout() {
   document.getElementById('login-screen').style.display = 'block';
 }
 
+let allDrivers = [];
+
+async function loadDrivers() {
+  const { data } = await client.from('drivers').select('*, restaurants(name)').order('created_at', { ascending: false });
+  allDrivers = data || [];
+  const order = { pending: 0, rejected: 1, approved: 2 };
+  allDrivers.sort((a, b) => (order[a.verification] ?? 3) - (order[b.verification] ?? 3));
+  const el = document.getElementById('drivers-list');
+  if (!allDrivers.length) { el.innerHTML = '<div class="empty">Aucun livreur inscrit.</div>'; return; }
+  const labels = { pending: 'En attente', approved: 'Validé', rejected: 'Refusé' };
+  const colors = { pending: 'var(--mango)', approved: 'var(--palm)', rejected: 'var(--chili)' };
+  el.innerHTML = allDrivers.map(d => `
+    <div style="background:var(--surface); border:1px solid var(--line); border-radius:14px; padding:14px; margin-bottom:10px;">
+      <div style="display:flex; gap:12px; align-items:center;">
+        ${d.face_photo_url ? `<img src="${d.face_photo_url}" alt="" style="width:56px; height:56px; border-radius:50%; object-fit:cover; border:1px solid var(--line);">` : `<div style="width:56px; height:56px; border-radius:50%; background:var(--raised);"></div>`}
+        <div style="flex:1; min-width:0;">
+          <div style="font-weight:700; font-size:14px;">${d.name}</div>
+          <div style="font-size:12px; color:var(--creamDim);">${d.phone} · ${d.restaurants ? d.restaurants.name : 'Indépendant'}</div>
+        </div>
+        <div style="font-size:11px; font-weight:700; color:${colors[d.verification] || 'var(--creamDim)'};">${labels[d.verification] || d.verification}</div>
+      </div>
+      <div style="display:flex; gap:8px; margin-top:12px; flex-wrap:wrap;">
+        ${d.id_doc_path ? `<button class="btn-outline" onclick="viewIdDoc('${d.id}')">Voir la pièce d'identité</button>` : ''}
+        ${d.verification !== 'approved' ? `<button class="btn-outline" style="border-color:var(--palm); color:var(--palm);" onclick="setDriverStatus('${d.id}','approved')">Valider</button>` : ''}
+        ${d.verification !== 'rejected' ? `<button class="btn-outline" style="border-color:var(--chili); color:var(--chili);" onclick="setDriverStatus('${d.id}','rejected')">${d.verification === 'approved' ? 'Suspendre' : 'Refuser'}</button>` : ''}
+      </div>
+    </div>`).join('');
+}
+
+async function viewIdDoc(driverId) {
+  const d = allDrivers.find(x => x.id === driverId);
+  if (!d || !d.id_doc_path) return;
+  const { data, error } = await client.storage.from('driver-ids').createSignedUrl(d.id_doc_path, 120);
+  if (error || !data) { alert("Impossible d'ouvrir la pièce d'identité."); return; }
+  window.open(data.signedUrl, '_blank');
+}
+
+async function setDriverStatus(driverId, status) {
+  await client.from('drivers').update({ verification: status }).eq('id', driverId);
+  loadDrivers();
+}
+
 async function loadData() {
+  loadDrivers();
   const { data: rests } = await client.from('restaurants').select('*').order('name');
   restaurants = rests || [];
 
