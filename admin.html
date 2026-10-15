@@ -104,12 +104,20 @@
 
     <div class="stats-grid">
       <div class="stat-card">
-        <div class="stat-label">Chiffre d'affaires</div>
+        <div class="stat-label">Ventes des plats</div>
         <div class="stat-value mono" id="stat-revenue">—</div>
       </div>
       <div class="stat-card">
         <div class="stat-label">Commandes</div>
         <div class="stat-value" id="stat-orders">—</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-label">Frais de livraison</div>
+        <div class="stat-value mono" id="stat-fees">—</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-label">Total payé par les clients</div>
+        <div class="stat-value mono" id="stat-paid">—</div>
       </div>
     </div>
 
@@ -378,13 +386,17 @@ function getFilteredByPeriod() {
 function renderAll() {
   const filtered = getFilteredByPeriod();
 
-  const revenue = filtered.reduce((sum, o) => sum + Number(o.total), 0);
+  const fees = filtered.reduce((sum, o) => sum + Number(o.delivery_fee || 0), 0);
+  const paid = filtered.reduce((sum, o) => sum + Number(o.total || 0), 0);
+  const revenue = paid - fees;
   document.getElementById('stat-revenue').textContent = money(revenue);
+  document.getElementById('stat-fees').textContent = money(fees);
+  document.getElementById('stat-paid').textContent = money(paid);
   document.getElementById('stat-orders').textContent = filtered.length;
 
   const byRest = {};
   filtered.forEach(o => {
-    byRest[o.restaurant_id] = (byRest[o.restaurant_id] || 0) + Number(o.total);
+    byRest[o.restaurant_id] = (byRest[o.restaurant_id] || 0) + Number(o.total || 0) - Number(o.delivery_fee || 0);
   });
   const sortedRest = Object.entries(byRest).sort((a, b) => b[1] - a[1]);
   const revEl = document.getElementById('revenue-by-restaurant');
