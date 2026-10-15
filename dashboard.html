@@ -215,12 +215,17 @@ const Alerts = (() => {
   let unlocked = false;
   let ringing = false;
   let overlay = null;
+  let overlayKey = '';
   let currentAck = null;
   let vibTimer = null;
   let titleTimer = null;
+  let testTimer = null;
   let pushState = 'off';
+  let pushError = '';
+  let pushBusy = false;
   let identityFn = null;
   let panelId = null;
+  let panelHtml = '';
   let wakeLock = null;
   const baseTitle = document.title;
 
@@ -228,12 +233,11 @@ const Alerts = (() => {
     return String(s == null ? '' : s).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
   }
 
-  // Sirène générée en WAV (jouée par un élément audio : elle reste audible même en mode silencieux sur iPhone)
+  // Sirène générée en WAV, jouée par un élément audio (audible même en mode silencieux sur iPhone)
   function buildWavUrl() {
     const sr = 22050;
     const lead = 0.25, beep = 0.18, count = 8;
-    const total = lead + beep * count;
-    const n = Math.floor(sr * total);
+    const n = Math.floor(sr * (lead + beep * count));
     const buf = new ArrayBuffer(44 + n * 2);
     const v = new DataView(buf);
     const w = (o, s) => { for (let i = 0; i < s.length; i++) v.setUint8(o + i, s.charCodeAt(i)); };
@@ -270,18 +274,21 @@ const Alerts = (() => {
     return audioEl;
   }
 
+  // Débloque le son (doit être appelé pendant un appui de l'utilisateur)
   function unlock() {
+    if (unlocked) return;
     let a;
     try { a = ensureAudio(); } catch (e) { return; }
-    const p = a.play();
-    if (p && p.then) {
-      p.then(() => {
-        unlocked = true;
-        if (!ringing) { a.pause(); a.currentTime = 0; }
-        renderPanel();
-        if (ringing && overlay) { const h = overlay.querySelector('.ao-hint'); if (h) h.remove(); }
-      }).catch(() => {});
-    } else { unlocked = true; }
+    let p;
+    try { p = a.play(); } catch (e) { return; }
+    const ok = () => {
+      if (unlocked) return;
+      unlocked = true;
+      if (!ringing) { try { a.pause(); a.currentTime = 0; } catch (e) {} }
+      if (overlay) { const h = overlay.querySelector('.ao-hint'); if (h) h.style.display = 'none'; }
+      renderPanel();
+    };
+    if (p && p.then) p.then(ok).catch(() => {}); else ok();
   }
 
   function injectStyle() {
@@ -290,37 +297,53 @@ const Alerts = (() => {
     st.id = 'alerts-style';
     st.textContent = `
       #alert-overlay { position:fixed; inset:0; z-index:9999; display:none; align-items:center; justify-content:center; padding:20px;
-        background:rgba(8,8,8,0.96); animation: aoPulse 0.9s infinite; }
+        background:rgba(8,8,8,0.96); animation: aoPulse 0.9s infinite; touch-action: manipulation; }
       @keyframes aoPulse { 0%,100% { box-shadow: inset 0 0 0 10px #C4432B; } 50% { box-shadow: inset 0 0 0 10px #F5C04A; } }
       #alert-overlay .ao-box { width:100%; max-width:420px; text-align:center; color:#fff; font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif; }
       #alert-overlay .ao-title { font-size:30px; font-weight:800; letter-spacing:-0.5px; color:#F5C04A; line-height:1.1; margin-bottom:18px; }
       #alert-overlay .ao-lines { font-size:16px; color:#fff; margin-bottom:18px; line-height:1.5; max-height:34vh; overflow:auto; }
       #alert-overlay .ao-hint { font-size:13px; color:#F5C04A; margin-bottom:14px; }
-      #alert-overlay .ao-btn { width:100%; border:none; border-radius:14px; padding:20px; font-size:20px; font-weight:800; letter-spacing:1px; background:#F5C04A; color:#080808; cursor:pointer; }
+      #alert-overlay .ao-btn { width:100%; border:none; border-radius:14px; padding:20px; font-size:20px; font-weight:800; letter-spacing:1px; background:#F5C04A; color:#080808; cursor:pointer; touch-action: manipulation; }
       .ap { background:#111; border:1px solid #242424; border-radius:12px; padding:12px 14px; margin-bottom:14px; font-size:12.5px; color:#8F8F8F; }
       .ap-row { display:flex; justify-content:space-between; gap:10px; padding:4px 0; }
       .ap-row b { font-weight:700; text-align:right; }
       .ap .ok { color:#5C8A63; } .ap .warn { color:#F5C04A; } .ap .bad { color:#C4432B; }
+      .ap-note { font-size:11.5px; line-height:1.45; margin-top:6px; color:#8F8F8F; }
       .ap-btns { display:flex; gap:8px; margin-top:8px; flex-wrap:wrap; }
-      .ap-btns button { flex:1; min-width:140px; border:1px solid #303030; background:#171717; color:#fff; border-radius:9px; padding:10px; font-size:12.5px; font-weight:700; cursor:pointer; }
+      .ap-btns button { flex:1; min-width:140px; border:1px solid #303030; background:#171717; color:#fff; border-radius:9px; padding:12px 10px; font-size:13px; font-weight:700; cursor:pointer; touch-action: manipulation; }
       .ap-btns button.primary { background:#F5C04A; color:#080808; border-color:#F5C04A; }
+      .ap-btns button[disabled] { opacity:0.6; }
     `;
     document.head.appendChild(st);
   }
 
-  function showOverlay(opts) {
+  // ----- Écran d'alerte : construit une seule fois, puis seul le texte est mis à jour -----
+  function ensureOverlay() {
     injectStyle();
-    if (!overlay) {
-      overlay = document.createElement('div');
-      overlay.id = 'alert-overlay';
-      document.body.appendChild(overlay);
+    if (overlay) return overlay;
+    overlay = document.createElement('div');
+    overlay.id = 'alert-overlay';
+    overlay.innerHTML = '<div class="ao-box"><div class="ao-title"></div><div class="ao-lines"></div><div class="ao-hint">Touchez l\'écran pour activer le son</div><button class="ao-btn" id="ao-ack" type="button">J\'AI VU</button></div>';
+    overlay.querySelector('#ao-ack').addEventListener('click', (e) => { e.stopPropagation(); unlock(); ack(); });
+    overlay.addEventListener('click', () => unlock());
+    document.body.appendChild(overlay);
+    return overlay;
+  }
+
+  function showOverlay(opts) {
+    const o = ensureOverlay();
+    const key = JSON.stringify([opts.title, opts.lines || []]);
+    if (key !== overlayKey) {
+      overlayKey = key;
+      o.querySelector('.ao-title').textContent = opts.title;
+      o.querySelector('.ao-lines').innerHTML = (opts.lines || []).map(l => `<div>${esc(l)}</div>`).join('');
     }
-    overlay.innerHTML = `<div class="ao-box"><div class="ao-title">${esc(opts.title)}</div><div class="ao-lines">${(opts.lines || []).map(l => `<div>${esc(l)}</div>`).join('')}</div>${unlocked ? '' : '<div class="ao-hint">Touchez l\'écran pour activer le son</div>'}<button class="ao-btn" id="ao-ack" type="button">J'AI VU</button></div>`;
-    overlay.querySelector('#ao-ack').onclick = () => ack();
-    overlay.style.display = 'flex';
+    o.querySelector('.ao-hint').style.display = unlocked ? 'none' : 'block';
+    if (o.style.display !== 'flex') o.style.display = 'flex';
   }
 
   function start(opts) {
+    if (testTimer) { clearTimeout(testTimer); testTimer = null; }
     currentAck = opts.onAck || null;
     showOverlay(opts);
     if (ringing) return;
@@ -329,7 +352,7 @@ const Alerts = (() => {
       const a = ensureAudio();
       a.currentTime = 0;
       const p = a.play();
-      if (p && p.then) p.then(() => { unlocked = true; renderPanel(); }).catch(() => {});
+      if (p && p.then) p.then(() => { if (!unlocked) { unlocked = true; renderPanel(); } }).catch(() => {});
     } catch (e) {}
     try {
       if (navigator.vibrate) {
@@ -338,19 +361,18 @@ const Alerts = (() => {
       }
     } catch (e) {}
     titleTimer = setInterval(() => { document.title = (document.title === baseTitle) ? opts.title : baseTitle; }, 700);
-    renderPanel();
   }
 
   function stop() {
-    if (!ringing && !(overlay && overlay.style.display !== 'none')) return;
     ringing = false;
+    overlayKey = '';
+    if (testTimer) { clearTimeout(testTimer); testTimer = null; }
     try { if (audioEl) { audioEl.pause(); audioEl.currentTime = 0; } } catch (e) {}
     if (vibTimer) { clearInterval(vibTimer); vibTimer = null; }
     try { if (navigator.vibrate) navigator.vibrate(0); } catch (e) {}
     if (titleTimer) { clearInterval(titleTimer); titleTimer = null; }
     document.title = baseTitle;
     if (overlay) overlay.style.display = 'none';
-    renderPanel();
   }
 
   function ack() {
@@ -363,7 +385,7 @@ const Alerts = (() => {
   function test() {
     unlock();
     start({ title: "TEST D'ALARME", lines: ['Si vous entendez ce son, les alertes fonctionnent.'], onAck: null });
-    setTimeout(() => { if (currentAck === null) stop(); }, 6000);
+    testTimer = setTimeout(() => { testTimer = null; if (currentAck === null) stop(); }, 6000);
   }
 
   // ----- Notifications push (appli fermée) -----
@@ -374,53 +396,69 @@ const Alerts = (() => {
   }
 
   function isIOS() { return /iphone|ipad|ipod/i.test(navigator.userAgent) || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1); }
-  function isStandalone() { return window.matchMedia('(display-mode: standalone)').matches || window.navigator.standalone === true; }
+  function isStandalone() { return (window.matchMedia && window.matchMedia('(display-mode: standalone)').matches) || window.navigator.standalone === true; }
+  function pushSupported() { return ('serviceWorker' in navigator) && ('PushManager' in window) && ('Notification' in window); }
 
-  function pushSupported() {
-    return ('serviceWorker' in navigator) && ('PushManager' in window) && ('Notification' in window);
+  function withTimeout(promise, ms, label) {
+    return Promise.race([promise, new Promise((_, rej) => setTimeout(() => rej(new Error(label + ' (délai dépassé)')), ms))]);
   }
 
   async function subscribeAndRegister() {
-    const reg = await navigator.serviceWorker.register('sw-driver.js');
-    await navigator.serviceWorker.ready;
+    const reg = await withTimeout(navigator.serviceWorker.register('sw-driver.js'), 15000, 'service');
+    await withTimeout(navigator.serviceWorker.ready, 15000, 'service');
     const want = b64ToU8(PUSH_VAPID_PUBLIC);
     let sub = await reg.pushManager.getSubscription();
     if (sub && sub.options && sub.options.applicationServerKey) {
       const have = new Uint8Array(sub.options.applicationServerKey);
       const same = have.length === want.length && have.every((x, i) => x === want[i]);
-      if (!same) { await sub.unsubscribe(); sub = null; }
+      if (!same) { try { await sub.unsubscribe(); } catch (e) {} sub = null; }
     }
-    if (!sub) sub = await reg.pushManager.subscribe({ userVisibleOnly: true, applicationServerKey: want });
+    if (!sub) sub = await withTimeout(reg.pushManager.subscribe({ userVisibleOnly: true, applicationServerKey: want }), 20000, 'abonnement');
     const j = sub.toJSON();
     const id = identityFn ? identityFn() : null;
-    if (!id) throw new Error('no identity');
+    if (!id) throw new Error('compte non chargé');
     const { error } = await client.rpc('register_push', {
       p_endpoint: j.endpoint, p_sub: j, p_role: id.role,
       p_restaurant_id: id.restaurant_id || null, p_driver_id: id.driver_id || null
     });
-    if (error) throw error;
+    if (error) throw new Error(error.message || 'enregistrement');
     pushState = 'on';
+    pushError = '';
   }
 
-  async function enablePush() {
+  // Appelé directement par l'appui sur le bouton (obligatoire sur iPhone)
+  function enablePush() {
     unlock();
-    try {
-      if (!pushSupported()) { pushState = 'unsupported'; renderPanel(); return; }
-      const perm = await Notification.requestPermission();
-      if (perm !== 'granted') { pushState = 'denied'; renderPanel(); return; }
-      await subscribeAndRegister();
-    } catch (e) {
-      pushState = 'error';
-    }
+    if (pushBusy) return;
+    if (!pushSupported()) { pushState = 'unsupported'; renderPanel(); return; }
+    let permPromise;
+    try { permPromise = Notification.requestPermission(); } catch (e) { permPromise = null; }
+    pushBusy = true;
     renderPanel();
+    Promise.resolve(permPromise).then(async (perm) => {
+      perm = perm || Notification.permission;
+      if (perm === 'granted') {
+        await subscribeAndRegister();
+      } else if (perm === 'denied') {
+        pushState = 'denied';
+      } else {
+        pushState = 'off';
+      }
+    }).catch((e) => {
+      pushState = 'error';
+      pushError = (e && e.message) ? e.message : String(e);
+    }).finally(() => {
+      pushBusy = false;
+      renderPanel();
+    });
   }
 
   async function syncPush() {
     try {
-      if (!pushSupported()) { pushState = 'unsupported'; renderPanel(); return; }
-      if (Notification.permission === 'denied') { pushState = 'denied'; renderPanel(); return; }
-      if (Notification.permission === 'granted') { await subscribeAndRegister(); }
-    } catch (e) { pushState = 'error'; }
+      if (!pushSupported()) { pushState = 'unsupported'; }
+      else if (Notification.permission === 'denied') { pushState = 'denied'; }
+      else if (Notification.permission === 'granted') { await subscribeAndRegister(); }
+    } catch (e) { pushState = 'error'; pushError = (e && e.message) ? e.message : String(e); }
     renderPanel();
   }
 
@@ -431,6 +469,7 @@ const Alerts = (() => {
       const sub = reg && await reg.pushManager.getSubscription();
       if (sub) await client.rpc('unregister_push', { p_endpoint: sub.endpoint });
     } catch (e) {}
+    pushState = 'off';
   }
 
   // ----- Écran allumé -----
@@ -444,30 +483,49 @@ const Alerts = (() => {
   }
   document.addEventListener('visibilitychange', () => { if (document.visibilityState === 'visible') keepAwake(); });
 
-  // ----- Panneau d'état -----
+  // ----- Panneau d'état : redessiné uniquement si son contenu change -----
   function renderPanel() {
     const el = panelId && document.getElementById(panelId);
     if (!el) return;
-    let pushTxt, pushCls;
-    if (pushState === 'on') { pushTxt = 'Activées'; pushCls = 'ok'; }
-    else if (pushState === 'denied') { pushTxt = 'Refusées (à autoriser dans les réglages)'; pushCls = 'bad'; }
-    else if (pushState === 'unsupported') {
-      pushTxt = (isIOS() && !isStandalone()) ? "Ajoutez l'appli à l'écran d'accueil" : 'Non disponibles sur ce navigateur';
-      pushCls = 'warn';
+    if (!el.dataset.bound) {
+      el.dataset.bound = '1';
+      el.addEventListener('click', (e) => {
+        const b = e.target.closest('button');
+        if (!b) return;
+        if (b.dataset.act === 'test') test();
+        else if (b.dataset.act === 'push') enablePush();
+      });
     }
-    else if (pushState === 'error') { pushTxt = 'Erreur, réessayez'; pushCls = 'bad'; }
+    let pushTxt, pushCls, note = '';
+    if (pushState === 'on') { pushTxt = 'Activées'; pushCls = 'ok'; }
+    else if (pushBusy) { pushTxt = 'Activation…'; pushCls = 'warn'; }
+    else if (pushState === 'denied') {
+      pushTxt = 'Refusées'; pushCls = 'bad';
+      note = isIOS() ? "Pour les autoriser : Réglages de l'iPhone, puis Notifications, puis Dallas Bouff', puis Autoriser les notifications." : "Autorisez les notifications pour ce site dans les réglages du navigateur.";
+    }
+    else if (pushState === 'unsupported') {
+      pushCls = 'warn';
+      if (isIOS() && !isStandalone()) { pushTxt = 'Non disponibles ici'; note = "Ajoutez l'appli à l'écran d'accueil (Partager, puis Sur l'écran d'accueil) et ouvrez-la depuis cette icône."; }
+      else if (isIOS()) { pushTxt = 'Non disponibles'; note = "Mettez à jour votre iPhone (iOS 16.4 ou plus récent)."; }
+      else { pushTxt = 'Non disponibles sur ce navigateur'; }
+    }
+    else if (pushState === 'error') { pushTxt = 'Erreur, réessayez'; pushCls = 'bad'; note = pushError ? 'Détail : ' + pushError : ''; }
     else { pushTxt = 'À activer'; pushCls = 'warn'; }
-    el.innerHTML = `<div class="ap">
-      <div class="ap-row"><span>Son d'alerte</span><b class="${unlocked ? 'ok' : 'warn'}">${unlocked ? 'Activé' : 'Touchez le bouton Tester'}</b></div>
-      <div class="ap-row"><span>Notifications (appli fermée)</span><b class="${pushCls}">${pushTxt}</b></div>
+    const showPushBtn = pushState !== 'on' && pushState !== 'unsupported';
+    const html = `<div class="ap">
+      <div class="ap-row"><span>Son d'alerte</span><b class="${unlocked ? 'ok' : 'warn'}">${unlocked ? 'Activé' : 'Touchez Tester l\'alarme'}</b></div>
+      <div class="ap-row"><span>Notifications (appli fermée)</span><b class="${pushCls}">${esc(pushTxt)}</b></div>
+      ${note ? `<div class="ap-note">${esc(note)}</div>` : ''}
       <div class="ap-btns">
-        <button type="button" id="ap-test">Tester l'alarme</button>
-        ${pushState === 'on' ? '' : '<button type="button" class="primary" id="ap-push">Activer les notifications</button>'}
+        <button type="button" data-act="test">Tester l'alarme</button>
+        ${showPushBtn ? `<button type="button" class="primary" data-act="push"${pushBusy ? ' disabled' : ''}>Activer les notifications</button>` : ''}
       </div></div>`;
-    const t = document.getElementById('ap-test'); if (t) t.onclick = test;
-    const p = document.getElementById('ap-push'); if (p) p.onclick = enablePush;
+    if (html === panelHtml) return;
+    panelHtml = html;
+    el.innerHTML = html;
   }
 
+  let swBound = false;
   function init(opts) {
     panelId = opts.panelId;
     identityFn = opts.identity;
@@ -475,18 +533,17 @@ const Alerts = (() => {
     renderPanel();
     syncPush();
     keepAwake();
-    if (navigator.serviceWorker && !Alerts._swBound) {
-      Alerts._swBound = true;
+    if (!swBound && navigator.serviceWorker) {
+      swBound = true;
       navigator.serviceWorker.addEventListener('message', (e) => {
         if (e.data && e.data.type === 'push' && typeof opts.onPush === 'function') opts.onPush();
       });
     }
   }
 
-  // Première interaction : on débloque le son pour que l'alarme puisse sonner plus tard
-  const firstGesture = () => { unlock(); };
-  document.addEventListener('touchstart', firstGesture, { passive: true });
-  document.addEventListener('click', firstGesture);
+  // Premier appui n'importe où : on débloque le son pour que l'alarme puisse sonner ensuite
+  document.addEventListener('touchend', unlock, { passive: true });
+  document.addEventListener('click', unlock);
 
   return { init, start, stop, test, unlock, unregisterPush, isRinging: () => ringing };
 })();
@@ -513,7 +570,7 @@ function driverAvatar(d, size) {
   return `<div style="width:${size}px; height:${size}px; border-radius:50%; background:var(--raised); border:1px solid var(--line); flex-shrink:0;"></div>`;
 }
 
-function money(n) { return n.toLocaleString('fr-FR') + ' F'; }
+function money(n) { return Number(n || 0).toLocaleString('fr-FR') + ' F'; }
 
 async function login() {
   const email = document.getElementById('login-email').value.trim();
@@ -686,11 +743,11 @@ async function loadOrders() {
           <div class="mono" style="font-weight:700; font-size:13px;">#${o.id.slice(0,8).toUpperCase()}</div>
           <div class="badge" style="background:${isLast ? 'var(--palm)' : 'var(--bg)'}; color:${isLast ? 'var(--cream)' : 'var(--mango)'}; border:${isLast ? 'none' : '1px solid var(--mango)'};">${o.status}</div>
         </div>
-        <div style="font-size:13px; margin-bottom:2px;">${o.customer_name} · ${o.phone}</div>
-        ${o.address ? `<div style="font-size:12.5px; color:var(--creamDim); margin-bottom:6px;">${o.address}</div>` : ''}
+        <div style="font-size:13px; margin-bottom:2px;">${escHtml(o.customer_name)} · ${escHtml(o.phone)}</div>
+        ${o.address ? `<div style="font-size:12.5px; color:var(--creamDim); margin-bottom:6px;">${escHtml(o.address)}</div>` : ''}
         ${gpsLink}
         <div style="border-top:1px solid var(--line); padding-top:8px; margin-top:8px;">
-          ${o.items.map(i => `<div class="line-item"><span>${i.qty}× ${i.name}</span><span>${money(i.price*i.qty)}</span></div>`).join('')}
+          ${(o.items || []).map(i => `<div class="line-item"><span>${i.qty}× ${escHtml(i.name)}</span><span>${money(i.price*i.qty)}</span></div>`).join('')}
           <div class="line-item" style="font-weight:700; color:var(--cream); margin-top:4px;"><span>Total</span><span>${money(o.total)}</span></div>
         </div>
         ${actionZone}
