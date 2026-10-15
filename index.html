@@ -270,7 +270,77 @@
 
 
 <script>
-const client = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+const client = supabase.createClient(SUPABASE_URL, SUPABASE_KEY, { auth: { persistSession: true, autoRefreshToken: true, detectSessionInUrl: false } });
+
+// ---------- Session durable ----------
+// Une erreur réseau passagère ne doit JAMAIS déconnecter l'utilisateur.
+const SESSION_BACKUP_KEY = 'dbf-session-backup';
+client.auth.onAuthStateChange((event, session) => {
+  try {
+    if (session && session.refresh_token) {
+      localStorage.setItem(SESSION_BACKUP_KEY, JSON.stringify({ a: session.access_token, r: session.refresh_token }));
+    }
+  } catch (e) {}
+});
+
+function hasSessionBackup() {
+  try { return !!localStorage.getItem(SESSION_BACKUP_KEY); } catch (e) { return false; }
+}
+
+async function getSessionSafe() {
+  try {
+    const { data } = await client.auth.getSession();
+    if (data && data.session) return data.session;
+  } catch (e) {}
+  try {
+    const raw = localStorage.getItem(SESSION_BACKUP_KEY);
+    if (raw) {
+      const b = JSON.parse(raw);
+      const { data, error } = await client.auth.setSession({ access_token: b.a, refresh_token: b.r });
+      if (data && data.session) return data.session;
+      if (error && error.status && error.status >= 400 && error.status < 500) {
+        localStorage.removeItem(SESSION_BACKUP_KEY);
+      }
+    }
+  } catch (e) {}
+  return null;
+}
+
+async function signOutLocal() {
+  try { localStorage.removeItem(SESSION_BACKUP_KEY); } catch (e) {}
+  try { await client.auth.signOut({ scope: 'local' }); } catch (e) {}
+}
+
+let restoreRunning = false;
+async function restoreSession(afterFn) {
+  if (restoreRunning) return;
+  restoreRunning = true;
+  try {
+    for (let i = 0; i < 6; i++) {
+      const s = await getSessionSafe();
+      if (s) { await afterFn(); return; }
+      if (!hasSessionBackup()) return;
+      await new Promise(r => setTimeout(r, 2500));
+    }
+  } finally { restoreRunning = false; }
+}
+
+function onAppResume() {
+  try { client.auth.startAutoRefresh(); } catch (e) {}
+  try {
+    if (typeof isAppLoggedIn === 'function' && isAppLoggedIn()) {
+      getSessionSafe();
+      if (typeof onResumeLoggedIn === 'function') onResumeLoggedIn();
+    } else if (typeof afterLogin === 'function') {
+      restoreSession(afterLogin);
+    }
+  } catch (e) {}
+}
+document.addEventListener('visibilitychange', () => { if (document.visibilityState === 'visible') onAppResume(); });
+window.addEventListener('pageshow', (e) => { if (e.persisted) onAppResume(); });
+window.addEventListener('online', onAppResume);
+window.addEventListener('focus', onAppResume);
+
 
 // Ajoute les fonds de carte (rues / satellite) + échelle à une carte Leaflet
 function equipMap(map) {
@@ -376,10 +446,15 @@ function phoneToEmail(phone) {
 
 // ---------- Comptes clients ----------
 
+function isAppLoggedIn() { return !!currentCustomer; }
+function afterLogin() { return refreshCustomer(); }
+function onResumeLoggedIn() {}
+
 async function refreshCustomer() {
-  const { data: { user } } = await client.auth.getUser();
-  if (!user) { currentCustomer = null; return; }
-  const { data } = await client.from('customers').select('*').eq('auth_user_id', user.id).maybeSingle();
+  const session = await getSessionSafe();
+  if (!session) { if (!hasSessionBackup()) currentCustomer = null; return; }
+  const { data, error } = await client.from('customers').select('*').eq('auth_user_id', session.user.id).maybeSingle();
+  if (error) return; // erreur réseau : on garde le client déjà connecté
   currentCustomer = data || null;
 }
 
@@ -502,7 +577,7 @@ async function loginCustomer() {
 }
 
 async function logoutCustomer() {
-  await client.auth.signOut();
+  await signOutLocal();
   currentCustomer = null;
   renderAccount();
 }
@@ -1198,6 +1273,7 @@ function dismissInstallBanner() {
 (async () => {
   await loadRestaurants();
   await refreshCustomer();
+  if (!currentCustomer && hasSessionBackup()) restoreSession(async () => { await refreshCustomer(); });
   if (isIOS() && !isStandalone()) showInstallBanner('ios');
 })();
 </script>
