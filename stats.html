@@ -142,7 +142,77 @@
 </nav>
 
 <script>
-const client = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+const client = supabase.createClient(SUPABASE_URL, SUPABASE_KEY, { auth: { persistSession: true, autoRefreshToken: true, detectSessionInUrl: false } });
+
+// ---------- Session durable ----------
+// Une erreur réseau passagère ne doit JAMAIS déconnecter l'utilisateur.
+const SESSION_BACKUP_KEY = 'dbf-session-backup';
+client.auth.onAuthStateChange((event, session) => {
+  try {
+    if (session && session.refresh_token) {
+      localStorage.setItem(SESSION_BACKUP_KEY, JSON.stringify({ a: session.access_token, r: session.refresh_token }));
+    }
+  } catch (e) {}
+});
+
+function hasSessionBackup() {
+  try { return !!localStorage.getItem(SESSION_BACKUP_KEY); } catch (e) { return false; }
+}
+
+async function getSessionSafe() {
+  try {
+    const { data } = await client.auth.getSession();
+    if (data && data.session) return data.session;
+  } catch (e) {}
+  try {
+    const raw = localStorage.getItem(SESSION_BACKUP_KEY);
+    if (raw) {
+      const b = JSON.parse(raw);
+      const { data, error } = await client.auth.setSession({ access_token: b.a, refresh_token: b.r });
+      if (data && data.session) return data.session;
+      if (error && error.status && error.status >= 400 && error.status < 500) {
+        localStorage.removeItem(SESSION_BACKUP_KEY);
+      }
+    }
+  } catch (e) {}
+  return null;
+}
+
+async function signOutLocal() {
+  try { localStorage.removeItem(SESSION_BACKUP_KEY); } catch (e) {}
+  try { await client.auth.signOut({ scope: 'local' }); } catch (e) {}
+}
+
+let restoreRunning = false;
+async function restoreSession(afterFn) {
+  if (restoreRunning) return;
+  restoreRunning = true;
+  try {
+    for (let i = 0; i < 6; i++) {
+      const s = await getSessionSafe();
+      if (s) { await afterFn(); return; }
+      if (!hasSessionBackup()) return;
+      await new Promise(r => setTimeout(r, 2500));
+    }
+  } finally { restoreRunning = false; }
+}
+
+function onAppResume() {
+  try { client.auth.startAutoRefresh(); } catch (e) {}
+  try {
+    if (typeof isAppLoggedIn === 'function' && isAppLoggedIn()) {
+      getSessionSafe();
+      if (typeof onResumeLoggedIn === 'function') onResumeLoggedIn();
+    } else if (typeof afterLogin === 'function') {
+      restoreSession(afterLogin);
+    }
+  } catch (e) {}
+}
+document.addEventListener('visibilitychange', () => { if (document.visibilityState === 'visible') onAppResume(); });
+window.addEventListener('pageshow', (e) => { if (e.persisted) onAppResume(); });
+window.addEventListener('online', onAppResume);
+window.addEventListener('focus', onAppResume);
+
 let myRestaurant = null;
 let allOrders = [];
 
@@ -163,18 +233,32 @@ async function login() {
   await afterLogin();
 }
 
+function isAppLoggedIn() { return !!myRestaurant; }
+
 async function afterLogin() {
-  const { data: { user } } = await client.auth.getUser();
-  if (!user) return;
+  const session = await getSessionSafe();
+  if (!session) return;
+  const user = session.user;
 
   const { data: rest, error } = await client.from('restaurants').select('*').eq('owner_email', user.email).maybeSingle();
-  if (error || !rest) {
+  if (error) {
+    // Erreur réseau passagère : on garde la session et on réessaie
+    if (!myRestaurant) {
+      const errEl = document.getElementById('login-error');
+      errEl.textContent = "Connexion lente, nouvelle tentative…";
+      errEl.style.display = 'block';
+      setTimeout(() => { if (!myRestaurant) restoreSession(afterLogin); }, 4000);
+    }
+    return;
+  }
+  if (!rest) {
     const errEl = document.getElementById('login-error');
     errEl.textContent = "Ce compte n'est relié à aucun restaurant.";
     errEl.style.display = 'block';
-    await client.auth.signOut();
+    await signOutLocal();
     return;
   }
+  document.getElementById('login-error').style.display = 'none';
 
   myRestaurant = rest;
   document.getElementById('login-screen').style.display = 'none';
@@ -186,7 +270,7 @@ async function afterLogin() {
 }
 
 async function logout() {
-  await client.auth.signOut();
+  await signOutLocal();
   myRestaurant = null;
   document.getElementById('stats-screen').style.display = 'none';
   document.getElementById('bottom-nav').style.display = 'none';
@@ -287,10 +371,7 @@ function renderAll() {
       `).join('');
 }
 
-(async () => {
-  const { data: { session } } = await client.auth.getSession();
-  if (session) await afterLogin();
-})();
+restoreSession(afterLogin);
 </script>
 
 </body>
