@@ -97,7 +97,7 @@
 
     <div class="stats-grid">
       <div class="stat-card">
-        <div class="stat-label">Encaissé</div>
+        <div class="stat-label">Ventes des plats</div>
         <div class="stat-value mono" id="stat-revenue">—</div>
       </div>
       <div class="stat-card">
@@ -310,7 +310,8 @@ function renderAll() {
   const filtered = getFilteredByPeriod();
   const delivered = filtered; // on compte toutes les commandes passées, quel que soit leur statut actuel
 
-  const revenue = delivered.reduce((sum, o) => sum + Number(o.total), 0);
+  // Les frais de livraison ne reviennent pas au restaurant : on les retire
+  const revenue = delivered.reduce((sum, o) => sum + Number(o.total || 0) - Number(o.delivery_fee || 0), 0);
   const orderCount = delivered.length;
   const dishCount = {};
   const priceRangeCount = {};
