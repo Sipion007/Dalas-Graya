@@ -61,6 +61,14 @@
   .nav-item svg { width:21px; height:21px; stroke:var(--creamDim); fill:none; stroke-width:1.7; }
   .nav-item.active { color:var(--mango); }
   .nav-item.active svg { stroke:var(--mango); }
+  .req { margin-top:10px; padding:11px 12px; border-radius:11px; background:rgba(245,192,74,.07); border:1px solid rgba(245,192,74,.32); }
+  .req.has-allergy { background:rgba(196,67,43,.10); border-color:rgba(196,67,43,.55); }
+  .req-title { font-size:12.5px; font-weight:700; color:var(--mango); margin-bottom:8px; }
+  .req.has-allergy .req-title { color:#F0A99A; }
+  .req-chips { display:flex; flex-wrap:wrap; gap:6px; }
+  .req-chip { font-size:12px; font-weight:600; padding:5px 10px; border-radius:999px; background:#1C1C1C; border:1px solid #2E2E2E; color:#E6E6E6; }
+  .req-chip.allergy { background:#C4432B; border-color:#C4432B; color:#fff; font-weight:700; }
+  .req-note { font-size:13px; color:#E6E6E6; margin-top:8px; line-height:1.45; }
 </style>
 </head>
 <body>
@@ -652,7 +660,12 @@ function checkNewOrders(list) {
   const ids = fresh.map(o => o.id);
   Alerts.start({
     title: fresh.length > 1 ? fresh.length + ' NOUVELLES COMMANDES' : 'NOUVELLE COMMANDE',
-    lines: fresh.slice(0, 4).map(o => (o.customer_name || 'Client') + ' · ' + money(o.total)),
+    lines: fresh.slice(0, 4).reduce((acc, o) => {
+      acc.push((o.customer_name || 'Client') + ' · ' + money(o.total));
+      const allergies = (o.preferences || []).filter(p => p.startsWith('Allergie'));
+      if (allergies.length) acc.push('Attention : ' + allergies.join(', ').toLowerCase());
+      return acc;
+    }, []),
     onAck: () => alertAckedAdd(ACK_KEY_REST, ids)
   });
 }
@@ -746,14 +759,29 @@ async function loadOrders() {
         <div style="font-size:13px; margin-bottom:2px;">${escHtml(o.customer_name)} · ${escHtml(o.phone)}</div>
         ${o.address ? `<div style="font-size:12.5px; color:var(--creamDim); margin-bottom:6px;">${escHtml(o.address)}</div>` : ''}
         ${gpsLink}
+        ${requestsHtml(o)}
         <div style="border-top:1px solid var(--line); padding-top:8px; margin-top:8px;">
           ${(o.items || []).map(i => `<div class="line-item"><span>${i.qty}× ${escHtml(i.name)}</span><span>${money(i.price*i.qty)}</span></div>`).join('')}
-          <div class="line-item" style="font-weight:700; color:var(--cream); margin-top:4px;"><span>Total</span><span>${money(o.total)}</span></div>
+          ${o.delivery_fee ? `<div class="line-item"><span>Livraison</span><span>${money(o.delivery_fee)}</span></div>` : ''}
+          <div class="line-item" style="font-weight:700; color:var(--cream); margin-top:4px;"><span>${o.delivery_fee ? 'Total payé par le client' : 'Total'}</span><span>${money(o.total)}</span></div>
         </div>
         ${actionZone}
       </div>
     `;
   }).join('');
+}
+
+function requestsHtml(o) {
+  const prefs = Array.isArray(o.preferences) ? o.preferences : [];
+  if (!prefs.length && !o.notes) return '';
+  const hasAllergy = prefs.some(p => p.startsWith('Allergie'));
+  const sorted = prefs.slice().sort((a, b) => (b.startsWith('Allergie') ? 1 : 0) - (a.startsWith('Allergie') ? 1 : 0));
+  return `
+    <div class="req${hasAllergy ? ' has-allergy' : ''}">
+      <div class="req-title">${hasAllergy ? 'Allergie signalée : à respecter absolument' : 'Demandes du client'}</div>
+      ${sorted.length ? `<div class="req-chips">${sorted.map(p => `<span class="req-chip${p.startsWith('Allergie') ? ' allergy' : ''}">${escHtml(p)}</span>`).join('')}</div>` : ''}
+      ${o.notes ? `<div class="req-note">« ${escHtml(o.notes)} »</div>` : ''}
+    </div>`;
 }
 
 async function advance(orderId, newStatus) {
