@@ -57,7 +57,7 @@
   .hero { padding: 20px 20px 0; margin-bottom: 0; }
   .hero-title { font-weight:700; font-size:35px; line-height:1.05; letter-spacing:-1px; color:var(--cream); }
   .hero-title-accent { color: var(--mango); font-weight:700; font-size:35px; letter-spacing:-1px; display:block; margin-top:-3px; }
-  .hero-sub { font-size:15px; line-height:23px; color: var(--creamDim); margin-top:14px; margin-bottom: 18px; }
+  .hero-sub { font-size:15px; line-height:23px; color: var(--creamDim); margin-top:12px; margin-bottom: 18px; }
   .btn-hero-cta { width:100%; border:none; border-radius:14px; height:57px; font-weight:700; font-size:16px;
     cursor:pointer; color:#080808; background: linear-gradient(135deg, var(--mango), #F8D36B, var(--mangoDark));
     display:flex; align-items:center; justify-content:center; gap:12px; margin-top:13px; }
@@ -185,6 +185,96 @@
     border:2px solid var(--mango); display:flex; align-items:center; justify-content:center;
     background:linear-gradient(155deg, var(--raised), var(--surface)); }
   .driver-badge svg { width:46px; height:46px; stroke:var(--mango); fill:none; stroke-width:1.6; }
+
+  /* ---------- Diaporama d'accueil ---------- */
+  .showcase { position:relative; margin:4px 0 16px; height:410px; border-radius:26px; overflow:hidden; background:var(--raised);
+    cursor:pointer; isolation:isolate; -webkit-tap-highlight-color:transparent; touch-action:pan-y; user-select:none; -webkit-user-select:none; }
+  .sc-slide { position:absolute; inset:0; margin:0; opacity:0; transition:opacity 1.1s cubic-bezier(.4,0,.2,1); }
+  .sc-slide.is-active { opacity:1; z-index:1; }
+  .sc-slide img { position:absolute; inset:0; width:100%; height:100%; object-fit:cover; transform:scale(1.02); will-change:transform; }
+  .sc-slide.is-active.kb-a img { animation: scZoomA 7.4s ease-out forwards; }
+  .sc-slide.is-active.kb-b img { animation: scZoomB 7.4s ease-out forwards; }
+  @keyframes scZoomA { from { transform:scale(1.02) translate3d(0,0,0); } to { transform:scale(1.12) translate3d(-2.5%,-1.5%,0); } }
+  @keyframes scZoomB { from { transform:scale(1.12) translate3d(2%,1.5%,0); } to { transform:scale(1.02) translate3d(0,0,0); } }
+  .sc-shade { position:absolute; inset:0; z-index:2; pointer-events:none;
+    background:linear-gradient(180deg, rgba(8,8,8,.55) 0%, rgba(8,8,8,0) 22%, rgba(8,8,8,0) 46%, rgba(8,8,8,.62) 74%, rgba(8,8,8,.94) 100%); }
+  .sc-bars { position:absolute; top:14px; left:16px; right:16px; z-index:3; display:flex; gap:5px; pointer-events:none; }
+  .sc-bars span { flex:1; height:3px; border-radius:2px; background:rgba(255,255,255,.26); overflow:hidden; }
+  .sc-bars i { display:block; height:100%; width:100%; background:#fff; transform:scaleX(0); transform-origin:left center; }
+  .sc-bars span.done i { transform:scaleX(1); }
+  .sc-bars span.run i { animation: scBar var(--sc-dur, 5600ms) linear forwards; }
+  .showcase.is-paused .sc-bars span.run i, .showcase.is-paused .sc-slide.is-active img { animation-play-state:paused; }
+  @keyframes scBar { from { transform:scaleX(0); } to { transform:scaleX(1); } }
+  .sc-rest { position:absolute; top:30px; left:16px; z-index:3; display:inline-flex; align-items:center; gap:8px; max-width:calc(100% - 32px);
+    padding:7px 13px 7px 10px; border-radius:999px; background:rgba(8,8,8,.48); backdrop-filter:blur(12px); -webkit-backdrop-filter:blur(12px);
+    border:1px solid rgba(255,255,255,.12); font-size:12.5px; font-weight:600; color:#fff; white-space:nowrap; }
+  .sc-rest-dot { width:8px; height:8px; border-radius:50%; flex-shrink:0; box-shadow:0 0 0 3px rgba(255,255,255,.08); }
+  .sc-rest-name { overflow:hidden; text-overflow:ellipsis; }
+  .sc-rest-state { color:#F0A99A; font-weight:500; }
+  .sc-info { position:absolute; left:20px; right:20px; bottom:20px; z-index:3; pointer-events:none; }
+  .sc-name { font-family:'Poppins', -apple-system, sans-serif; font-weight:800; font-size:29px; line-height:1.04; letter-spacing:-0.8px; color:#fff;
+    text-wrap:balance; text-shadow:0 2px 18px rgba(0,0,0,.35); display:-webkit-box; -webkit-line-clamp:2; -webkit-box-orient:vertical; overflow:hidden; }
+  .sc-row { display:flex; align-items:flex-end; justify-content:space-between; gap:14px; margin-top:12px; }
+  .sc-price { color:var(--mango); font-weight:700; font-size:21px; letter-spacing:-0.3px; line-height:1; }
+  .sc-price small { font-size:11px; color:rgba(255,255,255,.62); font-weight:600; margin-left:5px; letter-spacing:0.2px; }
+  .sc-go { display:inline-flex; align-items:center; gap:8px; height:40px; padding:0 8px 0 16px; border-radius:999px; background:var(--mango); color:#080808;
+    font-weight:700; font-size:13px; flex-shrink:0; }
+  .sc-go b { width:26px; height:26px; border-radius:50%; background:#080808; display:flex; align-items:center; justify-content:center; }
+  .sc-go svg { width:14px; height:14px; stroke:var(--mango); fill:none; stroke-width:2.2; }
+  .sc-info.swap .sc-name, .sc-info.swap .sc-row, .sc-rest.swap { animation: scText .7s cubic-bezier(.2,.7,.2,1) both; }
+  .sc-info.swap .sc-row { animation-delay:.08s; }
+  @keyframes scText { from { opacity:0; transform:translate3d(0,10px,0); } to { opacity:1; transform:none; } }
+  .sc-arrow { position:absolute; top:50%; z-index:3; width:40px; height:40px; margin-top:-20px; border-radius:50%; border:1px solid rgba(255,255,255,.18);
+    background:rgba(8,8,8,.4); backdrop-filter:blur(10px); -webkit-backdrop-filter:blur(10px); display:none; align-items:center; justify-content:center; cursor:pointer; }
+  .sc-arrow svg { width:16px; height:16px; stroke:#fff; fill:none; stroke-width:2; }
+  .sc-arrow.prev { left:12px; } .sc-arrow.next { right:12px; }
+  @media (hover:hover) and (pointer:fine) { .showcase:hover .sc-arrow { display:flex; } }
+  .showcase:focus-visible { outline:2px solid var(--mango); outline-offset:3px; }
+  @media (prefers-reduced-motion: reduce) {
+    .sc-slide { transition:opacity .4s linear; }
+    .sc-slide.is-active.kb-a img, .sc-slide.is-active.kb-b img { animation:none; transform:none; }
+    .sc-info.swap .sc-name, .sc-info.swap .sc-row, .sc-rest.swap { animation:none; }
+  }
+
+  /* ---------- Frais de livraison ---------- */
+  .fee-notice { position:fixed; left:50%; top:calc(84px + env(safe-area-inset-top)); z-index:120; width:calc(100% - 28px); max-width:452px;
+    transform:translate3d(-50%,-14px,0); opacity:0; pointer-events:none; transition:opacity .35s ease, transform .45s cubic-bezier(.2,.8,.2,1);
+    display:flex; align-items:center; gap:14px; padding:14px 14px 14px 16px; border-radius:18px; background:#151515;
+    border:1px solid rgba(245,192,74,.42); box-shadow:0 18px 40px rgba(0,0,0,.55); }
+  .fee-notice.show { opacity:1; transform:translate3d(-50%,0,0); pointer-events:auto; }
+  .fee-amount { font-family:'Poppins', -apple-system, sans-serif; font-weight:800; font-size:24px; letter-spacing:-0.6px; color:var(--mango); line-height:1; white-space:nowrap; }
+  .fee-amount small { font-size:13px; margin-left:2px; }
+  .fee-text { flex:1; min-width:0; }
+  .fee-title { font-size:14px; font-weight:700; color:#fff; }
+  .fee-sub { font-size:12px; color:var(--creamDim); margin-top:3px; line-height:1.4; }
+  .fee-ok { border:none; background:var(--mango); color:#080808; font-weight:700; font-size:12.5px; border-radius:10px; padding:10px 13px; cursor:pointer; flex-shrink:0; }
+  .fee-line { display:flex; align-items:center; gap:10px; margin:6px 0 14px; padding:11px 13px; border-radius:12px;
+    background:rgba(245,192,74,.08); border:1px solid rgba(245,192,74,.28); font-size:12.5px; color:#E9D9B0; line-height:1.4; }
+  .fee-line strong { color:var(--mango); font-size:15px; white-space:nowrap; }
+  .sum-box { background:var(--surface); border:1px solid var(--line); border-radius:14px; padding:14px; margin-bottom:16px; }
+  .sum-line { display:flex; justify-content:space-between; gap:12px; font-size:13.5px; color:var(--creamDim); padding:3px 0; }
+  .sum-line.sum-item span:first-child { color:var(--cream); }
+  .sum-line.fee span:last-child { color:var(--mango); font-weight:600; }
+  .sum-total { display:flex; justify-content:space-between; align-items:baseline; border-top:1px solid var(--line); margin-top:10px; padding-top:12px; }
+  .sum-total span:first-child { font-size:14px; font-weight:700; color:var(--cream); }
+  .sum-total span:last-child { font-family:'Poppins', -apple-system, sans-serif; font-weight:800; font-size:22px; color:var(--mango); letter-spacing:-0.5px; }
+  .cart-btn .cb-right { display:flex; flex-direction:column; align-items:flex-end; line-height:1.15; }
+  .cart-btn .cb-right small { font-size:10.5px; font-weight:600; opacity:.72; }
+
+  /* ---------- Préférences et allergies ---------- */
+  .prefs { margin:6px 0 18px; padding:16px; border-radius:16px; background:var(--surface); border:1px solid var(--line); }
+  .prefs-title { font-size:15px; font-weight:700; color:var(--cream); }
+  .prefs-help { font-size:12px; color:var(--creamDim); margin-top:3px; line-height:1.45; }
+  .prefs-group { font-size:12px; color:#B5B5B5; font-weight:600; margin:14px 0 8px; }
+  .chips { display:flex; flex-wrap:wrap; gap:8px; }
+  .chip { border:1px solid #2E2E2E; background:#141414; color:#D6D6D6; border-radius:999px; padding:9px 13px; font-size:13px; font-weight:500;
+    cursor:pointer; font-family:inherit; line-height:1.1; -webkit-tap-highlight-color:transparent; transition:background .15s, border-color .15s, color .15s; }
+  .chip[aria-pressed="true"] { background:var(--mango); border-color:var(--mango); color:#080808; font-weight:700; }
+  .chip.allergy[aria-pressed="true"] { background:#C4432B; border-color:#C4432B; color:#fff; }
+  .chip:focus-visible { outline:2px solid var(--mango); outline-offset:2px; }
+  .prefs textarea { margin:14px 0 0; min-height:64px; resize:vertical; }
+  .prefs-count { font-size:11px; color:#6E6E6E; text-align:right; margin-top:4px; }
+  .ticket-prefs { margin-top:10px; padding-top:10px; border-top:1.5px dashed #B8AA98; font-size:11.5px; line-height:1.5; color:#3A3027; }
 </style>
 </head>
 <body>
@@ -236,6 +326,15 @@
   </div>
   <button class="install-banner-btn" id="install-banner-btn" onclick="handleInstallClick()">Installer</button>
   <button class="install-banner-close" onclick="dismissInstallBanner()">✕</button>
+</div>
+
+<div class="fee-notice" id="fee-notice" role="status" aria-live="polite">
+  <div class="fee-amount" id="fee-notice-amount">500<small>F</small></div>
+  <div class="fee-text">
+    <div class="fee-title">Frais de livraison</div>
+    <div class="fee-sub">Ils s'ajoutent au prix de vos plats. Vous payez le tout au livreur.</div>
+  </div>
+  <button class="fee-ok" type="button" onclick="hideFeeNotice()">Compris</button>
 </div>
 
 <div class="wrap" id="app">
@@ -366,13 +465,18 @@ let menuItems = [];
 let cart = {};
 let location_ = null;
 let currentCustomer = null; // { id, phone, name, auth_user_id }
+let DELIVERY_FEE = 500; // remplacé par la valeur du réglage serveur au chargement
+let allDishPhotos = [];
 
 function driverAvatar(d, size) {
   if (d && d.face_photo_url) return `<img src="${d.face_photo_url}" alt="${d.name}" style="width:${size}px; height:${size}px; border-radius:50%; object-fit:cover; border:1px solid var(--line); flex-shrink:0;">`;
   return `<div style="width:${size}px; height:${size}px; border-radius:50%; background:var(--raised); border:1px solid var(--line); flex-shrink:0;"></div>`;
 }
 
-function money(n) { return n.toLocaleString('fr-FR') + ' F'; }
+function money(n) { return Number(n || 0).toLocaleString('fr-FR') + ' F'; }
+function escHtml(s) {
+  return String(s == null ? '' : s).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+}
 function initial(name) { return (name || '?').trim().charAt(0).toUpperCase(); }
 
 function isRestaurantOpen(r) {
@@ -840,14 +944,231 @@ const CATEGORY_ICONS = {
   cup: '<path d="M7 3h10l-1 13a2 2 0 0 1-2 2H10a2 2 0 0 1-2-2L7 3z"/><path d="M9 8h6"/>'
 };
 
+
+// ---------- Diaporama d'accueil : les plats de tous les restaurants ----------
+const Showcase = (() => {
+  const DUR = 5600;
+  let slides = [];
+  let idx = 0;
+  let timer = null;
+  let remaining = DUR;
+  let startedAt = 0;
+  let paused = false;
+  let held = false;
+  let root = null;
+  let touchX = null, touchY = null, swiped = false;
+  const reduce = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+  function shuffle(a) {
+    const b = a.slice();
+    for (let i = b.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1)); [b[i], b[j]] = [b[j], b[i]]; }
+    return b;
+  }
+
+  // Alternance équitable : un plat de chaque restaurant, puis on recommence
+  function prepare() {
+    const byRest = {};
+    allDishPhotos.forEach(p => {
+      if (!restaurants.some(r => r.id === p.restaurant_id)) return;
+      (byRest[p.restaurant_id] = byRest[p.restaurant_id] || []).push(p);
+    });
+    let ids = shuffle(Object.keys(byRest));
+    const isOpen = id => { const r = restaurants.find(x => x.id === id); return r ? isRestaurantOpen(r) : false; };
+    ids = ids.filter(isOpen).concat(ids.filter(id => !isOpen(id)));
+    ids.forEach(id => { byRest[id] = shuffle(byRest[id]).slice(0, 4); });
+    const out = [];
+    for (let round = 0; round < 4; round++) ids.forEach(id => { if (byRest[id][round]) out.push(byRest[id][round]); });
+    slides = out.slice(0, 16);
+    idx = 0;
+  }
+
+  function slideHtml(p, i) {
+    const src = i < 2 ? `src="${escHtml(p.photo_url)}"` : `data-src="${escHtml(p.photo_url)}"`;
+    return `<figure class="sc-slide ${i % 2 ? 'kb-b' : 'kb-a'}${i === 0 ? ' is-active' : ''}" data-i="${i}" aria-hidden="${i === 0 ? 'false' : 'true'}"><img ${src} alt="${escHtml(p.name)}" decoding="async" draggable="false" /></figure>`;
+  }
+
+  function html() {
+    if (slides.length === 0) {
+      return `<div class="showcase" style="cursor:default; background:url('images/hero-food.jpg') center/cover;"><div class="sc-shade"></div></div>`;
+    }
+    const multi = slides.length > 1;
+    return `
+      <div class="showcase" id="showcase" tabindex="0" role="region" aria-roledescription="carrousel" aria-label="Plats des restaurants">
+        ${slides.map(slideHtml).join('')}
+        <div class="sc-shade"></div>
+        ${multi ? `<div class="sc-bars">${slides.map(() => '<span><i></i></span>').join('')}</div>` : ''}
+        <div class="sc-rest" id="sc-rest"></div>
+        <div class="sc-info" id="sc-info" aria-live="polite"></div>
+        ${multi ? `
+        <button class="sc-arrow prev" type="button" aria-label="Plat précédent" data-nav="-1"><svg viewBox="0 0 24 24"><path d="M15 6l-6 6 6 6"/></svg></button>
+        <button class="sc-arrow next" type="button" aria-label="Plat suivant" data-nav="1"><svg viewBox="0 0 24 24"><path d="M9 6l6 6-6 6"/></svg></button>` : ''}
+      </div>`;
+  }
+
+  function restOf(p) { return restaurants.find(r => r.id === p.restaurant_id) || null; }
+
+  function paintInfo(animate) {
+    const p = slides[idx];
+    if (!p || !root) return;
+    const r = restOf(p);
+    const restEl = root.querySelector('#sc-rest');
+    const infoEl = root.querySelector('#sc-info');
+    const open = r ? isRestaurantOpen(r) : true;
+    restEl.innerHTML = `<span class="sc-rest-dot" style="background:${escHtml((r && r.accent) || '#F5C04A')}"></span><span class="sc-rest-name">${escHtml(r ? r.name : '')}</span>${open ? '' : `<span class="sc-rest-state">Fermé</span>`}`;
+    infoEl.innerHTML = `
+      <div class="sc-name">${escHtml(p.name)}</div>
+      <div class="sc-row">
+        <div class="sc-price">${Number(p.price || 0).toLocaleString('fr-FR')}<small>FCFA</small></div>
+        <span class="sc-go">Voir le menu<b><svg viewBox="0 0 24 24"><path d="M5 12h14M13 6l6 6-6 6"/></svg></b></span>
+      </div>`;
+    if (animate && !reduce) {
+      [infoEl, restEl].forEach(el => { el.classList.remove('swap'); void el.offsetWidth; el.classList.add('swap'); });
+    }
+  }
+
+  function paintBars() {
+    if (!root) return;
+    root.style.setProperty('--sc-dur', DUR + 'ms');
+    root.querySelectorAll('.sc-bars span').forEach((b, i) => {
+      b.classList.remove('run');
+      b.classList.toggle('done', i < idx);
+    });
+    const cur = root.querySelectorAll('.sc-bars span')[idx];
+    if (cur) { void cur.offsetWidth; cur.classList.add('run'); }
+  }
+
+  function ensureSrc(i) {
+    if (!root) return Promise.resolve();
+    const img = root.querySelector(`.sc-slide[data-i="${i}"] img`);
+    if (!img) return Promise.resolve();
+    if (img.dataset.src) { img.src = img.dataset.src; delete img.dataset.src; }
+    if (img.complete && img.naturalWidth) return Promise.resolve();
+    return new Promise(res => {
+      const done = () => { img.removeEventListener('load', done); img.removeEventListener('error', done); res(); };
+      img.addEventListener('load', done); img.addEventListener('error', done);
+      setTimeout(done, 4000);
+    });
+  }
+
+  function visible() {
+    const v = document.getElementById('view-list');
+    return root && document.body.contains(root) && document.visibilityState === 'visible' && v && v.style.display !== 'none';
+  }
+
+  function schedule(ms) {
+    clearTimeout(timer);
+    remaining = ms;
+    startedAt = Date.now();
+    timer = setTimeout(() => {
+      if (!visible() || held) { schedule(DUR); paintBars(); return; }
+      go(idx + 1, true);
+    }, ms);
+  }
+
+  async function go(next, auto) {
+    if (!root || slides.length < 2) return;
+    next = (next + slides.length) % slides.length;
+    await ensureSrc(next);
+    if (!root) return;
+    const slidesEls = root.querySelectorAll('.sc-slide');
+    const prev = slidesEls[idx];
+    const nxt = slidesEls[next];
+    if (!nxt) return;
+    if (prev && prev !== nxt) { prev.classList.remove('is-active'); prev.setAttribute('aria-hidden', 'true'); }
+    nxt.classList.remove('is-active'); void nxt.offsetWidth;
+    nxt.classList.add('is-active'); nxt.setAttribute('aria-hidden', 'false');
+    idx = next;
+    if (idx === 0) root.querySelectorAll('.sc-bars span').forEach(b => b.classList.remove('done'));
+    paintInfo(true);
+    paintBars();
+    ensureSrc((idx + 1) % slides.length);
+    paused = false; root.classList.remove('is-paused');
+    schedule(DUR);
+  }
+
+  function pause() {
+    if (paused || !root) return;
+    paused = true;
+    root.classList.add('is-paused');
+    clearTimeout(timer);
+    remaining = Math.max(400, remaining - (Date.now() - startedAt));
+  }
+  function resume() {
+    if (!paused || !root) return;
+    paused = false;
+    root.classList.remove('is-paused');
+    schedule(remaining);
+  }
+
+  function openCurrent() {
+    const p = slides[idx];
+    if (p) openRestaurant(p.restaurant_id);
+  }
+
+  function mount() {
+    clearTimeout(timer);
+    root = document.getElementById('showcase');
+    if (!root) return;
+    paused = false; held = false;
+    paintInfo(false);
+    if (slides.length < 2) { root.addEventListener('click', openCurrent); return; }
+    paintBars();
+    ensureSrc(1);
+    schedule(DUR);
+
+    root.addEventListener('touchstart', (e) => {
+      const t = e.touches[0]; touchX = t.clientX; touchY = t.clientY; swiped = false; held = true; pause();
+    }, { passive: true });
+    root.addEventListener('touchmove', (e) => {
+      if (touchX === null) return;
+      const t = e.touches[0];
+      if (Math.abs(t.clientX - touchX) > 12 && Math.abs(t.clientX - touchX) > Math.abs(t.clientY - touchY)) swiped = true;
+    }, { passive: true });
+    root.addEventListener('touchend', (e) => {
+      held = false;
+      const t = e.changedTouches[0];
+      const dx = touchX === null ? 0 : t.clientX - touchX;
+      const dy = touchY === null ? 0 : t.clientY - touchY;
+      touchX = touchY = null;
+      if (Math.abs(dx) > 45 && Math.abs(dx) > Math.abs(dy)) { swiped = true; go(idx + (dx < 0 ? 1 : -1)); return; }
+      resume();
+    }, { passive: true });
+    root.addEventListener('touchcancel', () => { held = false; touchX = touchY = null; resume(); }, { passive: true });
+    root.addEventListener('click', (e) => {
+      const nav = e.target.closest('[data-nav]');
+      if (nav) { e.stopPropagation(); go(idx + Number(nav.dataset.nav)); return; }
+      if (swiped) { swiped = false; return; }
+      openCurrent();
+    });
+    root.addEventListener('pointerenter', (e) => { if (e.pointerType === 'mouse') pause(); });
+    root.addEventListener('pointerleave', (e) => { if (e.pointerType === 'mouse') resume(); });
+    root.addEventListener('keydown', (e) => {
+      if (e.key === 'ArrowRight') { e.preventDefault(); go(idx + 1); }
+      else if (e.key === 'ArrowLeft') { e.preventDefault(); go(idx - 1); }
+      else if (e.key === 'Enter') { e.preventDefault(); openCurrent(); }
+    });
+  }
+
+  document.addEventListener('visibilitychange', () => {
+    if (!root || slides.length < 2) return;
+    if (document.visibilityState === 'visible') { paintBars(); schedule(DUR); }
+    else clearTimeout(timer);
+  });
+
+  return { prepare, html, mount, go, count: () => slides.length, current: () => idx, list: () => slides.slice() };
+})();
+
 async function loadRestaurants() {
   const { data, error } = await client.from('restaurants').select('*').order('created_at');
   if (error) { document.getElementById('view-list').innerHTML = '<div class="empty">Erreur de connexion à la base.</div>'; return; }
   restaurants = data;
 
-  const { data: photos } = await client.from('menu_items').select('restaurant_id, name, price, photo_url').not('photo_url', 'is', null).order('created_at');
-  (photos || []).forEach(p => { if (!restaurantCoverMap[p.restaurant_id]) restaurantCoverMap[p.restaurant_id] = p; });
-  if (photos && photos.length > 0) featuredDish = photos[0];
+  const { data: feeRow } = await client.from('app_settings').select('value').eq('key', 'delivery_fee').maybeSingle();
+  if (feeRow && Number.isFinite(Number(feeRow.value)) && Number(feeRow.value) >= 0) DELIVERY_FEE = Number(feeRow.value);
+
+  const { data: photos } = await client.from('menu_items').select('id, restaurant_id, name, price, photo_url').not('photo_url', 'is', null).order('created_at');
+  allDishPhotos = (photos || []).filter(p => p.photo_url);
+  allDishPhotos.forEach(p => { if (!restaurantCoverMap[p.restaurant_id]) restaurantCoverMap[p.restaurant_id] = p; });
 
   const { data: revs } = await client.from('reviews').select('restaurant_id, rating');
   const grouped = {};
@@ -862,11 +1183,12 @@ async function loadRestaurants() {
 
 function renderList() {
   const el = document.getElementById('view-list');
-  const featuredRestaurant = featuredDish ? restaurants.find(r => r.id === featuredDish.restaurant_id) : null;
+  Showcase.prepare();
   el.innerHTML = `
     <div class="hero">
       <div class="hero-title">Vos envies,<span class="hero-title-accent">livrées à temps</span></div>
       <div class="hero-sub">Commandez vos plats préférés en quelques clics.</div>
+      ${Showcase.html()}
       <div class="search-bar">
         <div class="search-bar-left">
           <svg viewBox="0 0 24 24"><path d="M12 21s-7-6.2-7-11a7 7 0 0 1 14 0c0 4.8-7 11-7 11z"/><circle cx="12" cy="10" r="2.4"/></svg>
@@ -879,17 +1201,6 @@ function renderList() {
         <svg viewBox="0 0 24 24" width="19" height="19" stroke="#080808" stroke-width="2" fill="none"><path d="M5 12h14M13 6l6 6-6 6"/></svg>
       </button>
 
-      <div class="hero-photo" style="${featuredDish ? `background-image:linear-gradient(180deg, rgba(8,8,8,0) 40%, rgba(8,8,8,.25) 60%, var(--bg) 100%), url('${featuredDish.photo_url}');` : ''}" ${featuredRestaurant ? `onclick="openRestaurant('${featuredRestaurant.id}')" role="button"` : ''}>
-        ${featuredDish ? `
-          <div class="hero-photo-info">
-            <div>
-              <div class="hero-photo-title">${featuredDish.name}</div>
-              <div class="hero-photo-subtitle">${featuredRestaurant ? featuredRestaurant.name : ''}</div>
-            </div>
-            <div class="hero-photo-price">${Number(featuredDish.price).toLocaleString('fr-FR')}<span class="hero-photo-currency">FCFA</span></div>
-          </div>
-        ` : ''}
-      </div>
     </div>
 
     <div class="section-header">
@@ -905,6 +1216,7 @@ function renderList() {
     </div>
   `;
   renderCategoryChips();
+  Showcase.mount();
 }
 
 function renderCategoryChips() {
@@ -987,6 +1299,7 @@ function renderMenu() {
       <button class="btn-back" onclick="setActiveNav('home'); show('list')">← Tous les restaurants</button>
       <div class="display" style="font-size:28px; color:${r.accent}">${r.name}</div>
       <div style="font-size:13px; color:var(--creamDim); margin-bottom:8px;">${r.tagline || ''}</div>
+      <div class="fee-line"><strong>${money(DELIVERY_FEE)}</strong><span>de frais de livraison, ajoutés au prix de vos plats et payés à la réception.</span></div>
       ${!open ? `<div class="closed-banner">Ce restaurant est actuellement fermé. Horaires : ${formatHM(r.opens_at)} – ${formatHM(r.closes_at)}. Vous pouvez consulter le menu, mais la commande n'est pas possible pour le moment.</div>` : ''}
       <div id="menu-items"></div>
     </div>
@@ -1057,7 +1370,10 @@ function renderMenuItems() {
 function addItem(id) {
   if (!isRestaurantOpen(currentRestaurant)) { toast("Ce restaurant est fermé pour le moment."); renderMenu(); return; }
   const item = menuItems.find(i => i.id === id);
+  if (!item) return;
+  const wasEmpty = cartCount() === 0;
   if (cart[id]) cart[id].qty++; else cart[id] = { ...item, qty: 1 };
+  if (wasEmpty) showFeeNotice();
   renderMenuItems();
   updateHeaderCartBadge();
 }
@@ -1071,6 +1387,22 @@ function removeItem(id) {
 
 function cartTotal() { return Object.values(cart).reduce((s,i) => s + i.qty * i.price, 0); }
 function cartCount() { return Object.values(cart).reduce((s,i) => s + i.qty, 0); }
+function orderTotal() { return cartTotal() + DELIVERY_FEE; }
+
+let feeNoticeTimer = null;
+function showFeeNotice() {
+  const n = document.getElementById('fee-notice');
+  if (!n) return;
+  document.getElementById('fee-notice-amount').innerHTML = `${Number(DELIVERY_FEE).toLocaleString('fr-FR')}<small>F</small>`;
+  n.classList.add('show');
+  clearTimeout(feeNoticeTimer);
+  feeNoticeTimer = setTimeout(hideFeeNotice, 6500);
+}
+function hideFeeNotice() {
+  clearTimeout(feeNoticeTimer);
+  const n = document.getElementById('fee-notice');
+  if (n) n.classList.remove('show');
+}
 
 function updateHeaderCartBadge() {
   const badge = document.getElementById('header-cart-badge');
@@ -1093,7 +1425,7 @@ function renderCartBar() {
     <div class="cart-bar">
       <button class="cart-btn" style="background:linear-gradient(135deg, ${r.accent}, ${r.accent}CC);" onclick="show('checkout'); renderCheckout();">
         <span>Voir le panier (${cartCount()})</span>
-        <span class="mono">${money(cartTotal())}</span>
+        <span class="cb-right"><span>${money(orderTotal())}</span><small>livraison ${money(DELIVERY_FEE)} incluse</small></span>
       </button>
     </div>
   `;
@@ -1118,11 +1450,14 @@ function renderCheckout() {
     <div class="section">
       <button class="btn-back" onclick="show('menu')">← Retour au menu</button>
       <div class="display" style="font-size:26px; margin-bottom:14px;">Votre commande</div>
-      <div style="background:var(--surface); border:1px solid var(--line); border-radius:10px; padding:14px; margin-bottom:16px;">
+      <div class="fee-line"><strong>${money(DELIVERY_FEE)}</strong><span>de frais de livraison s'ajoutent à vos plats. Vous réglez le total en espèces au livreur.</span></div>
+      <div class="sum-box">
         ${Object.values(cart).map(i => `
-          <div class="ticket-line" style="color:var(--cream);"><span>${i.qty}× ${i.name}</span><span>${money(i.qty*i.price)}</span></div>
+          <div class="sum-line sum-item"><span>${i.qty}× ${escHtml(i.name)}</span><span>${money(i.qty*i.price)}</span></div>
         `).join('')}
-        <div class="ticket-line" style="border-top:1px solid var(--line); margin-top:8px; padding-top:8px; font-weight:700; color:var(--cream);"><span>Total</span><span>${money(cartTotal())}</span></div>
+        <div class="sum-line" style="border-top:1px solid var(--line); margin-top:8px; padding-top:9px;"><span>Sous-total des plats</span><span>${money(cartTotal())}</span></div>
+        <div class="sum-line fee"><span>Livraison</span><span>${money(DELIVERY_FEE)}</span></div>
+        <div class="sum-total"><span>Total à payer</span><span>${money(orderTotal())}</span></div>
       </div>
 
       <label>Nom</label>
@@ -1139,10 +1474,77 @@ function renderCheckout() {
       <label>Repère (optionnel)</label>
       <input id="f-address" placeholder="Ex: portail bleu, près de la pharmacie" />
 
-      <button class="btn-primary" id="btn-order" onclick="placeOrder()">Valider la commande — Paiement à la livraison</button>
+      ${prefsHtml()}
+
+      <button class="btn-primary" id="btn-order" onclick="placeOrder()">Commander pour ${money(orderTotal())}, payé à la livraison</button>
     </div>
   `;
 }
+
+
+// ---------- Préférences et allergies ----------
+const PREF_TASTE = ['Sans piment', 'Peu pimenté', 'Bien pimenté', "Pas trop d'huile", 'Peu salé', 'Sans oignon', 'Sans ail', 'Sans cube', 'Sans mayonnaise', 'Sauce à part', 'Bien cuit'];
+const PREF_DIET = ["Allergie à l'arachide", 'Allergie aux fruits de mer', 'Allergie au poisson', 'Allergie aux œufs', 'Allergie au lait', 'Allergie au gluten', 'Sans porc', 'Végétarien'];
+const PREF_EXCLUSIVE = [['Sans piment', 'Peu pimenté', 'Bien pimenté']];
+const PREFS_KEY = 'dbf-prefs';
+let selectedPrefs = new Set();
+let prefNotes = '';
+
+function loadSavedPrefs() {
+  try {
+    const raw = JSON.parse(localStorage.getItem(PREFS_KEY) || 'null');
+    if (raw && Array.isArray(raw.p)) {
+      const known = new Set(PREF_TASTE.concat(PREF_DIET));
+      selectedPrefs = new Set(raw.p.filter(x => known.has(x)));
+      prefNotes = typeof raw.n === 'string' ? raw.n.slice(0, 200) : '';
+    }
+  } catch (e) {}
+}
+function savePrefs() {
+  try { localStorage.setItem(PREFS_KEY, JSON.stringify({ p: [...selectedPrefs], n: prefNotes })); } catch (e) {}
+}
+
+function prefChip(label, isAllergy) {
+  const on = selectedPrefs.has(label);
+  return `<button type="button" class="chip${isAllergy ? ' allergy' : ''}" aria-pressed="${on}" data-pref="${escHtml(label)}">${escHtml(label)}</button>`;
+}
+
+function prefsHtml() {
+  loadSavedPrefs();
+  return `
+    <div class="prefs" id="prefs">
+      <div class="prefs-title">Préférences et allergies</div>
+      <div class="prefs-help">Facultatif. Le restaurant les verra avec votre commande. Vos choix sont gardés pour la prochaine fois.</div>
+      <div class="prefs-group">Goût et cuisson</div>
+      <div class="chips">${PREF_TASTE.map(l => prefChip(l, false)).join('')}</div>
+      <div class="prefs-group">Allergies et régime</div>
+      <div class="chips">${PREF_DIET.map(l => prefChip(l, l.startsWith('Allergie'))).join('')}</div>
+      <textarea id="f-notes" maxlength="200" placeholder="Autre précision : sauce à part, attiéké bien chaud, sans os…">${escHtml(prefNotes)}</textarea>
+      <div class="prefs-count" id="f-notes-count">${prefNotes.length} / 200</div>
+    </div>`;
+}
+
+document.addEventListener('click', (e) => {
+  const chip = e.target.closest('#prefs .chip');
+  if (!chip) return;
+  const label = chip.dataset.pref;
+  if (selectedPrefs.has(label)) {
+    selectedPrefs.delete(label);
+  } else {
+    PREF_EXCLUSIVE.forEach(group => { if (group.includes(label)) group.forEach(g => selectedPrefs.delete(g)); });
+    selectedPrefs.add(label);
+  }
+  document.querySelectorAll('#prefs .chip').forEach(c => c.setAttribute('aria-pressed', String(selectedPrefs.has(c.dataset.pref))));
+  savePrefs();
+});
+document.addEventListener('input', (e) => {
+  if (e.target && e.target.id === 'f-notes') {
+    prefNotes = e.target.value.slice(0, 200);
+    const c = document.getElementById('f-notes-count');
+    if (c) c.textContent = prefNotes.length + ' / 200';
+    savePrefs();
+  }
+});
 
 function useGPS() {
   document.getElementById('loc-status').innerHTML = 'Recherche de votre position…';
@@ -1167,7 +1569,10 @@ async function placeOrder() {
   if (!name || !phone || !(location_ || address)) { toast("Complétez au moins le nom, le téléphone et une position"); return; }
 
   const items = Object.values(cart).map(i => ({ itemId: i.id, name: i.name, price: i.price, qty: i.qty }));
-  const total = cartTotal();
+  const total = orderTotal();
+  const notesEl = document.getElementById('f-notes');
+  const notes = (notesEl ? notesEl.value : prefNotes).trim().slice(0, 200);
+  const preferences = PREF_TASTE.concat(PREF_DIET).filter(l => selectedPrefs.has(l));
 
   const orderId = crypto.randomUUID();
   const payload = {
@@ -1177,15 +1582,29 @@ async function placeOrder() {
     phone, address,
     location: location_,
     items, total,
+    delivery_fee: DELIVERY_FEE,
+    preferences,
+    notes: notes || null,
     status: 'Reçue'
   };
   if (currentCustomer) payload.customer_id = currentCustomer.id;
 
+  const btn = document.getElementById('btn-order');
+  if (btn) { if (btn.disabled) return; btn.disabled = true; btn.style.opacity = '0.6'; }
   const { error } = await client.from('orders').insert(payload);
 
-  if (error) { toast("Erreur lors de l'envoi de la commande"); console.error(error); return; }
+  if (error) {
+    if (btn) { btn.disabled = false; btn.style.opacity = ''; }
+    toast("La commande n'est pas partie. Vérifiez votre connexion et réessayez.");
+    console.error(error);
+    return;
+  }
 
   renderConfirmation({ ...payload, created_at: new Date().toISOString() });
+  cart = {};
+  location_ = null;
+  updateHeaderCartBadge();
+  hideFeeNotice();
   show('confirm');
 }
 
@@ -1208,10 +1627,13 @@ function renderConfirmation(order) {
         <div style="border-top:1.5px dashed #B8AA98; border-bottom:1.5px dashed #B8AA98; padding:10px 0; margin:10px 0;">
           <div class="ticket-line"><span>N° COMMANDE</span><span>${order.id.slice(0,8).toUpperCase()}</span></div>
           <div class="ticket-line"><span>RESTAURANT</span><span>${r.name}</span></div>
-          <div class="ticket-line"><span>CLIENT</span><span>${order.customer_name}</span></div>
+          <div class="ticket-line"><span>CLIENT</span><span>${escHtml(order.customer_name)}</span></div>
         </div>
-        ${order.items.map(i => `<div class="ticket-line"><span>${i.qty}× ${i.name}</span><span>${money(i.price*i.qty)}</span></div>`).join('')}
-        <div class="ticket-line" style="border-top:1.5px dashed #B8AA98; margin-top:10px; padding-top:10px; font-weight:700;"><span>TOTAL</span><span>${money(order.total)}</span></div>
+        ${order.items.map(i => `<div class="ticket-line"><span>${i.qty}× ${escHtml(i.name)}</span><span>${money(i.price*i.qty)}</span></div>`).join('')}
+        <div class="ticket-line" style="border-top:1.5px dashed #B8AA98; margin-top:10px; padding-top:10px;"><span>SOUS-TOTAL</span><span>${money(order.total - (order.delivery_fee || 0))}</span></div>
+        <div class="ticket-line"><span>LIVRAISON</span><span>${money(order.delivery_fee || 0)}</span></div>
+        <div class="ticket-line" style="font-weight:700; font-size:13px;"><span>TOTAL À PAYER</span><span>${money(order.total)}</span></div>
+        ${(order.preferences && order.preferences.length) || order.notes ? `<div class="ticket-prefs"><b>Vos demandes :</b> ${escHtml((order.preferences || []).join(', '))}${order.notes ? `${order.preferences && order.preferences.length ? ' ; ' : ''}${escHtml(order.notes)}` : ''}</div>` : ''}
       </div>
       ${waLink ? `<a href="${waLink}" target="_blank" style="display:block; text-align:center; margin-top:14px; background:var(--palm); color:var(--cream); padding:13px; border-radius:10px; text-decoration:none; font-weight:600; font-size:13px;">Confirmer par WhatsApp</a>` : ''}
       <button class="btn-secondary" style="margin-top:12px;" onclick="resetOrder()">Commander ailleurs</button>
@@ -1220,6 +1642,7 @@ function renderConfirmation(order) {
 }
 
 function resetOrder() {
+  hideFeeNotice();
   cart = {}; location_ = null; currentRestaurant = null;
   updateHeaderCartBadge();
   setActiveNav('home');
