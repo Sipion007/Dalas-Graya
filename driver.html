@@ -161,7 +161,7 @@
 
     <button class="btn-outline" style="width:100%; margin-bottom:16px;" onclick="testVoice()">Tester la voix</button>
 
-    <div id="notif-banner"></div>
+    <div id="alert-panel"></div>
 
     <div class="section-title" id="section-en-cours">Ma livraison en cours</div>
     <div id="current-delivery"></div>
@@ -184,7 +184,372 @@
 </nav>
 
 <script>
-const client = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+const client = supabase.createClient(SUPABASE_URL, SUPABASE_KEY, { auth: { persistSession: true, autoRefreshToken: true, detectSessionInUrl: false } });
+
+// ---------- Session durable ----------
+// Une erreur réseau passagère ne doit JAMAIS déconnecter l'utilisateur.
+const SESSION_BACKUP_KEY = 'dbf-session-backup';
+client.auth.onAuthStateChange((event, session) => {
+  try {
+    if (session && session.refresh_token) {
+      localStorage.setItem(SESSION_BACKUP_KEY, JSON.stringify({ a: session.access_token, r: session.refresh_token }));
+    }
+  } catch (e) {}
+});
+
+function hasSessionBackup() {
+  try { return !!localStorage.getItem(SESSION_BACKUP_KEY); } catch (e) { return false; }
+}
+
+async function getSessionSafe() {
+  try {
+    const { data } = await client.auth.getSession();
+    if (data && data.session) return data.session;
+  } catch (e) {}
+  try {
+    const raw = localStorage.getItem(SESSION_BACKUP_KEY);
+    if (raw) {
+      const b = JSON.parse(raw);
+      const { data, error } = await client.auth.setSession({ access_token: b.a, refresh_token: b.r });
+      if (data && data.session) return data.session;
+      if (error && error.status && error.status >= 400 && error.status < 500) {
+        localStorage.removeItem(SESSION_BACKUP_KEY);
+      }
+    }
+  } catch (e) {}
+  return null;
+}
+
+async function signOutLocal() {
+  try { localStorage.removeItem(SESSION_BACKUP_KEY); } catch (e) {}
+  try { await client.auth.signOut({ scope: 'local' }); } catch (e) {}
+}
+
+let restoreRunning = false;
+async function restoreSession(afterFn) {
+  if (restoreRunning) return;
+  restoreRunning = true;
+  try {
+    for (let i = 0; i < 6; i++) {
+      const s = await getSessionSafe();
+      if (s) { await afterFn(); return; }
+      if (!hasSessionBackup()) return;
+      await new Promise(r => setTimeout(r, 2500));
+    }
+  } finally { restoreRunning = false; }
+}
+
+function onAppResume() {
+  try { client.auth.startAutoRefresh(); } catch (e) {}
+  try {
+    if (typeof isAppLoggedIn === 'function' && isAppLoggedIn()) {
+      getSessionSafe();
+      if (typeof onResumeLoggedIn === 'function') onResumeLoggedIn();
+    } else if (typeof afterLogin === 'function') {
+      restoreSession(afterLogin);
+    }
+  } catch (e) {}
+}
+document.addEventListener('visibilitychange', () => { if (document.visibilityState === 'visible') onAppResume(); });
+window.addEventListener('pageshow', (e) => { if (e.persisted) onAppResume(); });
+window.addEventListener('online', onAppResume);
+window.addEventListener('focus', onAppResume);
+
+// ================= ALERTES : alarme sonore + notifications =================
+const PUSH_VAPID_PUBLIC = "BGQqCWf5N_IzK-p2AmEXRR3K0-TgOns-uDNKjTxJOd8zpxsUz1277aLtQr2hefzhrUIbRDTojnMZ_GAsAK_kWwo";
+
+const Alerts = (() => {
+  let audioEl = null;
+  let unlocked = false;
+  let ringing = false;
+  let overlay = null;
+  let currentAck = null;
+  let vibTimer = null;
+  let titleTimer = null;
+  let pushState = 'off';
+  let identityFn = null;
+  let panelId = null;
+  let wakeLock = null;
+  const baseTitle = document.title;
+
+  function esc(s) {
+    return String(s == null ? '' : s).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+  }
+
+  // Sirène générée en WAV (jouée par un élément audio : elle reste audible même en mode silencieux sur iPhone)
+  function buildWavUrl() {
+    const sr = 22050;
+    const lead = 0.25, beep = 0.18, count = 8;
+    const total = lead + beep * count;
+    const n = Math.floor(sr * total);
+    const buf = new ArrayBuffer(44 + n * 2);
+    const v = new DataView(buf);
+    const w = (o, s) => { for (let i = 0; i < s.length; i++) v.setUint8(o + i, s.charCodeAt(i)); };
+    w(0, 'RIFF'); v.setUint32(4, 36 + n * 2, true); w(8, 'WAVE'); w(12, 'fmt ');
+    v.setUint32(16, 16, true); v.setUint16(20, 1, true); v.setUint16(22, 1, true);
+    v.setUint32(24, sr, true); v.setUint32(28, sr * 2, true); v.setUint16(32, 2, true); v.setUint16(34, 16, true);
+    w(36, 'data'); v.setUint32(40, n * 2, true);
+    let phase = 0;
+    for (let i = 0; i < n; i++) {
+      const t = i / sr;
+      let s = 0;
+      if (t >= lead) {
+        const k = Math.floor((t - lead) / beep);
+        const local = (t - lead) - k * beep;
+        const f = (k % 2 === 0) ? 1046 : 784;
+        phase += 2 * Math.PI * f / sr;
+        const sq = Math.sin(phase) >= 0 ? 1 : -1;
+        const mix = 0.65 * sq + 0.35 * Math.sin(phase);
+        const edge = Math.min(1, local / 0.006, (beep - local) / 0.006);
+        s = mix * Math.max(0, edge);
+      }
+      v.setInt16(44 + i * 2, Math.round(s * 0.97 * 32767), true);
+    }
+    return URL.createObjectURL(new Blob([buf], { type: 'audio/wav' }));
+  }
+
+  function ensureAudio() {
+    if (!audioEl) {
+      audioEl = new Audio(buildWavUrl());
+      audioEl.loop = true;
+      audioEl.preload = 'auto';
+      audioEl.volume = 1;
+    }
+    return audioEl;
+  }
+
+  function unlock() {
+    let a;
+    try { a = ensureAudio(); } catch (e) { return; }
+    const p = a.play();
+    if (p && p.then) {
+      p.then(() => {
+        unlocked = true;
+        if (!ringing) { a.pause(); a.currentTime = 0; }
+        renderPanel();
+        if (ringing && overlay) { const h = overlay.querySelector('.ao-hint'); if (h) h.remove(); }
+      }).catch(() => {});
+    } else { unlocked = true; }
+  }
+
+  function injectStyle() {
+    if (document.getElementById('alerts-style')) return;
+    const st = document.createElement('style');
+    st.id = 'alerts-style';
+    st.textContent = `
+      #alert-overlay { position:fixed; inset:0; z-index:9999; display:none; align-items:center; justify-content:center; padding:20px;
+        background:rgba(8,8,8,0.96); animation: aoPulse 0.9s infinite; }
+      @keyframes aoPulse { 0%,100% { box-shadow: inset 0 0 0 10px #C4432B; } 50% { box-shadow: inset 0 0 0 10px #F5C04A; } }
+      #alert-overlay .ao-box { width:100%; max-width:420px; text-align:center; color:#fff; font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif; }
+      #alert-overlay .ao-title { font-size:30px; font-weight:800; letter-spacing:-0.5px; color:#F5C04A; line-height:1.1; margin-bottom:18px; }
+      #alert-overlay .ao-lines { font-size:16px; color:#fff; margin-bottom:18px; line-height:1.5; max-height:34vh; overflow:auto; }
+      #alert-overlay .ao-hint { font-size:13px; color:#F5C04A; margin-bottom:14px; }
+      #alert-overlay .ao-btn { width:100%; border:none; border-radius:14px; padding:20px; font-size:20px; font-weight:800; letter-spacing:1px; background:#F5C04A; color:#080808; cursor:pointer; }
+      .ap { background:#111; border:1px solid #242424; border-radius:12px; padding:12px 14px; margin-bottom:14px; font-size:12.5px; color:#8F8F8F; }
+      .ap-row { display:flex; justify-content:space-between; gap:10px; padding:4px 0; }
+      .ap-row b { font-weight:700; text-align:right; }
+      .ap .ok { color:#5C8A63; } .ap .warn { color:#F5C04A; } .ap .bad { color:#C4432B; }
+      .ap-btns { display:flex; gap:8px; margin-top:8px; flex-wrap:wrap; }
+      .ap-btns button { flex:1; min-width:140px; border:1px solid #303030; background:#171717; color:#fff; border-radius:9px; padding:10px; font-size:12.5px; font-weight:700; cursor:pointer; }
+      .ap-btns button.primary { background:#F5C04A; color:#080808; border-color:#F5C04A; }
+    `;
+    document.head.appendChild(st);
+  }
+
+  function showOverlay(opts) {
+    injectStyle();
+    if (!overlay) {
+      overlay = document.createElement('div');
+      overlay.id = 'alert-overlay';
+      document.body.appendChild(overlay);
+    }
+    overlay.innerHTML = `<div class="ao-box"><div class="ao-title">${esc(opts.title)}</div><div class="ao-lines">${(opts.lines || []).map(l => `<div>${esc(l)}</div>`).join('')}</div>${unlocked ? '' : '<div class="ao-hint">Touchez l\'écran pour activer le son</div>'}<button class="ao-btn" id="ao-ack" type="button">J'AI VU</button></div>`;
+    overlay.querySelector('#ao-ack').onclick = () => ack();
+    overlay.style.display = 'flex';
+  }
+
+  function start(opts) {
+    currentAck = opts.onAck || null;
+    showOverlay(opts);
+    if (ringing) return;
+    ringing = true;
+    try {
+      const a = ensureAudio();
+      a.currentTime = 0;
+      const p = a.play();
+      if (p && p.then) p.then(() => { unlocked = true; renderPanel(); }).catch(() => {});
+    } catch (e) {}
+    try {
+      if (navigator.vibrate) {
+        navigator.vibrate([500, 200, 500, 200, 500]);
+        vibTimer = setInterval(() => { try { navigator.vibrate([500, 200, 500, 200, 500]); } catch (e) {} }, 2500);
+      }
+    } catch (e) {}
+    titleTimer = setInterval(() => { document.title = (document.title === baseTitle) ? opts.title : baseTitle; }, 700);
+    renderPanel();
+  }
+
+  function stop() {
+    if (!ringing && !(overlay && overlay.style.display !== 'none')) return;
+    ringing = false;
+    try { if (audioEl) { audioEl.pause(); audioEl.currentTime = 0; } } catch (e) {}
+    if (vibTimer) { clearInterval(vibTimer); vibTimer = null; }
+    try { if (navigator.vibrate) navigator.vibrate(0); } catch (e) {}
+    if (titleTimer) { clearInterval(titleTimer); titleTimer = null; }
+    document.title = baseTitle;
+    if (overlay) overlay.style.display = 'none';
+    renderPanel();
+  }
+
+  function ack() {
+    const f = currentAck;
+    currentAck = null;
+    stop();
+    if (f) { try { f(); } catch (e) {} }
+  }
+
+  function test() {
+    unlock();
+    start({ title: "TEST D'ALARME", lines: ['Si vous entendez ce son, les alertes fonctionnent.'], onAck: null });
+    setTimeout(() => { if (currentAck === null) stop(); }, 6000);
+  }
+
+  // ----- Notifications push (appli fermée) -----
+  function b64ToU8(b64) {
+    const pad = '='.repeat((4 - b64.length % 4) % 4);
+    const raw = atob((b64 + pad).replace(/-/g, '+').replace(/_/g, '/'));
+    return Uint8Array.from([...raw].map(c => c.charCodeAt(0)));
+  }
+
+  function isIOS() { return /iphone|ipad|ipod/i.test(navigator.userAgent) || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1); }
+  function isStandalone() { return window.matchMedia('(display-mode: standalone)').matches || window.navigator.standalone === true; }
+
+  function pushSupported() {
+    return ('serviceWorker' in navigator) && ('PushManager' in window) && ('Notification' in window);
+  }
+
+  async function subscribeAndRegister() {
+    const reg = await navigator.serviceWorker.register('sw-driver.js');
+    await navigator.serviceWorker.ready;
+    const want = b64ToU8(PUSH_VAPID_PUBLIC);
+    let sub = await reg.pushManager.getSubscription();
+    if (sub && sub.options && sub.options.applicationServerKey) {
+      const have = new Uint8Array(sub.options.applicationServerKey);
+      const same = have.length === want.length && have.every((x, i) => x === want[i]);
+      if (!same) { await sub.unsubscribe(); sub = null; }
+    }
+    if (!sub) sub = await reg.pushManager.subscribe({ userVisibleOnly: true, applicationServerKey: want });
+    const j = sub.toJSON();
+    const id = identityFn ? identityFn() : null;
+    if (!id) throw new Error('no identity');
+    const { error } = await client.rpc('register_push', {
+      p_endpoint: j.endpoint, p_sub: j, p_role: id.role,
+      p_restaurant_id: id.restaurant_id || null, p_driver_id: id.driver_id || null
+    });
+    if (error) throw error;
+    pushState = 'on';
+  }
+
+  async function enablePush() {
+    unlock();
+    try {
+      if (!pushSupported()) { pushState = 'unsupported'; renderPanel(); return; }
+      const perm = await Notification.requestPermission();
+      if (perm !== 'granted') { pushState = 'denied'; renderPanel(); return; }
+      await subscribeAndRegister();
+    } catch (e) {
+      pushState = 'error';
+    }
+    renderPanel();
+  }
+
+  async function syncPush() {
+    try {
+      if (!pushSupported()) { pushState = 'unsupported'; renderPanel(); return; }
+      if (Notification.permission === 'denied') { pushState = 'denied'; renderPanel(); return; }
+      if (Notification.permission === 'granted') { await subscribeAndRegister(); }
+    } catch (e) { pushState = 'error'; }
+    renderPanel();
+  }
+
+  async function unregisterPush() {
+    try {
+      if (!('serviceWorker' in navigator)) return;
+      const reg = await navigator.serviceWorker.getRegistration();
+      const sub = reg && await reg.pushManager.getSubscription();
+      if (sub) await client.rpc('unregister_push', { p_endpoint: sub.endpoint });
+    } catch (e) {}
+  }
+
+  // ----- Écran allumé -----
+  async function keepAwake() {
+    try {
+      if ('wakeLock' in navigator && document.visibilityState === 'visible' && !wakeLock) {
+        wakeLock = await navigator.wakeLock.request('screen');
+        wakeLock.addEventListener('release', () => { wakeLock = null; });
+      }
+    } catch (e) { wakeLock = null; }
+  }
+  document.addEventListener('visibilitychange', () => { if (document.visibilityState === 'visible') keepAwake(); });
+
+  // ----- Panneau d'état -----
+  function renderPanel() {
+    const el = panelId && document.getElementById(panelId);
+    if (!el) return;
+    let pushTxt, pushCls;
+    if (pushState === 'on') { pushTxt = 'Activées'; pushCls = 'ok'; }
+    else if (pushState === 'denied') { pushTxt = 'Refusées (à autoriser dans les réglages)'; pushCls = 'bad'; }
+    else if (pushState === 'unsupported') {
+      pushTxt = (isIOS() && !isStandalone()) ? "Ajoutez l'appli à l'écran d'accueil" : 'Non disponibles sur ce navigateur';
+      pushCls = 'warn';
+    }
+    else if (pushState === 'error') { pushTxt = 'Erreur, réessayez'; pushCls = 'bad'; }
+    else { pushTxt = 'À activer'; pushCls = 'warn'; }
+    el.innerHTML = `<div class="ap">
+      <div class="ap-row"><span>Son d'alerte</span><b class="${unlocked ? 'ok' : 'warn'}">${unlocked ? 'Activé' : 'Touchez le bouton Tester'}</b></div>
+      <div class="ap-row"><span>Notifications (appli fermée)</span><b class="${pushCls}">${pushTxt}</b></div>
+      <div class="ap-btns">
+        <button type="button" id="ap-test">Tester l'alarme</button>
+        ${pushState === 'on' ? '' : '<button type="button" class="primary" id="ap-push">Activer les notifications</button>'}
+      </div></div>`;
+    const t = document.getElementById('ap-test'); if (t) t.onclick = test;
+    const p = document.getElementById('ap-push'); if (p) p.onclick = enablePush;
+  }
+
+  function init(opts) {
+    panelId = opts.panelId;
+    identityFn = opts.identity;
+    injectStyle();
+    renderPanel();
+    syncPush();
+    keepAwake();
+    if (navigator.serviceWorker && !Alerts._swBound) {
+      Alerts._swBound = true;
+      navigator.serviceWorker.addEventListener('message', (e) => {
+        if (e.data && e.data.type === 'push' && typeof opts.onPush === 'function') opts.onPush();
+      });
+    }
+  }
+
+  // Première interaction : on débloque le son pour que l'alarme puisse sonner plus tard
+  const firstGesture = () => { unlock(); };
+  document.addEventListener('touchstart', firstGesture, { passive: true });
+  document.addEventListener('click', firstGesture);
+
+  return { init, start, stop, test, unlock, unregisterPush, isRinging: () => ringing };
+})();
+
+function alertAckedGet(key) {
+  try { return new Set(JSON.parse(localStorage.getItem(key) || '[]')); } catch (e) { return new Set(); }
+}
+function alertAckedAdd(key, ids) {
+  try {
+    const s = alertAckedGet(key);
+    ids.forEach(i => s.add(i));
+    localStorage.setItem(key, JSON.stringify([...s].slice(-300)));
+  } catch (e) {}
+}
+
 
 // Ajoute les fonds de carte (rues / satellite) + échelle à une carte Leaflet
 function equipMap(map) {
@@ -323,7 +688,6 @@ function updateNavigationBanner() {
     upcomingStepIndex++;
   }
 }
-const VAPID_PUBLIC_KEY = "BGBnL8TUONEP5DuzE5Rt-8ic2TxLF3q0sxX61Xi7a4BvKyFGa4qxfOrgkMidtrV8EI1WnsAhZEIg948G1kL0LZI";
 let myDriver = null;
 let refreshTimer = null;
 let gpsWatchId = null;
@@ -339,24 +703,6 @@ let deliveryDestination = null;
 let fsMap = null;
 
 function money(n) { return Number(n).toLocaleString('fr-FR') + ' F'; }
-
-function playNotificationSound() {
-  try {
-    if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
-    const now = audioCtx.currentTime;
-    [0, 0.18].forEach(delay => {
-      const osc = audioCtx.createOscillator();
-      const gain = audioCtx.createGain();
-      osc.type = 'sine';
-      osc.frequency.setValueAtTime(880, now + delay);
-      gain.gain.setValueAtTime(0.0001, now + delay);
-      gain.gain.exponentialRampToValueAtTime(0.25, now + delay + 0.02);
-      gain.gain.exponentialRampToValueAtTime(0.0001, now + delay + 0.28);
-      osc.connect(gain); gain.connect(audioCtx.destination);
-      osc.start(now + delay); osc.stop(now + delay + 0.3);
-    });
-  } catch (e) { /* audio non disponible, on ignore */ }
-}
 
 async function loadRestaurantOptions() {
   const { data } = await client.from('restaurants').select('id, name').order('name');
@@ -489,16 +835,24 @@ async function loginDriver() {
   await afterLogin();
 }
 
+function isAppLoggedIn() { return !!myDriver; }
+function onResumeLoggedIn() { if (myDriver) refreshOrders(); }
+
 async function afterLogin() {
-  const { data: { user } } = await client.auth.getUser();
-  if (!user) return;
+  const session = await getSessionSafe();
+  if (!session) return;
+  const user = session.user;
 
   const { data: driver, error } = await client.from('drivers').select('*, restaurants(name)').eq('auth_user_id', user.id).maybeSingle();
-  if (error || !driver) {
+  if (error) {
+    if (!myDriver) setTimeout(() => { if (!myDriver) restoreSession(afterLogin); }, 4000);
+    return;
+  }
+  if (!driver) {
     const errEl = document.getElementById('auth-error');
     errEl.textContent = "Aucun profil livreur trouvé pour ce compte.";
     errEl.style.display = 'block';
-    await client.auth.signOut();
+    await signOutLocal();
     return;
   }
 
@@ -508,7 +862,7 @@ async function afterLogin() {
       ? "Votre dossier n'a pas été accepté. Contactez l'administrateur."
       : "Votre dossier est en cours de vérification. Vous pourrez livrer dès qu'il sera validé.";
     errEl.style.display = 'block';
-    await client.auth.signOut();
+    await signOutLocal();
     return;
   }
 
@@ -522,56 +876,13 @@ async function afterLogin() {
 
   refreshOrders();
   if (refreshTimer) clearInterval(refreshTimer);
-  refreshTimer = setInterval(refreshOrders, 8000);
+  refreshTimer = setInterval(refreshOrders, 5000);
 
-  renderNotifBanner();
-}
-
-function urlBase64ToUint8Array(base64String) {
-  const padding = '='.repeat((4 - base64String.length % 4) % 4);
-  const base64 = (base64String + padding).replace(/-/g, '+').replace(/_/g, '/');
-  const rawData = atob(base64);
-  return Uint8Array.from([...rawData].map(c => c.charCodeAt(0)));
-}
-
-function renderNotifBanner() {
-  const el = document.getElementById('notif-banner');
-  if (!('serviceWorker' in navigator) || !('PushManager' in window)) {
-    el.innerHTML = '';
-    return;
-  }
-  if (Notification.permission === 'granted') {
-    el.innerHTML = '<div class="notif-ok">Notifications activées</div>';
-  } else {
-    el.innerHTML = '<button class="notif-btn" onclick="enableNotifications()">Activer les notifications de livraison</button>';
-  }
-}
-
-async function enableNotifications() {
-  try {
-    const reg = await navigator.serviceWorker.register('sw-driver.js');
-    const permission = await Notification.requestPermission();
-    if (permission !== 'granted') { renderNotifBanner(); return; }
-
-    const sub = await reg.pushManager.subscribe({
-      userVisibleOnly: true,
-      applicationServerKey: urlBase64ToUint8Array(VAPID_PUBLIC_KEY)
-    });
-    const subJson = sub.toJSON();
-
-    await client.from('driver_push_subscriptions').upsert({
-      driver_id: myDriver.id,
-      endpoint: subJson.endpoint,
-      p256dh: subJson.keys.p256dh,
-      auth: subJson.keys.auth
-    }, { onConflict: 'endpoint' });
-
-    renderNotifBanner();
-    toastDriver("Notifications activées !");
-  } catch (e) {
-    console.error(e);
-    alert("Impossible d'activer les notifications sur cet appareil/navigateur.");
-  }
+  Alerts.init({
+    panelId: 'alert-panel',
+    identity: () => ({ role: 'driver', driver_id: myDriver.id }),
+    onPush: () => refreshOrders()
+  });
 }
 
 function toastDriver(msg) {
@@ -584,7 +895,8 @@ function toastDriver(msg) {
 
 async function logoutDriver() {
   stopGPS();
-  await client.auth.signOut();
+  try { await Alerts.unregisterPush(); Alerts.stop(); } catch (e) {}
+  await signOutLocal();
   if (refreshTimer) clearInterval(refreshTimer);
   myDriver = null;
   document.getElementById('driver-screen').style.display = 'none';
@@ -592,9 +904,23 @@ async function logoutDriver() {
   document.getElementById('login-screen').style.display = 'block';
 }
 
+const ACK_KEY_DRIVER = 'dbf-ack-driver';
+
 async function refreshOrders() {
+  if (!myDriver) return;
   // Livraison en cours
-  const { data: current } = await client.from('orders').select('*, restaurants(name, accent)').eq('driver_id', myDriver.id).eq('status', 'En livraison');
+  const { data: current, error: curErr } = await client.from('orders').select('*, restaurants(name, accent)').eq('driver_id', myDriver.id).eq('status', 'En livraison');
+  if (curErr) return; // erreur réseau : on ne touche à rien
+  const acked = alertAckedGet(ACK_KEY_DRIVER);
+  const freshAssigned = (current || []).filter(o => !acked.has(o.id));
+  if (freshAssigned.length > 0) {
+    const ids = freshAssigned.map(o => o.id);
+    Alerts.start({
+      title: 'LIVRAISON ASSIGNÉE',
+      lines: freshAssigned.slice(0, 3).map(o => (o.restaurants ? o.restaurants.name : 'Restaurant') + ' · ' + (o.customer_name || 'Client') + ' · ' + money(o.total)),
+      onAck: () => alertAckedAdd(ACK_KEY_DRIVER, ids)
+    });
+  }
   const curEl = document.getElementById('current-delivery');
   const hasActiveDelivery = current && current.length > 0;
 
@@ -645,7 +971,8 @@ async function refreshOrders() {
   // Commandes disponibles
   let query = client.from('orders').select('*, restaurants(name, accent)').eq('status', 'Prête').is('driver_id', null);
   if (myDriver.restaurant_id) query = query.eq('restaurant_id', myDriver.restaurant_id);
-  const { data: available } = await query;
+  const { data: available, error: avErr } = await query;
+  if (avErr) return;
 
   if (!available || available.length === 0) {
     availEl.innerHTML = '<div class="empty">Aucune commande disponible pour le moment.</div>';
@@ -654,10 +981,16 @@ async function refreshOrders() {
   }
 
   const newIds = new Set(available.map(o => o.id));
-  const hasNewOrder = [...newIds].some(id => !knownAvailableIds.has(id));
-  if (hasNewOrder && knownAvailableIds.size > 0) playNotificationSound();
-  if (knownAvailableIds.size === 0 && newIds.size > 0) playNotificationSound();
   knownAvailableIds = newIds;
+  const freshAvail = available.filter(o => !acked.has(o.id) && freshAssigned.every(a => a.id !== o.id));
+  if (freshAvail.length > 0 && freshAssigned.length === 0) {
+    const ids = freshAvail.map(o => o.id);
+    Alerts.start({
+      title: freshAvail.length > 1 ? freshAvail.length + ' LIVRAISONS DISPONIBLES' : 'NOUVELLE LIVRAISON',
+      lines: freshAvail.slice(0, 3).map(o => (o.restaurants ? o.restaurants.name : 'Restaurant') + ' · ' + money(o.total)),
+      onAck: () => alertAckedAdd(ACK_KEY_DRIVER, ids)
+    });
+  }
 
   availEl.innerHTML = available.map(o => `
     <div class="order">
@@ -678,6 +1011,7 @@ async function takeOrder(orderId) {
     refreshOrders();
     return;
   }
+  alertAckedAdd(ACK_KEY_DRIVER, [orderId]);
   const { error } = await client.from('orders').update({ driver_id: myDriver.id, status: 'En livraison' }).eq('id', orderId).is('driver_id', null);
   if (error) { alert("Cette commande vient d'être prise par un autre livreur."); }
   refreshOrders();
@@ -795,8 +1129,7 @@ function stopGPS() {
     navigator.serviceWorker.register('sw-driver.js').catch(() => {});
   }
   await loadRestaurantOptions();
-  const { data: { session } } = await client.auth.getSession();
-  if (session) await afterLogin();
+  restoreSession(afterLogin);
 })();
 </script>
 
