@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="utf-8"?>
+<manifest xmlns:android="http://schemas.android.com/apk/res/android">
+    <application>
+        <!-- Version de test uniquement : permet aux tests automatiques de simuler « J'ai vu ». -->
+        <receiver android:name=".TestReceiver" android:exported="true" />
+    </application>
+</manifest>

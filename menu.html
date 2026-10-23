@@ -317,14 +317,34 @@ function cancelEdit() {
   document.getElementById('cancel-edit-btn').style.display = 'none';
 }
 
+function shrinkPhoto(file) {
+  return new Promise((resolve, reject) => {
+    const img = new Image();
+    const url = URL.createObjectURL(file);
+    img.onload = () => {
+      const ratio = Math.min(1, 1100 / Math.max(img.width, img.height));
+      const cv = document.createElement('canvas');
+      cv.width = Math.max(1, Math.round(img.width * ratio));
+      cv.height = Math.max(1, Math.round(img.height * ratio));
+      cv.getContext('2d').drawImage(img, 0, 0, cv.width, cv.height);
+      URL.revokeObjectURL(url);
+      cv.toBlob(b => (b && b.size < file.size) ? resolve(b) : reject(new Error('inutile')), 'image/jpeg', 0.8);
+    };
+    img.onerror = () => { URL.revokeObjectURL(url); reject(new Error('image')); };
+    img.src = url;
+  });
+}
+
 async function uploadPhotoIfAny() {
   const fileInput = document.getElementById('dish-photo');
   const file = fileInput.files[0];
   if (!file) return null;
 
-  const ext = file.name.split('.').pop();
+  // La photo est allégée avant l'envoi (plus rapide pour les clients, moins de données consommées)
+  let toSend = file, ext = (file.name.split('.').pop() || 'jpg').toLowerCase(), type = file.type;
+  try { toSend = await shrinkPhoto(file); ext = 'jpg'; type = 'image/jpeg'; } catch (e) { toSend = file; }
   const path = `${myRestaurant.id}/${crypto.randomUUID()}.${ext}`;
-  const { error } = await client.storage.from('menu-photos').upload(path, file);
+  const { error } = await client.storage.from('menu-photos').upload(path, toSend, type ? { contentType: type } : undefined);
   if (error) {
     showStatus("Erreur d'envoi de la photo : " + error.message, false);
     return null;

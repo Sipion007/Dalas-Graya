@@ -64,6 +64,25 @@
   .nav-item svg { width:21px; height:21px; stroke:var(--creamDim); fill:none; stroke-width:1.7; }
   .nav-item.active { color:var(--mango); }
   .nav-item.active svg { stroke:var(--mango); }
+  .w-group { margin-bottom:14px; }
+  .w-title { font-size:12px; font-weight:700; color:var(--creamDim); margin-bottom:8px; }
+  .w-item { border:1px solid var(--line); border-left-width:4px; background:var(--surface); border-radius:10px; padding:11px 12px; margin-bottom:8px; display:flex; flex-direction:column; gap:8px; }
+  .w-item.bad { border-left-color:var(--chili); } .w-item.warn { border-left-color:var(--mango); } .w-item.old { border-left-color:#555; }
+  .w-item.ok { border-left-color:var(--palm, #5C8A63); }
+  .w-cov summary { cursor:pointer; list-style:none; }
+  .w-cov summary::-webkit-details-marker { display:none; }
+  .w-cov summary::after { content:' (afficher)'; color:var(--creamDim, #9A978F); font-weight:400; }
+  .w-cov[open] summary::after { content:' (masquer)'; }
+  .w-main b { display:block; font-size:13.5px; } .w-main span { display:block; font-size:12px; color:var(--creamDim); margin-top:2px; line-height:1.4; }
+  .w-main a { color:var(--cream); }
+  .w-acts { display:flex; flex-wrap:wrap; gap:6px; align-items:center; }
+  .w-acts input { margin:0; flex:1; min-width:150px; padding:8px 10px; font-size:13px; }
+  .w-btn { border:1px solid #3A3A3A; background:#171717; color:#fff; border-radius:8px; padding:8px 11px; font-size:12px; font-weight:700; cursor:pointer; text-decoration:none; font-family:inherit; }
+  .w-btn.go { background:var(--mango); color:#080808; border-color:var(--mango); }
+  .w-btn.danger { border-color:var(--chili); color:#F0A99A; }
+  .w-ok { font-size:12.5px; color:var(--palm); }
+  .opt-box { background:var(--surface); border:1px solid var(--line); border-radius:12px; padding:14px; margin-top:8px; }
+  .opt-box p { font-size:12.5px; color:var(--creamDim); margin:0 0 10px; line-height:1.45; }
 </style>
 </head>
 <body>
@@ -95,6 +114,10 @@
       <button class="btn-outline" onclick="logout()">Déconnexion</button>
     </div>
 
+    <div id="alert-panel"></div>
+    <div class="section-title" style="margin-top:0;">À surveiller</div>
+    <div id="watch-box"><div class="w-ok">Chargement…</div></div>
+
     <select id="period-select" onchange="renderAll()">
       <option value="today">Aujourd'hui</option>
       <option value="week">Cette semaine</option>
@@ -119,6 +142,14 @@
         <div class="stat-label">Total payé par les clients</div>
         <div class="stat-value mono" id="stat-paid">—</div>
       </div>
+      <div class="stat-card">
+        <div class="stat-label">Commandes annulées</div>
+        <div class="stat-value" id="stat-cancelled">—</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-label">Temps moyen d'acceptation</div>
+        <div class="stat-value" id="stat-accept">—</div>
+      </div>
     </div>
 
     <div class="section-title">Comptes sur l'application</div>
@@ -137,6 +168,11 @@
 
     <div class="section-title" id="section-livreurs">Livreurs</div>
     <div id="drivers-list"></div>
+
+    <div class="section-title">Photos des menus</div>
+    <div class="opt-box"><p>Les photos envoyées par les restaurants sont souvent très lourdes. Les alléger accélère l'appli pour les clients et évite de dépasser la limite gratuite du serveur. Les photos d'origine sont conservées.</p>
+      <button class="btn-primary" id="opt-btn" style="margin-top:0;" onclick="optimizePhotos()">Alléger toutes les photos</button>
+      <div id="opt-status" style="font-size:12.5px; color:var(--palm); margin-top:8px;"></div></div>
 
     <div class="section-title" id="section-historique">Historique des commandes</div>
     <select id="restaurant-filter" onchange="renderOrdersList()">
@@ -234,8 +270,660 @@ window.addEventListener('pageshow', (e) => { if (e.persisted) onAppResume(); });
 window.addEventListener('online', onAppResume);
 window.addEventListener('focus', onAppResume);
 
+// ================= ALERTES : alarme sonore + notifications =================
+const PUSH_VAPID_PUBLIC = "BGQqCWf5N_IzK-p2AmEXRR3K0-TgOns-uDNKjTxJOd8zpxsUz1277aLtQr2hefzhrUIbRDTojnMZ_GAsAK_kWwo";
+
+const Alerts = (() => {
+  let audioEl = null;
+  let unlocked = false;
+  let ringing = false;
+  let overlay = null;
+  let overlayKey = '';
+  let currentAck = null;
+  let vibTimer = null;
+  let titleTimer = null;
+  let testTimer = null;
+  let pushState = 'off';
+  let pushError = '';
+  let pushBusy = false;
+  let identityFn = null;
+  let panelId = null;
+  let panelHtml = '';
+  let wakeLock = null;
+  const baseTitle = document.title;
+
+  // ----- Appli Android « Dallas Bouff' Pro » : alarme qui sonne même téléphone en poche -----
+  const NATIVE = window.DBFAndroid || null;
+  const APK_URL = 'pro.html';
+  let nativeState = null;
+  let nativeErr = '';
+  let nativeBusy = false;
+  let nativeTimer = null;
+  function isAndroid() { return /android/i.test(navigator.userAgent); }
+  function nativeStatus() { try { return JSON.parse(NATIVE.status()); } catch (e) { return null; } }
+  function refreshNative() { if (NATIVE) { nativeState = nativeStatus(); renderPanel(); } }
+  async function registerNative() {
+    if (!NATIVE || nativeBusy) return;
+    const id = identityFn ? identityFn() : null;
+    if (!id || (id.role !== 'restaurant' && id.role !== 'driver')) return;
+    nativeBusy = true;
+    try {
+      let old = '';
+      try { old = NATIVE.getToken() || ''; } catch (e) {}
+      const { data, error } = await client.rpc('register_alarm_device', {
+        p_role: id.role, p_restaurant_id: id.restaurant_id || null, p_driver_id: id.driver_id || null,
+        p_old: old || null, p_model: (navigator.userAgent || '').slice(0, 80)
+      });
+      if (error || !data) throw new Error((error && error.message) || 'enregistrement');
+      NATIVE.setDevice(String(data), id.role, '');
+      nativeErr = '';
+    } catch (e) {
+      nativeErr = (e && e.message) ? e.message : String(e);
+      setTimeout(registerNative, 20000);
+    } finally {
+      nativeBusy = false;
+      refreshNative();
+    }
+  }
+
+  function esc(s) {
+    return String(s == null ? '' : s).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+  }
+
+  // Sirène générée en WAV, jouée par un élément audio (audible même en mode silencieux sur iPhone)
+  function buildWavUrl() {
+    const sr = 22050;
+    const lead = 0.25, beep = 0.18, count = 8;
+    const n = Math.floor(sr * (lead + beep * count));
+    const buf = new ArrayBuffer(44 + n * 2);
+    const v = new DataView(buf);
+    const w = (o, s) => { for (let i = 0; i < s.length; i++) v.setUint8(o + i, s.charCodeAt(i)); };
+    w(0, 'RIFF'); v.setUint32(4, 36 + n * 2, true); w(8, 'WAVE'); w(12, 'fmt ');
+    v.setUint32(16, 16, true); v.setUint16(20, 1, true); v.setUint16(22, 1, true);
+    v.setUint32(24, sr, true); v.setUint32(28, sr * 2, true); v.setUint16(32, 2, true); v.setUint16(34, 16, true);
+    w(36, 'data'); v.setUint32(40, n * 2, true);
+    let phase = 0;
+    for (let i = 0; i < n; i++) {
+      const t = i / sr;
+      let s = 0;
+      if (t >= lead) {
+        const k = Math.floor((t - lead) / beep);
+        const local = (t - lead) - k * beep;
+        const f = (k % 2 === 0) ? 1046 : 784;
+        phase += 2 * Math.PI * f / sr;
+        const sq = Math.sin(phase) >= 0 ? 1 : -1;
+        const mix = 0.65 * sq + 0.35 * Math.sin(phase);
+        const edge = Math.min(1, local / 0.006, (beep - local) / 0.006);
+        s = mix * Math.max(0, edge);
+      }
+      v.setInt16(44 + i * 2, Math.round(s * 0.97 * 32767), true);
+    }
+    return URL.createObjectURL(new Blob([buf], { type: 'audio/wav' }));
+  }
+
+  function ensureAudio() {
+    if (!audioEl) {
+      audioEl = new Audio(buildWavUrl());
+      audioEl.loop = true;
+      audioEl.preload = 'auto';
+      audioEl.volume = 1;
+    }
+    return audioEl;
+  }
+
+  // Débloque le son (doit être appelé pendant un appui de l'utilisateur)
+  function unlock() {
+    if (unlocked) return;
+    let a;
+    try { a = ensureAudio(); } catch (e) { return; }
+    let p;
+    try { p = a.play(); } catch (e) { return; }
+    const ok = () => {
+      if (unlocked) return;
+      unlocked = true;
+      if (!ringing) { try { a.pause(); a.currentTime = 0; } catch (e) {} }
+      if (overlay) { const h = overlay.querySelector('.ao-hint'); if (h) h.style.display = 'none'; }
+      renderPanel();
+    };
+    if (p && p.then) p.then(ok).catch(() => {}); else ok();
+  }
+
+  function injectStyle() {
+    if (document.getElementById('alerts-style')) return;
+    const st = document.createElement('style');
+    st.id = 'alerts-style';
+    st.textContent = `
+      #alert-overlay { position:fixed; inset:0; z-index:9999; display:none; align-items:center; justify-content:center; padding:20px;
+        background:rgba(8,8,8,0.96); animation: aoPulse 0.9s infinite; touch-action: manipulation; }
+      @keyframes aoPulse { 0%,100% { box-shadow: inset 0 0 0 10px #C4432B; } 50% { box-shadow: inset 0 0 0 10px #F5C04A; } }
+      #alert-overlay .ao-box { width:100%; max-width:420px; text-align:center; color:#fff; font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif; }
+      #alert-overlay .ao-title { font-size:30px; font-weight:800; letter-spacing:-0.5px; color:#F5C04A; line-height:1.1; margin-bottom:18px; }
+      #alert-overlay .ao-lines { font-size:16px; color:#fff; margin-bottom:18px; line-height:1.5; max-height:34vh; overflow:auto; }
+      #alert-overlay .ao-hint { font-size:13px; color:#F5C04A; margin-bottom:14px; }
+      #alert-overlay .ao-btn { width:100%; border:none; border-radius:14px; padding:20px; font-size:20px; font-weight:800; letter-spacing:1px; background:#F5C04A; color:#080808; cursor:pointer; touch-action: manipulation; }
+      .ap { background:#111; border:1px solid #242424; border-radius:12px; padding:12px 14px; margin-bottom:14px; font-size:12.5px; color:#8F8F8F; }
+      .ap-row { display:flex; justify-content:space-between; gap:10px; padding:4px 0; }
+      .ap-row b { font-weight:700; text-align:right; }
+      .ap .ok { color:#5C8A63; } .ap .warn { color:#F5C04A; } .ap .bad { color:#C4432B; }
+      .ap-apk { display:inline-flex; align-items:center; justify-content:center; min-height:44px; padding:10px 16px; border-radius:10px; background:#F5C04A; color:#0A0A0A; font-weight:700; text-decoration:none; }
+      .ap-note { font-size:11.5px; line-height:1.45; margin-top:6px; color:#8F8F8F; }
+      .ap-btns { display:flex; gap:8px; margin-top:8px; flex-wrap:wrap; }
+      .ap-btns button { flex:1; min-width:140px; border:1px solid #303030; background:#171717; color:#fff; border-radius:9px; padding:12px 10px; font-size:13px; font-weight:700; cursor:pointer; touch-action: manipulation; }
+      .ap-btns button.primary { background:#F5C04A; color:#080808; border-color:#F5C04A; }
+      .ap-btns button[disabled] { opacity:0.6; }
+    `;
+    document.head.appendChild(st);
+  }
+
+  // ----- Écran d'alerte : construit une seule fois, puis seul le texte est mis à jour -----
+  function ensureOverlay() {
+    injectStyle();
+    if (overlay) return overlay;
+    overlay = document.createElement('div');
+    overlay.id = 'alert-overlay';
+    overlay.innerHTML = '<div class="ao-box"><div class="ao-title"></div><div class="ao-lines"></div><div class="ao-hint">Touchez l\'écran pour activer le son</div><button class="ao-btn" id="ao-ack" type="button">J\'AI VU</button></div>';
+    overlay.querySelector('#ao-ack').addEventListener('click', (e) => { e.stopPropagation(); unlock(); ack(); });
+    overlay.addEventListener('click', () => unlock());
+    document.body.appendChild(overlay);
+    return overlay;
+  }
+
+  function showOverlay(opts) {
+    const o = ensureOverlay();
+    const key = JSON.stringify([opts.title, opts.lines || []]);
+    if (key !== overlayKey) {
+      overlayKey = key;
+      o.querySelector('.ao-title').textContent = opts.title;
+      o.querySelector('.ao-lines').innerHTML = (opts.lines || []).map(l => `<div>${esc(l)}</div>`).join('');
+    }
+    o.querySelector('.ao-hint').style.display = unlocked ? 'none' : 'block';
+    if (o.style.display !== 'flex') o.style.display = 'flex';
+  }
+
+  function start(opts) {
+    if (testTimer) { clearTimeout(testTimer); testTimer = null; }
+    currentAck = opts.onAck || null;
+    showOverlay(opts);
+    if (ringing) return;
+    ringing = true;
+    try {
+      const a = ensureAudio();
+      a.currentTime = 0;
+      const p = a.play();
+      if (p && p.then) p.then(() => { if (!unlocked) { unlocked = true; renderPanel(); } }).catch(() => {});
+    } catch (e) {}
+    try {
+      if (navigator.vibrate) {
+        navigator.vibrate([500, 200, 500, 200, 500]);
+        vibTimer = setInterval(() => { try { navigator.vibrate([500, 200, 500, 200, 500]); } catch (e) {} }, 2500);
+      }
+    } catch (e) {}
+    titleTimer = setInterval(() => { document.title = (document.title === baseTitle) ? opts.title : baseTitle; }, 700);
+  }
+
+  function stop() {
+    ringing = false;
+    overlayKey = '';
+    if (testTimer) { clearTimeout(testTimer); testTimer = null; }
+    try { if (audioEl) { audioEl.pause(); audioEl.currentTime = 0; } } catch (e) {}
+    if (vibTimer) { clearInterval(vibTimer); vibTimer = null; }
+    try { if (navigator.vibrate) navigator.vibrate(0); } catch (e) {}
+    if (titleTimer) { clearInterval(titleTimer); titleTimer = null; }
+    document.title = baseTitle;
+    if (overlay) overlay.style.display = 'none';
+  }
+
+  function ack() {
+    const f = currentAck;
+    currentAck = null;
+    stop();
+    if (f) { try { f(); } catch (e) {} }
+  }
+
+  function test() {
+    unlock();
+    start({ title: "TEST D'ALARME", lines: ['Si vous entendez ce son, les alertes fonctionnent.'], onAck: null });
+    testTimer = setTimeout(() => { testTimer = null; if (currentAck === null) stop(); }, 6000);
+  }
+
+  // ----- Notifications push (appli fermée) -----
+  function b64ToU8(b64) {
+    const pad = '='.repeat((4 - b64.length % 4) % 4);
+    const raw = atob((b64 + pad).replace(/-/g, '+').replace(/_/g, '/'));
+    return Uint8Array.from([...raw].map(c => c.charCodeAt(0)));
+  }
+
+  function isIOS() { return /iphone|ipad|ipod/i.test(navigator.userAgent) || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1); }
+  function isStandalone() { return (window.matchMedia && window.matchMedia('(display-mode: standalone)').matches) || window.navigator.standalone === true; }
+  function pushSupported() { return ('serviceWorker' in navigator) && ('PushManager' in window) && ('Notification' in window); }
+
+  function withTimeout(promise, ms, label) {
+    return Promise.race([promise, new Promise((_, rej) => setTimeout(() => rej(new Error(label + ' (délai dépassé)')), ms))]);
+  }
+
+  async function subscribeAndRegister() {
+    const reg = await withTimeout(navigator.serviceWorker.register('sw-driver.js'), 15000, 'service');
+    await withTimeout(navigator.serviceWorker.ready, 15000, 'service');
+    const want = b64ToU8(PUSH_VAPID_PUBLIC);
+    let sub = await reg.pushManager.getSubscription();
+    if (sub && sub.options && sub.options.applicationServerKey) {
+      const have = new Uint8Array(sub.options.applicationServerKey);
+      const same = have.length === want.length && have.every((x, i) => x === want[i]);
+      if (!same) { try { await sub.unsubscribe(); } catch (e) {} sub = null; }
+    }
+    if (!sub) sub = await withTimeout(reg.pushManager.subscribe({ userVisibleOnly: true, applicationServerKey: want }), 20000, 'abonnement');
+    const j = sub.toJSON();
+    const id = identityFn ? identityFn() : null;
+    if (!id) throw new Error('compte non chargé');
+    const { error } = await client.rpc('register_push', {
+      p_endpoint: j.endpoint, p_sub: j, p_role: id.role,
+      p_restaurant_id: id.restaurant_id || null, p_driver_id: id.driver_id || null
+    });
+    if (error) throw new Error(error.message || 'enregistrement');
+    pushState = 'on';
+    pushError = '';
+  }
+
+  // Appelé directement par l'appui sur le bouton (obligatoire sur iPhone)
+  function enablePush() {
+    unlock();
+    if (pushBusy) return;
+    if (!pushSupported()) { pushState = 'unsupported'; renderPanel(); return; }
+    let permPromise;
+    try { permPromise = Notification.requestPermission(); } catch (e) { permPromise = null; }
+    pushBusy = true;
+    renderPanel();
+    Promise.resolve(permPromise).then(async (perm) => {
+      perm = perm || Notification.permission;
+      if (perm === 'granted') {
+        await subscribeAndRegister();
+      } else if (perm === 'denied') {
+        pushState = 'denied';
+      } else {
+        pushState = 'off';
+      }
+    }).catch((e) => {
+      pushState = 'error';
+      pushError = (e && e.message) ? e.message : String(e);
+    }).finally(() => {
+      pushBusy = false;
+      renderPanel();
+    });
+  }
+
+  async function syncPush() {
+    try {
+      if (!pushSupported()) { pushState = 'unsupported'; }
+      else if (Notification.permission === 'denied') { pushState = 'denied'; }
+      else if (Notification.permission === 'granted') { await subscribeAndRegister(); }
+    } catch (e) { pushState = 'error'; pushError = (e && e.message) ? e.message : String(e); }
+    renderPanel();
+  }
+
+  async function unregisterPush() {
+    if (NATIVE) {
+      try { const t = NATIVE.getToken(); if (t) await client.rpc('unregister_alarm_device', { p_token: t }); } catch (e) {}
+      try { NATIVE.clearDevice(); } catch (e) {}
+    }
+    try {
+      if (!('serviceWorker' in navigator)) return;
+      const reg = await navigator.serviceWorker.getRegistration();
+      const sub = reg && await reg.pushManager.getSubscription();
+      if (sub) await client.rpc('unregister_push', { p_endpoint: sub.endpoint });
+    } catch (e) {}
+    pushState = 'off';
+  }
+
+  // ----- Écran allumé -----
+  async function keepAwake() {
+    try {
+      if ('wakeLock' in navigator && document.visibilityState === 'visible' && !wakeLock) {
+        wakeLock = await navigator.wakeLock.request('screen');
+        wakeLock.addEventListener('release', () => { wakeLock = null; });
+      }
+    } catch (e) { wakeLock = null; }
+  }
+  document.addEventListener('visibilitychange', () => { if (document.visibilityState === 'visible') keepAwake(); });
+
+  // ----- Panneau d'état : redessiné uniquement si son contenu change -----
+  function renderPanel() {
+    const el = panelId && document.getElementById(panelId);
+    if (!el) return;
+    if (!el.dataset.bound) {
+      el.dataset.bound = '1';
+      el.addEventListener('click', (e) => {
+        const b = e.target.closest('button');
+        if (!b) return;
+        if (b.dataset.act === 'test') test();
+        else if (b.dataset.act === 'push') enablePush();
+        else if (b.dataset.act === 'ntest' && NATIVE) { NATIVE.testAlarm(); b.textContent = 'Verrouillez le téléphone : il sonne dans 8 s'; }
+        else if (b.dataset.act === 'nfix' && NATIVE) NATIVE.fix(b.dataset.w);
+        else if (b.dataset.act === 'nswitch' && NATIVE) NATIVE.switchSpace();
+      });
+    }
+    if (NATIVE) { renderNativePanel(el); return; }
+    let pushTxt, pushCls, note = '';
+    if (pushState === 'on') { pushTxt = 'Activées'; pushCls = 'ok'; }
+    else if (pushBusy) { pushTxt = 'Activation…'; pushCls = 'warn'; }
+    else if (pushState === 'denied') {
+      pushTxt = 'Refusées'; pushCls = 'bad';
+      note = isIOS() ? "Pour les autoriser : Réglages de l'iPhone, puis Notifications, puis Dallas Bouff', puis Autoriser les notifications." : "Autorisez les notifications pour ce site dans les réglages du navigateur.";
+    }
+    else if (pushState === 'unsupported') {
+      pushCls = 'warn';
+      if (isIOS() && !isStandalone()) { pushTxt = 'Non disponibles ici'; note = "Ajoutez l'appli à l'écran d'accueil (Partager, puis Sur l'écran d'accueil) et ouvrez-la depuis cette icône."; }
+      else if (isIOS()) { pushTxt = 'Non disponibles'; note = "Mettez à jour votre iPhone (iOS 16.4 ou plus récent)."; }
+      else { pushTxt = 'Non disponibles sur ce navigateur'; }
+    }
+    else if (pushState === 'error') { pushTxt = 'Erreur, réessayez'; pushCls = 'bad'; note = pushError ? 'Détail : ' + pushError : ''; }
+    else { pushTxt = 'À activer'; pushCls = 'warn'; }
+    const showPushBtn = pushState !== 'on' && pushState !== 'unsupported';
+    const apkNote = isAndroid() && identityFn && ['restaurant', 'driver'].includes((identityFn() || {}).role)
+      ? `<div class="ap-note">Sur Android, installez l'appli <b>Dallas Bouff' Pro</b> : l'alarme sonne alors même téléphone verrouillé, dans la poche.</div>
+         <div class="ap-btns"><a class="ap-apk" href="${APK_URL}">Installer l'appli Android</a></div>` : '';
+    const html = `<div class="ap">
+      <div class="ap-row"><span>Son d'alerte</span><b class="${unlocked ? 'ok' : 'warn'}">${unlocked ? 'Activé' : 'Touchez Tester l\'alarme'}</b></div>
+      <div class="ap-row"><span>Notifications (appli fermée)</span><b class="${pushCls}">${esc(pushTxt)}</b></div>
+      ${note ? `<div class="ap-note">${esc(note)}</div>` : ''}
+      <div class="ap-btns">
+        <button type="button" data-act="test">Tester l'alarme</button>
+        ${showPushBtn ? `<button type="button" class="primary" data-act="push"${pushBusy ? ' disabled' : ''}>Activer les notifications</button>` : ''}
+      </div>${apkNote}</div>`;
+    if (html === panelHtml) return;
+    panelHtml = html;
+    el.innerHTML = html;
+  }
+
+  function renderNativePanel(el) {
+    const st = nativeState || {};
+    const rows = [];
+    const fixes = [];
+    let alarmTxt, alarmCls;
+    if (st.running && st.connected) { alarmTxt = 'Active'; alarmCls = 'ok'; }
+    else if (st.running) { alarmTxt = 'Connexion…'; alarmCls = 'warn'; }
+    else if (nativeErr) { alarmTxt = 'Erreur, nouvel essai automatique'; alarmCls = 'bad'; }
+    else { alarmTxt = 'Démarrage…'; alarmCls = 'warn'; }
+    rows.push(['Alarme téléphone en poche', alarmTxt, alarmCls]);
+    rows.push(['Notifications', st.notif ? 'Autorisées' : 'Bloquées', st.notif ? 'ok' : 'bad']);
+    if (!st.notif) fixes.push(['notif', 'Autoriser les notifications']);
+    rows.push(['Économie de batterie', st.battery ? "Ne bloque pas l'appli" : 'À désactiver', st.battery ? 'ok' : 'warn']);
+    if (!st.battery) fixes.push(['battery', "Ne plus bloquer l'appli"]);
+    if (st.fullscreen === false) { rows.push(['Alarme sur écran verrouillé', 'À autoriser', 'warn']); fixes.push(['fullscreen', "Autoriser l'écran d'alarme"]); }
+    if (st.role === 'driver') {
+      rows.push(['Position GPS', st.location ? 'Autorisée' : 'À autoriser', st.location ? 'ok' : 'warn']);
+      if (!st.location) fixes.push(['location', 'Autoriser la position']);
+    }
+    const note = !st.battery
+      ? "Sur Tecno, Infinix, itel et Samsung : autorisez aussi le démarrage automatique et l'activité en arrière-plan de Dallas Bouff' Pro dans les réglages de la batterie."
+      : (nativeErr ? 'Détail : ' + nativeErr : "Touchez Tester l'alarme puis verrouillez votre téléphone : il doit sonner au bout de 8 secondes.");
+    const html = `<div class="ap">
+      ${rows.map(r => `<div class="ap-row"><span>${esc(r[0])}</span><b class="${r[2]}">${esc(r[1])}</b></div>`).join('')}
+      <div class="ap-note">${esc(note)}</div>
+      <div class="ap-btns">
+        <button type="button" data-act="ntest">Tester l'alarme</button>
+        ${fixes.map(f => `<button type="button" class="primary" data-act="nfix" data-w="${f[0]}">${esc(f[1])}</button>`).join('')}
+        <button type="button" data-act="nswitch">Changer d'espace</button>
+      </div></div>`;
+    if (html === panelHtml) return;
+    panelHtml = html;
+    el.innerHTML = html;
+  }
+
+  let swBound = false;
+  function init(opts) {
+    panelId = opts.panelId;
+    identityFn = opts.identity;
+    injectStyle();
+    if (NATIVE) {
+      refreshNative();
+      registerNative();
+      if (!nativeTimer) {
+        nativeTimer = setInterval(refreshNative, 3000);
+        window.addEventListener('dbf-native-resume', refreshNative);
+      }
+    } else {
+      renderPanel();
+      syncPush();
+    }
+    keepAwake();
+    if (!swBound && navigator.serviceWorker) {
+      swBound = true;
+      navigator.serviceWorker.addEventListener('message', (e) => {
+        if (e.data && e.data.type === 'push' && typeof opts.onPush === 'function') opts.onPush();
+      });
+    }
+  }
+
+  // Premier appui n'importe où : on débloque le son pour que l'alarme puisse sonner ensuite
+  document.addEventListener('touchend', unlock, { passive: true });
+  document.addEventListener('click', unlock);
+
+  return { init, start, stop, test, unlock, unregisterPush, isRinging: () => ringing, isTest: () => testTimer !== null };
+})();
+
+function alertAckedGet(key) {
+  try { return new Set(JSON.parse(localStorage.getItem(key) || '[]')); } catch (e) { return new Set(); }
+}
+function alertAckedAdd(key, ids) {
+  try {
+    const s = alertAckedGet(key);
+    ids.forEach(i => s.add(i));
+    localStorage.setItem(key, JSON.stringify([...s].slice(-300)));
+  } catch (e) {}
+}
+
+// ---------- Outils communs : temps, messages par commande ----------
+function timeAgo(ts) {
+  if (!ts) return '';
+  const s = Math.max(0, Math.round((Date.now() - new Date(ts).getTime()) / 1000));
+  if (s < 60) return "à l'instant";
+  const m = Math.floor(s / 60);
+  if (m < 60) return 'il y a ' + m + ' min';
+  const h = Math.floor(m / 60);
+  if (h < 24) return 'il y a ' + h + ' h' + (m % 60 ? ' ' + String(m % 60).padStart(2, '0') : '');
+  return 'le ' + new Date(ts).toLocaleDateString('fr-FR', { day: '2-digit', month: '2-digit' });
+}
+function hhmm(ts) { return ts ? new Date(ts).toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' }) : ''; }
+function minutesSince(ts) { return ts ? Math.floor((Date.now() - new Date(ts).getTime()) / 60000) : 0; }
+
+const ROLE_LABEL = { client: 'Client', restaurant: 'Restaurant', driver: 'Livreur', admin: "Dallas Bouff'" };
+const msgDrafts = {};
+const openThreads = new Set();
+
+function threadHtml(orderId, msgs, myRole, quick) {
+  const list = (msgs || []).map(m => {
+    const mine = m.sender_role === myRole;
+    return `<div class="msg ${mine ? 'mine' : ''}"><div class="msg-meta">${escHtml(mine ? 'Vous' : (m.sender_name || ROLE_LABEL[m.sender_role] || ''))} · ${hhmm(m.created_at)}</div><div class="msg-body">${escHtml(m.body)}</div></div>`;
+  }).join('');
+  return `
+    <div class="thread" data-thread="${orderId}">
+      <div class="thread-list" id="thread-list-${orderId}">${list || '<div class="thread-empty">Aucun message pour cette commande.</div>'}</div>
+      ${quick && quick.length ? `<div class="quick-row">${quick.map(q => `<button type="button" class="quick" data-quick="${orderId}" data-text="${escHtml(q)}">${escHtml(q)}</button>`).join('')}</div>` : ''}
+      <div class="thread-send">
+        <textarea id="msg-input-${orderId}" data-draft="${orderId}" maxlength="500" rows="2" placeholder="Écrire un message…">${escHtml(msgDrafts[orderId] || '')}</textarea>
+        <button type="button" class="send-btn" data-send="${orderId}">Envoyer</button>
+      </div>
+    </div>`;
+}
+
+async function sendThreadMessage(orderId, text, onDone) {
+  const body = String(text || '').trim();
+  if (!body) return;
+  const { error } = await client.rpc('send_order_message', { p_order: orderId, p_body: body });
+  if (error) { alert("Le message n'est pas parti. Vérifiez votre connexion et réessayez."); return; }
+  msgDrafts[orderId] = '';
+  const ta = document.getElementById('msg-input-' + orderId);
+  if (ta) ta.value = '';
+  if (onDone) onDone();
+}
+
+function bindThreadEvents(onSent) {
+  document.addEventListener('input', (e) => {
+    const t = e.target;
+    if (t && t.dataset && t.dataset.draft) msgDrafts[t.dataset.draft] = t.value;
+  });
+  document.addEventListener('click', (e) => {
+    const q = e.target.closest('[data-quick]');
+    if (q) { sendThreadMessage(q.dataset.quick, q.dataset.text, onSent); return; }
+    const s = e.target.closest('[data-send]');
+    if (s) { const id = s.dataset.send; const ta = document.getElementById('msg-input-' + id); sendThreadMessage(id, ta ? ta.value : '', onSent); return; }
+    const tg = e.target.closest('[data-toggle-thread]');
+    if (tg) { const id = tg.dataset.toggleThread; if (openThreads.has(id)) openThreads.delete(id); else openThreads.add(id); if (onSent) onSent(true); }
+  });
+}
+
+// Garde le champ en cours de saisie et la position des fils quand la liste est redessinée
+function renderKeepingFocus(el, html) {
+  const a = document.activeElement;
+  const keepId = a && el.contains(a) && a.id ? a.id : null;
+  const sel = keepId && typeof a.selectionStart === 'number' ? [a.selectionStart, a.selectionEnd] : null;
+  const scrolls = {};
+  el.querySelectorAll('.thread-list').forEach(t => { scrolls[t.id] = t.scrollTop; });
+  const values = {};
+  el.querySelectorAll('select[id], input[id]').forEach(x => { values[x.id] = x.value; });
+  el.innerHTML = html;
+  Object.keys(values).forEach(id => { const x = document.getElementById(id); if (x && el.contains(x) && values[id] && x.tagName === 'SELECT' && [...x.options].some(o => o.value === values[id])) x.value = values[id]; else if (x && el.contains(x) && x.tagName === 'INPUT' && x.type !== 'file') x.value = values[id]; });
+  el.querySelectorAll('.thread-list').forEach(t => { t.scrollTop = (t.id in scrolls) ? scrolls[t.id] : t.scrollHeight; });
+  if (keepId) { const n = document.getElementById(keepId); if (n) { n.focus({ preventScroll: true }); if (sel && n.setSelectionRange) { try { n.setSelectionRange(sel[0], sel[1]); } catch (e) {} } } }
+}
+
+function compressImageFile(file, max, quality) {
+  return new Promise((resolve, reject) => {
+    const img = new Image();
+    const url = URL.createObjectURL(file);
+    img.onload = () => {
+      const ratio = Math.min(1, (max || 1280) / Math.max(img.width, img.height));
+      const cv = document.createElement('canvas');
+      cv.width = Math.max(1, Math.round(img.width * ratio));
+      cv.height = Math.max(1, Math.round(img.height * ratio));
+      cv.getContext('2d').drawImage(img, 0, 0, cv.width, cv.height);
+      URL.revokeObjectURL(url);
+      cv.toBlob(b => b ? resolve(b) : reject(new Error('compression')), 'image/jpeg', quality || 0.8);
+    };
+    img.onerror = () => { URL.revokeObjectURL(url); reject(new Error('image')); };
+    img.src = url;
+  });
+}
+
+
+function escHtml(s) {
+  return String(s == null ? '' : s).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+}
+// ---------- À surveiller : commandes en retard, restaurants en pause ----------
+const ACK_KEY_ADMIN = 'dbf-ack-admin';
+let watchSig = '';
+const adminCancelOpen = {};
+
+function watchProblems(orders) {
+  const now = Date.now();
+  const out = [];
+  orders.forEach(o => {
+    if (['Livrée', 'Annulée'].includes(o.status)) return;
+    const age = minutesSince(o.created_at);
+    if (o.status === 'Reçue' && age >= 5) out.push({ o, level: age >= 15 ? 'bad' : 'warn', text: `Pas encore acceptée depuis ${age} min`, key: 'acc-' + o.id });
+    else if (o.status === 'Prête' && !o.driver_id && minutesSince(o.ready_at || o.created_at) >= 10) out.push({ o, level: 'warn', text: `Prête depuis ${minutesSince(o.ready_at || o.created_at)} min, aucun livreur`, key: 'drv-' + o.id });
+    else if (o.status === 'En livraison' && o.picked_at && minutesSince(o.picked_at) >= 60) out.push({ o, level: 'warn', text: `En livraison depuis ${minutesSince(o.picked_at)} min`, key: 'liv-' + o.id });
+    else if (o.cancel_requested_at) out.push({ o, level: 'warn', text: "Le client demande l'annulation", key: 'cr-' + o.id });
+    else if (age >= 6 * 60) out.push({ o, level: 'old', text: `Commande restée « ${o.status} » depuis ${timeAgo(o.created_at).replace('il y a ', '')}`, key: 'old-' + o.id });
+  });
+  return out;
+}
+
+async function loadWatch() {
+  const since = new Date(Date.now() - 10 * 24 * 3600 * 1000).toISOString();
+  const { data: orders, error } = await client.from('orders').select('*').gte('created_at', since).order('created_at', { ascending: false });
+  const { data: rests } = await client.from('restaurants').select('*').order('name');
+  const { data: coverage } = await client.rpc('admin_alert_coverage');
+  if (error) return;
+  const problems = watchProblems(orders || []);
+  const paused = (rests || []).filter(r => r.accepting_orders === false);
+  const acked = alertAckedGet(ACK_KEY_ADMIN);
+  const urgent = problems.filter(p => p.level !== 'old' && !acked.has(p.key));
+  if (urgent.length) {
+    Alerts.start({
+      title: urgent.length > 1 ? urgent.length + ' COMMANDES À SURVEILLER' : 'COMMANDE À SURVEILLER',
+      lines: urgent.slice(0, 4).map(p => { const r = (rests || []).find(x => x.id === p.o.restaurant_id); return (r ? r.name : '') + ' · ' + p.text; }),
+      onAck: () => alertAckedAdd(ACK_KEY_ADMIN, urgent.map(p => p.key))
+    });
+  }
+  const cov = (coverage || []).map(c => ({ ...c, level: c.android_active > 0 ? 'ok' : (c.push_devices > 0 ? 'warn' : 'bad') }))
+    .sort((a, b) => ({ bad: 0, warn: 1, ok: 2 }[a.level] - { bad: 0, warn: 1, ok: 2 }[b.level]) || String(a.name).localeCompare(String(b.name)));
+  const sig = JSON.stringify([problems.map(p => [p.key, p.text]), paused.map(r => [r.id, r.paused_reason]), adminCancelOpen, cov.map(c => [c.id, c.level])]);
+  if (sig === watchSig) return;
+  watchSig = sig;
+  const el = document.getElementById('watch-box');
+  if (!el) return;
+  const restOf = id => (rests || []).find(r => r.id === id) || {};
+  el.innerHTML = `
+    ${paused.length ? `<div class="w-group"><div class="w-title">Restaurants en pause</div>${paused.map(r => `
+      <div class="w-item ${r.paused_reason === 'auto' ? 'bad' : 'warn'}"><div class="w-main"><b>${escHtml(r.name)}</b><span>${r.paused_reason === 'auto' ? 'Bloqué automatiquement : une commande est restée 15 min sans réponse' : 'Mis en pause par le restaurant'}${r.paused_at ? ' · ' + timeAgo(r.paused_at) : ''}</span></div>
+      <div class="w-acts">${r.whatsapp ? `<a class="w-btn" href="tel:+${escHtml(r.whatsapp)}">Appeler</a>` : ''}<button class="w-btn go" onclick="adminReopen('${r.id}')">Rouvrir</button></div></div>`).join('')}</div>` : ''}
+    ${cov.length ? `<details class="w-group w-cov"${cov.some(c => c.level === 'bad') ? ' open' : ''}><summary class="w-title">Alertes des partenaires · ${cov.filter(c => c.level !== 'bad').length} sur ${cov.length} reçoivent les alertes appli fermée</summary>${cov.map(c => `
+      <div class="w-item ${c.level === 'ok' ? 'ok' : c.level}"><div class="w-main"><b>${escHtml(c.name || '')}</b><span>${c.kind === 'driver' ? 'Livreur' : 'Restaurant'} · ${c.level === 'ok' ? 'Appli Android active : sonne même téléphone en poche' : (c.level === 'warn' ? 'Notifications activées, sans l\'appli Android' + (c.android_last ? ' (appli vue ' + timeAgo(c.android_last) + ')' : '') : 'Ne reçoit rien quand l\'appli est fermée' + (c.android_last ? ' (appli vue ' + timeAgo(c.android_last) + ')' : ''))}</span></div></div>`).join('')}</details>` : ''}
+    <div class="w-group"><div class="w-title">Commandes à surveiller</div>
+    ${problems.length ? problems.map(p => { const r = restOf(p.o.restaurant_id); return `
+      <div class="w-item ${p.level}"><div class="w-main"><b>${escHtml(r.name || '')} · #${p.o.id.slice(0, 8).toUpperCase()}</b><span>${escHtml(p.text)} · ${escHtml(p.o.customer_name || '')} · <a href="tel:${escHtml(p.o.phone)}">${escHtml(p.o.phone)}</a> · ${money(p.o.total)}</span>${p.o.cancel_request_reason ? `<span>Motif du client : ${escHtml(p.o.cancel_request_reason)}</span>` : ''}</div>
+      <div class="w-acts">${r.whatsapp ? `<a class="w-btn" href="tel:+${escHtml(r.whatsapp)}">Appeler le restaurant</a>` : ''}
+        ${p.o.status === 'En livraison' || p.level === 'old' ? `<button class="w-btn" onclick="adminDelivered('${p.o.id}')">Marquer livrée</button>` : ''}
+        ${adminCancelOpen[p.o.id] ? `<input id="adm-cancel-${p.o.id}" maxlength="120" placeholder="Motif de l'annulation" /><button class="w-btn danger" onclick="adminCancel('${p.o.id}')">Confirmer</button>` : `<button class="w-btn danger" onclick="adminCancelToggle('${p.o.id}')">Annuler</button>`}</div></div>`; }).join('') : '<div class="w-ok">Tout va bien : aucune commande en retard.</div>'}
+    </div>`;
+}
+
+function adminCancelToggle(id) { adminCancelOpen[id] = !adminCancelOpen[id]; if (!adminCancelOpen[id]) delete adminCancelOpen[id]; watchSig = ''; loadWatch(); }
+async function adminCancel(id) {
+  const inp = document.getElementById('adm-cancel-' + id);
+  const why = inp ? inp.value.trim() : '';
+  if (why.length < 3) { alert("Indiquez le motif de l'annulation."); return; }
+  const { error } = await client.rpc('cancel_order', { p_order: id, p_reason: why });
+  if (error) { alert("Annulation impossible. Réessayez."); return; }
+  delete adminCancelOpen[id]; watchSig = ''; loadWatch(); loadData();
+}
+async function adminDelivered(id) {
+  const { error } = await client.rpc('admin_mark_delivered', { p_order: id });
+  if (error) { alert("Action impossible. Réessayez."); return; }
+  watchSig = ''; loadWatch(); loadData();
+}
+async function adminReopen(rid) {
+  const { error } = await client.rpc('set_restaurant_open', { p_rest: rid, p_open: true });
+  if (error) { alert("Réouverture impossible. Réessayez."); return; }
+  watchSig = ''; loadWatch();
+}
+
+// ---------- Alléger les photos des menus (une seule fois) ----------
+async function optimizePhotos() {
+  const btn = document.getElementById('opt-btn');
+  const st = document.getElementById('opt-status');
+  btn.disabled = true;
+  const { data: items, error } = await client.from('menu_items').select('id, restaurant_id, name, photo_url').not('photo_url', 'is', null);
+  if (error) { st.textContent = 'Lecture des plats impossible.'; btn.disabled = false; return; }
+  const todo = (items || []).filter(i => i.photo_url && !/\/opt-[^/]+\.jpg$/.test(i.photo_url));
+  let done = 0, saved = 0, failed = 0;
+  for (const it of todo) {
+    st.textContent = `Optimisation ${done + failed + 1} sur ${todo.length}…`;
+    try {
+      const res = await fetch(it.photo_url, { cache: 'no-store' });
+      if (!res.ok) throw new Error('telechargement');
+      const before = Number(res.headers.get('content-length')) || 0;
+      const blob = await res.blob();
+      const small = await compressImageFile(new File([blob], 'p', { type: blob.type || 'image/jpeg' }), 1100, 0.78);
+      if (small.size >= blob.size * 0.9) { done++; continue; }
+      const path = `${it.restaurant_id}/opt-${crypto.randomUUID()}.jpg`;
+      const up = await client.storage.from('menu-photos').upload(path, small, { contentType: 'image/jpeg' });
+      if (up.error) throw up.error;
+      const url = client.storage.from('menu-photos').getPublicUrl(path).data.publicUrl;
+      const { error: uErr } = await client.from('menu_items').update({ photo_url: url }).eq('id', it.id);
+      if (uErr) throw uErr;
+      saved += (blob.size - small.size);
+      done++;
+    } catch (e) { failed++; }
+  }
+  st.textContent = `Terminé : ${done} photo${done > 1 ? 's' : ''} traitée${done > 1 ? 's' : ''}, ${(saved / 1048576).toFixed(1)} Mo économisés${failed ? `, ${failed} non traitée${failed > 1 ? 's' : ''} (réessayez plus tard)` : ''}.`;
+  btn.disabled = false;
+}
+
 let restaurants = [];
 let allOrders = [];
+let watchTimer = null;
 
 function money(n) { return Number(n).toLocaleString('fr-FR') + ' F'; }
 
@@ -256,7 +944,7 @@ async function login() {
 
 let adminLoggedIn = false;
 function isAppLoggedIn() { return adminLoggedIn; }
-function onResumeLoggedIn() { try { loadData(); } catch (e) {} }
+function onResumeLoggedIn() { try { loadData(); loadWatch(); } catch (e) {} }
 
 async function afterLogin() {
   const session = await getSessionSafe();
@@ -276,6 +964,10 @@ async function afterLogin() {
     return;
   }
   adminLoggedIn = true;
+  Alerts.init({ panelId: 'alert-panel', identity: () => ({ role: 'admin' }), onPush: () => loadWatch() });
+  loadWatch();
+  if (watchTimer) clearInterval(watchTimer);
+  watchTimer = setInterval(loadWatch, 20000);
 
   document.getElementById('login-screen').style.display = 'none';
   document.getElementById('admin-screen').style.display = 'block';
@@ -285,6 +977,8 @@ async function afterLogin() {
 
 async function logout() {
   adminLoggedIn = false;
+  if (watchTimer) { clearInterval(watchTimer); watchTimer = null; }
+  try { await Alerts.unregisterPush(); Alerts.stop(); } catch (e) {}
   await signOutLocal();
   document.getElementById('admin-screen').style.display = 'none';
   document.getElementById('bottom-nav').style.display = 'none';
@@ -384,7 +1078,11 @@ function getFilteredByPeriod() {
 }
 
 function renderAll() {
-  const filtered = getFilteredByPeriod();
+  const periodAll = getFilteredByPeriod();
+  const filtered = periodAll.filter(o => o.status !== 'Annulée');
+  document.getElementById('stat-cancelled').textContent = periodAll.length - filtered.length;
+  const acc = filtered.filter(o => o.accepted_at).map(o => (new Date(o.accepted_at) - new Date(o.created_at)) / 60000);
+  document.getElementById('stat-accept').textContent = acc.length ? Math.round(acc.reduce((a, b) => a + b, 0) / acc.length) + ' min' : '—';
 
   const fees = filtered.reduce((sum, o) => sum + Number(o.delivery_fee || 0), 0);
   const paid = filtered.reduce((sum, o) => sum + Number(o.total || 0), 0);

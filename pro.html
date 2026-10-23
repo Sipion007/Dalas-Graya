@@ -1,0 +1,79 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Dallas Bouff' Pro · Appli Android des partenaires</title>
+<meta name="description" content="L'appli Android des restaurants et livreurs Dallas Bouff' : l'alarme sonne même téléphone verrouillé, dans la poche.">
+<meta name="theme-color" content="#080808">
+<link rel="icon" href="icons/icon-192.png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Work+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #080808; --surface: #111111; --raised: #171717; --line: #242424;
+    --mango: #F5C04A; --palm: #5C8A63; --chili: #C4432B;
+    --cream: #FFFFFF; --creamDim: #8F8F8F;
+  }
+  * { box-sizing: border-box; }
+  body { margin: 0; background: var(--bg); color: var(--cream); font-family: 'Work Sans', -apple-system, 'Segoe UI', Roboto, sans-serif; line-height: 1.55; }
+  .wrap { max-width: 560px; margin: 0 auto; padding: 32px max(18px, env(safe-area-inset-left)) 56px; }
+  .brand { display: flex; align-items: center; gap: 14px; }
+  .brand img { width: 64px; height: 64px; border-radius: 16px; }
+  .kicker { font-size: 12px; letter-spacing: 2.4px; text-transform: uppercase; color: var(--mango); font-weight: 700; }
+  h1 { font-family: 'Bebas Neue', sans-serif; font-weight: 400; font-size: 46px; line-height: .95; letter-spacing: .5px; margin: 26px 0 12px; }
+  .lead { color: #CFCFCF; font-size: 16.5px; margin: 0; }
+  .cta { display: flex; align-items: center; justify-content: center; min-height: 58px; margin: 26px 0 8px; border-radius: 14px; background: var(--mango); color: #0A0A0A; font-weight: 700; font-size: 17px; text-decoration: none; }
+  .cta:focus-visible { outline: 2px solid var(--cream); outline-offset: 3px; }
+  .small { font-size: 13px; color: var(--creamDim); text-align: center; margin: 0; }
+  h2 { font-size: 13px; letter-spacing: 2px; text-transform: uppercase; color: var(--creamDim); margin: 40px 0 14px; font-weight: 600; }
+  ol.steps { list-style: none; counter-reset: s; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 10px; }
+  ol.steps li { counter-increment: s; background: var(--surface); border: 1px solid var(--line); border-radius: 14px; padding: 15px 16px 15px 58px; position: relative; }
+  ol.steps li::before { content: counter(s); position: absolute; left: 16px; top: 14px; width: 28px; height: 28px; border-radius: 50%; background: var(--raised); border: 1px solid var(--line); color: var(--mango); font-weight: 700; display: flex; align-items: center; justify-content: center; font-size: 14px; }
+  ol.steps b { color: var(--cream); }
+  ol.steps span { color: #BDBDBD; font-size: 14.5px; display: block; margin-top: 2px; }
+  .grid { display: grid; gap: 10px; }
+  .card { background: var(--surface); border: 1px solid var(--line); border-left: 4px solid var(--mango); border-radius: 12px; padding: 14px 16px; }
+  .card b { display: block; margin-bottom: 2px; }
+  .card span { color: #BDBDBD; font-size: 14.5px; }
+  .iphone { border-left-color: var(--creamDim); }
+  footer { margin-top: 44px; color: var(--creamDim); font-size: 13px; text-align: center; }
+  footer a { color: var(--mango); }
+</style>
+</head>
+<body>
+<main class="wrap">
+  <div class="brand">
+    <img src="icons/icon-192.png" alt="Dallas Bouff'">
+    <div><div class="kicker">Espace partenaires</div><div style="font-weight:700;font-size:18px;">Dallas Bouff' Pro</div></div>
+  </div>
+
+  <h1>Plus aucune commande ratée</h1>
+  <p class="lead">L'appli Android des restaurants et des livreurs. Quand une commande arrive, le téléphone sonne comme un réveil, même verrouillé, même en mode silencieux, même dans la poche, jusqu'à ce que vous répondiez.</p>
+
+  <a class="cta" href="dallas-bouff-pro.apk" download>Télécharger l'appli Android</a>
+  <p class="small">Gratuite · moins de 1 Mo · Android 6 ou plus récent</p>
+
+  <h2>Installer en 4 étapes</h2>
+  <ol class="steps">
+    <li><b>Touchez « Télécharger l'appli Android »</b><span>Si le téléphone prévient que le fichier peut être dangereux, touchez « Télécharger quand même ». L'appli vient directement de Dallas Bouff'.</span></li>
+    <li><b>Ouvrez le fichier téléchargé</b><span>Dans la notification de téléchargement ou dans l'appli « Fichiers ». Si Android demande d'autoriser cette source, touchez « Paramètres », activez « Autoriser », puis revenez.</span></li>
+    <li><b>Touchez « Installer », puis « Ouvrir »</b><span>Choisissez « Je suis restaurateur » ou « Je suis livreur », puis connectez-vous avec votre compte habituel.</span></li>
+    <li><b>Acceptez les autorisations demandées</b><span>Notifications, et pour les livreurs la position. Quand le téléphone propose de ne plus limiter l'appli en arrière-plan, touchez « Autoriser ».</span></li>
+  </ol>
+
+  <h2>Pour une alarme vraiment fiable</h2>
+  <div class="grid">
+    <div class="card"><b>Testez une fois</b><span>Dans l'appli, touchez « Tester l'alarme » puis verrouillez le téléphone : il doit sonner au bout de 8 secondes.</span></div>
+    <div class="card"><b>Tecno, Infinix, itel</b><span>Réglages, puis Batterie (ou Gestionnaire du téléphone), puis Démarrage automatique : activez Dallas Bouff' Pro. Dans « Applications récentes », vous pouvez aussi verrouiller l'appli avec le cadenas.</span></div>
+    <div class="card"><b>Samsung</b><span>Réglages, puis Batterie, puis Limites d'utilisation en arrière-plan : retirez Dallas Bouff' Pro des applis en veille.</span></div>
+    <div class="card"><b>Gardez internet allumé</b><span>Les alertes passent par internet. Sans données mobiles ni Wi-Fi, l'appli vous le signale dans sa notification.</span></div>
+    <div class="card iphone"><b>Vous avez un iPhone ?</b><span>Continuez avec le site : ajoutez-le à l'écran d'accueil (Partager, puis « Sur l'écran d'accueil ») et activez les notifications.</span></div>
+  </div>
+
+  <footer>
+    Restaurants : <a href="dashboard.html">espace restaurant sur le site</a> · Livreurs : <a href="driver.html">espace livreur sur le site</a>
+  </footer>
+</main>
+</body>
+</html>
