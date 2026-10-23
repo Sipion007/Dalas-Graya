@@ -1,0 +1,17 @@
+name: probe
+on:
+  push:
+    branches: [android-probe]
+permissions:
+  contents: write
+jobs:
+  probe:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - run: |
+          mkdir -p out
+          { echo "sdk=$ANDROID_HOME"; ls $ANDROID_HOME/build-tools $ANDROID_HOME/platforms; ls -l /dev/kvm; java -version 2>&1; nproc; } > out/probe.txt 2>&1
+          git config user.name ci; git config user.email ci@users.noreply.github.com
+          git checkout -b android-results
+          git add -f out/probe.txt && git commit -m "probe results" && git push -f origin android-results
