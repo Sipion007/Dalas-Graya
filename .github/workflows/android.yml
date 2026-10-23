@@ -1,0 +1,57 @@
+name: android
+on:
+  push:
+    branches: [android-build]
+permissions:
+  contents: write
+concurrency:
+  group: android
+  cancel-in-progress: true
+jobs:
+  build-and-test:
+    runs-on: ubuntu-latest
+    timeout-minutes: 75
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+      - uses: gradle/actions/setup-gradle@v4
+        with:
+          gradle-version: '8.9'
+      - name: Build
+        run: |
+          set -o pipefail
+          gradle -p android assembleDebug assembleRelease --no-daemon --stacktrace 2>&1 | tee build.log
+          cp android/app/build/outputs/apk/debug/app-debug.apk app-debug.apk
+      - name: Enable KVM
+        run: |
+          echo 'KERNEL=="kvm", GROUP="kvm", MODE="0666", OPTIONS+="static_node=kvm"' | sudo tee /etc/udev/rules.d/99-kvm4all.rules
+          sudo udevadm control --reload-rules
+          sudo udevadm trigger --name-match=kvm
+      - name: Emulator tests
+        continue-on-error: true
+        uses: reactivecircus/android-emulator-runner@v2
+        with:
+          api-level: 34
+          target: google_apis
+          arch: x86_64
+          disable-animations: true
+          emulator-options: -no-window -gpu swiftshader_indirect -no-boot-anim -camera-back none -no-snapshot
+          script: bash android/ci/emu_test.sh
+      - name: Publish results
+        if: always()
+        run: |
+          mkdir -p out
+          cp build.log out/ 2>/dev/null || true
+          cp android/app/build/outputs/apk/release/*.apk out/ 2>/dev/null || true
+          cp "$ANDROID_HOME/build-tools/34.0.0/lib/apksigner.jar" out/ 2>/dev/null || true
+          echo "$GITHUB_SHA" > out/source_sha.txt
+          git config user.name ci
+          git config user.email ci@users.noreply.github.com
+          git checkout --orphan results-tmp
+          git rm -rfq --cached .
+          git add -f out
+          git commit -qm "Android results for $GITHUB_SHA"
+          git push -f origin HEAD:android-results

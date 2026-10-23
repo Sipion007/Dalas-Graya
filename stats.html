@@ -308,7 +308,7 @@ function priceRangeLabel(price) {
 
 function renderAll() {
   const filtered = getFilteredByPeriod();
-  const delivered = filtered; // on compte toutes les commandes passées, quel que soit leur statut actuel
+  const delivered = filtered.filter(o => o.status !== 'Annulée'); // les commandes annulées ne comptent pas
 
   // Les frais de livraison ne reviennent pas au restaurant : on les retire
   const revenue = delivered.reduce((sum, o) => sum + Number(o.total || 0) - Number(o.delivery_fee || 0), 0);

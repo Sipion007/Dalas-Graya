@@ -87,6 +87,37 @@
   .notif-btn { width:100%; border:none; border-radius:9px; padding:12px; font-weight:700; font-size:13px;
     cursor:pointer; color:#080808; background: var(--mango); font-family:'Work Sans',sans-serif; margin-bottom:16px; }
   .notif-ok { text-align:center; font-size:12px; color:var(--palm); margin-bottom:16px; }
+  .gps-dot.bad { background:var(--chili); }
+  .gps-help { font-size:11.5px; color:var(--creamDim); margin:-8px 0 14px; line-height:1.45; }
+  .nogps { margin-top:10px; font-size:12.5px; color:#F5D58A; border:1px solid rgba(245,192,74,.4); background:rgba(245,192,74,.08); border-radius:9px; padding:9px 11px; line-height:1.4; }
+  .chips { display:flex; flex-wrap:wrap; gap:6px; margin-bottom:10px; }
+  .chip-s { border:1px solid #333; background:#141414; color:#E6E6E6; border-radius:999px; padding:9px 12px; font-size:12.5px; cursor:pointer; font-family:inherit; }
+  .row2 { display:flex; gap:8px; align-items:center; }
+  .row2 input { margin:0; flex:1; }
+  .btn-small { border:1px solid #3A3A3A; background:#171717; color:#fff; border-radius:9px; padding:10px 12px; font-weight:700; font-size:12.5px; cursor:pointer; font-family:inherit; white-space:nowrap; }
+  .btn-small.danger { background:#C4432B; border-color:#C4432B; }
+  .link-btn { background:none; border:none; color:var(--creamDim); font-size:12.5px; text-decoration:underline; cursor:pointer; padding:8px 0; font-family:inherit; }
+  .link-btn.danger { color:#E0705A; }
+  .card-foot { display:flex; justify-content:space-between; align-items:center; gap:10px; flex-wrap:wrap; margin-top:12px; }
+  .dp-box { margin-top:10px; border:1px solid #333; border-radius:10px; padding:11px 12px; }
+  .dp-title { font-size:13px; font-weight:700; }
+  .dp-sub { font-size:12px; color:var(--creamDim); margin:3px 0 10px; line-height:1.4; }
+
+  .thread { margin-top:10px; border-top:1px solid #242424; padding-top:10px; }
+  .thread-list { max-height:240px; overflow:auto; display:flex; flex-direction:column; gap:8px; padding:2px 0 8px; }
+  .thread-empty { font-size:12.5px; color:#8F8F8F; }
+  .msg { align-self:flex-start; max-width:85%; background:#1C1C1C; border:1px solid #2A2A2A; border-radius:14px 14px 14px 4px; padding:8px 11px; }
+  .msg.mine { align-self:flex-end; background:rgba(245,192,74,.14); border-color:rgba(245,192,74,.35); border-radius:14px 14px 4px 14px; }
+  .msg-meta { font-size:10.5px; color:#8F8F8F; margin-bottom:2px; }
+  .msg-body { font-size:13.5px; color:#F2F2F2; line-height:1.4; white-space:pre-wrap; word-break:break-word; }
+  .quick-row { display:flex; gap:6px; overflow-x:auto; padding-bottom:8px; -webkit-overflow-scrolling:touch; }
+  .quick { flex-shrink:0; border:1px solid #333; background:#151515; color:#E4E4E4; border-radius:999px; padding:7px 11px; font-size:12px; cursor:pointer; font-family:inherit; }
+  .thread-send { display:flex; gap:8px; align-items:flex-end; }
+  .thread-send textarea { flex:1; margin:0; min-height:42px; resize:vertical; font-size:14px; background:#111; border:1px solid #2A2A2A; color:#fff; border-radius:10px; padding:9px 11px; font-family:inherit; }
+  .send-btn { border:none; background:#F5C04A; color:#080808; font-weight:700; border-radius:10px; padding:11px 14px; cursor:pointer; font-size:13px; font-family:inherit; }
+  .msg-toggle { background:none; border:1px solid #2E2E2E; color:#E4E4E4; border-radius:9px; padding:8px 12px; font-size:12.5px; font-weight:600; cursor:pointer; font-family:inherit; display:inline-flex; align-items:center; gap:6px; }
+  .msg-toggle .dotnew { width:8px; height:8px; border-radius:50%; background:#C4432B; }
+
 </style>
 </head>
 <body>
@@ -158,6 +189,7 @@
       <div class="gps-dot" id="gps-dot"></div>
       <span id="gps-text">Position non partagée</span>
     </div>
+    <div class="gps-help" id="gps-help"><button class="link-btn" onclick="testGPS()">Vérifier mon GPS maintenant</button></div>
 
     <button class="btn-outline" style="width:100%; margin-bottom:16px;" onclick="testVoice()">Tester la voix</button>
 
@@ -277,6 +309,40 @@ const Alerts = (() => {
   let wakeLock = null;
   const baseTitle = document.title;
 
+  // ----- Appli Android « Dallas Bouff' Pro » : alarme qui sonne même téléphone en poche -----
+  const NATIVE = window.DBFAndroid || null;
+  const APK_URL = 'dallas-bouff-pro.apk';
+  let nativeState = null;
+  let nativeErr = '';
+  let nativeBusy = false;
+  let nativeTimer = null;
+  function isAndroid() { return /android/i.test(navigator.userAgent); }
+  function nativeStatus() { try { return JSON.parse(NATIVE.status()); } catch (e) { return null; } }
+  function refreshNative() { if (NATIVE) { nativeState = nativeStatus(); renderPanel(); } }
+  async function registerNative() {
+    if (!NATIVE || nativeBusy) return;
+    const id = identityFn ? identityFn() : null;
+    if (!id || (id.role !== 'restaurant' && id.role !== 'driver')) return;
+    nativeBusy = true;
+    try {
+      let old = '';
+      try { old = NATIVE.getToken() || ''; } catch (e) {}
+      const { data, error } = await client.rpc('register_alarm_device', {
+        p_role: id.role, p_restaurant_id: id.restaurant_id || null, p_driver_id: id.driver_id || null,
+        p_old: old || null, p_model: (navigator.userAgent || '').slice(0, 80)
+      });
+      if (error || !data) throw new Error((error && error.message) || 'enregistrement');
+      NATIVE.setDevice(String(data), id.role, '');
+      nativeErr = '';
+    } catch (e) {
+      nativeErr = (e && e.message) ? e.message : String(e);
+      setTimeout(registerNative, 20000);
+    } finally {
+      nativeBusy = false;
+      refreshNative();
+    }
+  }
+
   function esc(s) {
     return String(s == null ? '' : s).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
   }
@@ -356,6 +422,7 @@ const Alerts = (() => {
       .ap-row { display:flex; justify-content:space-between; gap:10px; padding:4px 0; }
       .ap-row b { font-weight:700; text-align:right; }
       .ap .ok { color:#5C8A63; } .ap .warn { color:#F5C04A; } .ap .bad { color:#C4432B; }
+      .ap-apk { display:inline-flex; align-items:center; justify-content:center; min-height:44px; padding:10px 16px; border-radius:10px; background:#F5C04A; color:#0A0A0A; font-weight:700; text-decoration:none; }
       .ap-note { font-size:11.5px; line-height:1.45; margin-top:6px; color:#8F8F8F; }
       .ap-btns { display:flex; gap:8px; margin-top:8px; flex-wrap:wrap; }
       .ap-btns button { flex:1; min-width:140px; border:1px solid #303030; background:#171717; color:#fff; border-radius:9px; padding:12px 10px; font-size:13px; font-weight:700; cursor:pointer; touch-action: manipulation; }
@@ -511,6 +578,10 @@ const Alerts = (() => {
   }
 
   async function unregisterPush() {
+    if (NATIVE) {
+      try { const t = NATIVE.getToken(); if (t) await client.rpc('unregister_alarm_device', { p_token: t }); } catch (e) {}
+      try { NATIVE.clearDevice(); } catch (e) {}
+    }
     try {
       if (!('serviceWorker' in navigator)) return;
       const reg = await navigator.serviceWorker.getRegistration();
@@ -542,8 +613,12 @@ const Alerts = (() => {
         if (!b) return;
         if (b.dataset.act === 'test') test();
         else if (b.dataset.act === 'push') enablePush();
+        else if (b.dataset.act === 'ntest' && NATIVE) { NATIVE.testAlarm(); b.textContent = 'Verrouillez le téléphone : il sonne dans 8 s'; }
+        else if (b.dataset.act === 'nfix' && NATIVE) NATIVE.fix(b.dataset.w);
+        else if (b.dataset.act === 'nswitch' && NATIVE) NATIVE.switchSpace();
       });
     }
+    if (NATIVE) { renderNativePanel(el); return; }
     let pushTxt, pushCls, note = '';
     if (pushState === 'on') { pushTxt = 'Activées'; pushCls = 'ok'; }
     else if (pushBusy) { pushTxt = 'Activation…'; pushCls = 'warn'; }
@@ -560,6 +635,9 @@ const Alerts = (() => {
     else if (pushState === 'error') { pushTxt = 'Erreur, réessayez'; pushCls = 'bad'; note = pushError ? 'Détail : ' + pushError : ''; }
     else { pushTxt = 'À activer'; pushCls = 'warn'; }
     const showPushBtn = pushState !== 'on' && pushState !== 'unsupported';
+    const apkNote = isAndroid() && identityFn && ['restaurant', 'driver'].includes((identityFn() || {}).role)
+      ? `<div class="ap-note">Sur Android, installez l'appli <b>Dallas Bouff' Pro</b> : l'alarme sonne alors même téléphone verrouillé, dans la poche.</div>
+         <div class="ap-btns"><a class="ap-apk" href="${APK_URL}" download>Télécharger l'appli Android</a></div>` : '';
     const html = `<div class="ap">
       <div class="ap-row"><span>Son d'alerte</span><b class="${unlocked ? 'ok' : 'warn'}">${unlocked ? 'Activé' : 'Touchez Tester l\'alarme'}</b></div>
       <div class="ap-row"><span>Notifications (appli fermée)</span><b class="${pushCls}">${esc(pushTxt)}</b></div>
@@ -567,6 +645,41 @@ const Alerts = (() => {
       <div class="ap-btns">
         <button type="button" data-act="test">Tester l'alarme</button>
         ${showPushBtn ? `<button type="button" class="primary" data-act="push"${pushBusy ? ' disabled' : ''}>Activer les notifications</button>` : ''}
+      </div>${apkNote}</div>`;
+    if (html === panelHtml) return;
+    panelHtml = html;
+    el.innerHTML = html;
+  }
+
+  function renderNativePanel(el) {
+    const st = nativeState || {};
+    const rows = [];
+    const fixes = [];
+    let alarmTxt, alarmCls;
+    if (st.running && st.connected) { alarmTxt = 'Active'; alarmCls = 'ok'; }
+    else if (st.running) { alarmTxt = 'Connexion…'; alarmCls = 'warn'; }
+    else if (nativeErr) { alarmTxt = 'Erreur, nouvel essai automatique'; alarmCls = 'bad'; }
+    else { alarmTxt = 'Démarrage…'; alarmCls = 'warn'; }
+    rows.push(['Alarme téléphone en poche', alarmTxt, alarmCls]);
+    rows.push(['Notifications', st.notif ? 'Autorisées' : 'Bloquées', st.notif ? 'ok' : 'bad']);
+    if (!st.notif) fixes.push(['notif', 'Autoriser les notifications']);
+    rows.push(['Économie de batterie', st.battery ? "Ne bloque pas l'appli" : 'À désactiver', st.battery ? 'ok' : 'warn']);
+    if (!st.battery) fixes.push(['battery', "Ne plus bloquer l'appli"]);
+    if (st.fullscreen === false) { rows.push(['Alarme sur écran verrouillé', 'À autoriser', 'warn']); fixes.push(['fullscreen', "Autoriser l'écran d'alarme"]); }
+    if (st.role === 'driver') {
+      rows.push(['Position GPS', st.location ? 'Autorisée' : 'À autoriser', st.location ? 'ok' : 'warn']);
+      if (!st.location) fixes.push(['location', 'Autoriser la position']);
+    }
+    const note = !st.battery
+      ? "Sur Tecno, Infinix, itel et Samsung : autorisez aussi le démarrage automatique et l'activité en arrière-plan de Dallas Bouff' Pro dans les réglages de la batterie."
+      : (nativeErr ? 'Détail : ' + nativeErr : "Touchez Tester l'alarme puis verrouillez votre téléphone : il doit sonner au bout de 8 secondes.");
+    const html = `<div class="ap">
+      ${rows.map(r => `<div class="ap-row"><span>${esc(r[0])}</span><b class="${r[2]}">${esc(r[1])}</b></div>`).join('')}
+      <div class="ap-note">${esc(note)}</div>
+      <div class="ap-btns">
+        <button type="button" data-act="ntest">Tester l'alarme</button>
+        ${fixes.map(f => `<button type="button" class="primary" data-act="nfix" data-w="${f[0]}">${esc(f[1])}</button>`).join('')}
+        <button type="button" data-act="nswitch">Changer d'espace</button>
       </div></div>`;
     if (html === panelHtml) return;
     panelHtml = html;
@@ -578,8 +691,17 @@ const Alerts = (() => {
     panelId = opts.panelId;
     identityFn = opts.identity;
     injectStyle();
-    renderPanel();
-    syncPush();
+    if (NATIVE) {
+      refreshNative();
+      registerNative();
+      if (!nativeTimer) {
+        nativeTimer = setInterval(refreshNative, 3000);
+        window.addEventListener('dbf-native-resume', refreshNative);
+      }
+    } else {
+      renderPanel();
+      syncPush();
+    }
     keepAwake();
     if (!swBound && navigator.serviceWorker) {
       swBound = true;
@@ -593,7 +715,7 @@ const Alerts = (() => {
   document.addEventListener('touchend', unlock, { passive: true });
   document.addEventListener('click', unlock);
 
-  return { init, start, stop, test, unlock, unregisterPush, isRinging: () => ringing };
+  return { init, start, stop, test, unlock, unregisterPush, isRinging: () => ringing, isTest: () => testTimer !== null };
 })();
 
 function alertAckedGet(key) {
@@ -964,25 +1086,131 @@ async function logoutDriver() {
   document.getElementById('login-screen').style.display = 'block';
 }
 
+// ---------- Outils communs : temps, messages par commande ----------
+function timeAgo(ts) {
+  if (!ts) return '';
+  const s = Math.max(0, Math.round((Date.now() - new Date(ts).getTime()) / 1000));
+  if (s < 60) return "à l'instant";
+  const m = Math.floor(s / 60);
+  if (m < 60) return 'il y a ' + m + ' min';
+  const h = Math.floor(m / 60);
+  if (h < 24) return 'il y a ' + h + ' h' + (m % 60 ? ' ' + String(m % 60).padStart(2, '0') : '');
+  return 'le ' + new Date(ts).toLocaleDateString('fr-FR', { day: '2-digit', month: '2-digit' });
+}
+function hhmm(ts) { return ts ? new Date(ts).toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' }) : ''; }
+function minutesSince(ts) { return ts ? Math.floor((Date.now() - new Date(ts).getTime()) / 60000) : 0; }
+
+const ROLE_LABEL = { client: 'Client', restaurant: 'Restaurant', driver: 'Livreur', admin: "Dallas Bouff'" };
+const msgDrafts = {};
+const openThreads = new Set();
+
+function threadHtml(orderId, msgs, myRole, quick) {
+  const list = (msgs || []).map(m => {
+    const mine = m.sender_role === myRole;
+    return `<div class="msg ${mine ? 'mine' : ''}"><div class="msg-meta">${escHtml(mine ? 'Vous' : (m.sender_name || ROLE_LABEL[m.sender_role] || ''))} · ${hhmm(m.created_at)}</div><div class="msg-body">${escHtml(m.body)}</div></div>`;
+  }).join('');
+  return `
+    <div class="thread" data-thread="${orderId}">
+      <div class="thread-list" id="thread-list-${orderId}">${list || '<div class="thread-empty">Aucun message pour cette commande.</div>'}</div>
+      ${quick && quick.length ? `<div class="quick-row">${quick.map(q => `<button type="button" class="quick" data-quick="${orderId}" data-text="${escHtml(q)}">${escHtml(q)}</button>`).join('')}</div>` : ''}
+      <div class="thread-send">
+        <textarea id="msg-input-${orderId}" data-draft="${orderId}" maxlength="500" rows="2" placeholder="Écrire un message…">${escHtml(msgDrafts[orderId] || '')}</textarea>
+        <button type="button" class="send-btn" data-send="${orderId}">Envoyer</button>
+      </div>
+    </div>`;
+}
+
+async function sendThreadMessage(orderId, text, onDone) {
+  const body = String(text || '').trim();
+  if (!body) return;
+  const { error } = await client.rpc('send_order_message', { p_order: orderId, p_body: body });
+  if (error) { alert("Le message n'est pas parti. Vérifiez votre connexion et réessayez."); return; }
+  msgDrafts[orderId] = '';
+  const ta = document.getElementById('msg-input-' + orderId);
+  if (ta) ta.value = '';
+  if (onDone) onDone();
+}
+
+function bindThreadEvents(onSent) {
+  document.addEventListener('input', (e) => {
+    const t = e.target;
+    if (t && t.dataset && t.dataset.draft) msgDrafts[t.dataset.draft] = t.value;
+  });
+  document.addEventListener('click', (e) => {
+    const q = e.target.closest('[data-quick]');
+    if (q) { sendThreadMessage(q.dataset.quick, q.dataset.text, onSent); return; }
+    const s = e.target.closest('[data-send]');
+    if (s) { const id = s.dataset.send; const ta = document.getElementById('msg-input-' + id); sendThreadMessage(id, ta ? ta.value : '', onSent); return; }
+    const tg = e.target.closest('[data-toggle-thread]');
+    if (tg) { const id = tg.dataset.toggleThread; if (openThreads.has(id)) openThreads.delete(id); else openThreads.add(id); if (onSent) onSent(true); }
+  });
+}
+
+// Garde le champ en cours de saisie et la position des fils quand la liste est redessinée
+function renderKeepingFocus(el, html) {
+  const a = document.activeElement;
+  const keepId = a && el.contains(a) && a.id ? a.id : null;
+  const sel = keepId && typeof a.selectionStart === 'number' ? [a.selectionStart, a.selectionEnd] : null;
+  const scrolls = {};
+  el.querySelectorAll('.thread-list').forEach(t => { scrolls[t.id] = t.scrollTop; });
+  const values = {};
+  el.querySelectorAll('select[id], input[id]').forEach(x => { values[x.id] = x.value; });
+  el.innerHTML = html;
+  Object.keys(values).forEach(id => { const x = document.getElementById(id); if (x && el.contains(x) && values[id] && x.tagName === 'SELECT' && [...x.options].some(o => o.value === values[id])) x.value = values[id]; else if (x && el.contains(x) && x.tagName === 'INPUT' && x.type !== 'file') x.value = values[id]; });
+  el.querySelectorAll('.thread-list').forEach(t => { t.scrollTop = (t.id in scrolls) ? scrolls[t.id] : t.scrollHeight; });
+  if (keepId) { const n = document.getElementById(keepId); if (n) { n.focus({ preventScroll: true }); if (sel && n.setSelectionRange) { try { n.setSelectionRange(sel[0], sel[1]); } catch (e) {} } } }
+}
+
+function compressImageFile(file, max, quality) {
+  return new Promise((resolve, reject) => {
+    const img = new Image();
+    const url = URL.createObjectURL(file);
+    img.onload = () => {
+      const ratio = Math.min(1, (max || 1280) / Math.max(img.width, img.height));
+      const cv = document.createElement('canvas');
+      cv.width = Math.max(1, Math.round(img.width * ratio));
+      cv.height = Math.max(1, Math.round(img.height * ratio));
+      cv.getContext('2d').drawImage(img, 0, 0, cv.width, cv.height);
+      URL.revokeObjectURL(url);
+      cv.toBlob(b => b ? resolve(b) : reject(new Error('compression')), 'image/jpeg', quality || 0.8);
+    };
+    img.onerror = () => { URL.revokeObjectURL(url); reject(new Error('image')); };
+    img.src = url;
+  });
+}
+
+
 const ACK_KEY_DRIVER = 'dbf-ack-driver';
+let lastCurrentId = null;
+let curMessages = [];
+const driverPanel = {};
+const RELEASE_REASONS = ['Moto en panne', 'Trop loin pour moi', 'Urgence personnelle'];
+const FAIL_REASONS = ['Client injoignable', 'Client absent à l\'adresse', 'Le client refuse la commande', 'Adresse introuvable'];
+const QUICK_DRIVER = ['Je suis en route.', "J'arrive dans 5 minutes.", 'Je suis devant chez vous.', 'Je ne trouve pas l\'adresse, pouvez-vous m\'appeler ?'];
+
+function mapsLink(o) {
+  if (o.location && o.location.type === 'gps') return `https://www.google.com/maps/dir/?api=1&destination=${o.location.lat},${o.location.lng}&travelmode=driving`;
+  return `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent((o.address || '') + ' Daloa')}`;
+}
 
 async function refreshOrders() {
   if (!myDriver) return;
-  // Livraison en cours
-  const { data: current, error: curErr } = await client.from('orders').select('*, restaurants(name, accent)').eq('driver_id', myDriver.id).eq('status', 'En livraison');
-  if (curErr) return; // erreur réseau : on ne touche à rien
+  const { data: current, error: curErr } = await client.from('orders').select('*, restaurants(name, accent, whatsapp)').eq('driver_id', myDriver.id).eq('status', 'En livraison');
+  if (curErr) return;
   const acked = alertAckedGet(ACK_KEY_DRIVER);
   const freshAssigned = (current || []).filter(o => !acked.has(o.id));
-  if (freshAssigned.length > 0) {
-    const ids = freshAssigned.map(o => o.id);
-    Alerts.start({
-      title: 'LIVRAISON ASSIGNÉE',
-      lines: freshAssigned.slice(0, 3).map(o => (o.restaurants ? o.restaurants.name : 'Restaurant') + ' · ' + (o.customer_name || 'Client') + ' · ' + money(o.total)),
-      onAck: () => alertAckedAdd(ACK_KEY_DRIVER, ids)
-    });
-  }
   const curEl = document.getElementById('current-delivery');
   const hasActiveDelivery = current && current.length > 0;
+
+  // Livraison qui a disparu : annulée ?
+  if (lastCurrentId && !(current || []).some(o => o.id === lastCurrentId)) {
+    const goneId = lastCurrentId;
+    const { data: gone } = await client.from('orders').select('id, status, cancel_reason, cancelled_by').eq('id', goneId).maybeSingle();
+    if (gone && gone.status === 'Annulée' && gone.cancelled_by !== 'driver' && !acked.has('ca-' + goneId)) {
+      Alerts.start({ title: 'LIVRAISON ANNULÉE', lines: ['#' + goneId.slice(0, 8).toUpperCase() + (gone.cancel_reason ? ' · ' + gone.cancel_reason : ''), "Inutile de continuer : rapportez la commande au restaurant si vous l'avez déjà."], onAck: () => alertAckedAdd(ACK_KEY_DRIVER, ['ca-' + goneId]) });
+    }
+  }
+  lastCurrentId = hasActiveDelivery ? current[0].id : null;
 
   if (hasActiveDelivery) {
     startGPS();
@@ -990,21 +1218,39 @@ async function refreshOrders() {
     if (o0.id !== currentDeliveryOrderId) {
       currentDeliveryOrderId = o0.id;
       deliveryMap = null;
-      curEl.innerHTML = current.map(o => `
+      curEl.innerHTML = current.slice(0, 1).map(o => `
         <div class="order">
-          <div style="font-weight:700; font-size:15px;">${o.restaurants ? o.restaurants.name : ''}</div>
+          <div style="font-weight:700; font-size:15px;">${o.restaurants ? escHtml(o.restaurants.name) : ''}</div>
           <div style="font-size:13px; margin-top:4px;">${escHtml(o.customer_name)}</div>
           ${o.address ? `<div style="font-size:12.5px; color:var(--creamDim); margin-top:2px;">${escHtml(o.address)}</div>` : ''}
           <div style="margin-top:8px; font-size:13px; color:var(--creamDim);">À encaisser auprès du client : <span class="mono" style="font-weight:700; color:var(--mango); font-size:14px;">${money(o.total)}</span>${o.delivery_fee ? ` <span style="font-size:11.5px;">(livraison ${money(o.delivery_fee)} comprise)</span>` : ''}</div>
+          ${requestsHtmlDriver(o)}
           <a href="tel:${escHtml(o.phone)}" class="btn-call" onclick="primeSpeech()">Appeler le client</a>
+          ${o.restaurants && o.restaurants.whatsapp ? `<a href="tel:+${escHtml(o.restaurants.whatsapp)}" class="btn-call" style="border-color:#3A3A3A; color:var(--cream);">Appeler le restaurant</a>` : ''}
+          <a href="${mapsLink(o)}" target="_blank" rel="noopener" class="btn-call" style="border-color:var(--mango); color:var(--mango);">Itinéraire dans Google Maps</a>
+          ${o.location && o.location.type === 'gps' ? '' : '<div class="nogps">Le client n\'a pas partagé sa position GPS. Appelez-le pour qu\'il vous guide jusqu\'à lui.</div>'}
           <button class="btn-done" onclick="markDelivered('${o.id}')">Marquer comme livrée</button>
-          ${o.location && o.location.type === 'gps' ? '<div class="map-wrap"><button class="btn-fullscreen-map" onclick="openFullscreenMap()">⤢ Plein écran</button><div id="delivery-map"></div></div>' : ''}
+          ${o.location && o.location.type === 'gps' ? '<div class="map-wrap"><button class="btn-fullscreen-map" onclick="openFullscreenMap()">Plein écran</button><div id="delivery-map"></div></div>' : ''}
+          <div id="cur-extra"></div>
         </div>
       `).join('');
-      if (o0.location && o0.location.type === 'gps') {
-        updateDeliveryMap(o0.location);
-      }
+      if (o0.location && o0.location.type === 'gps') updateDeliveryMap(o0.location);
     }
+    // Messages de la livraison en cours
+    const { data: msgs, error: mErr } = await client.from('order_messages').select('*').eq('order_id', o0.id).order('created_at');
+    if (!mErr) curMessages = msgs || [];
+    const newMsgs = curMessages.filter(m => m.sender_role !== 'driver' && !acked.has('m-' + m.id));
+    if (freshAssigned.length > 0) {
+      const ids = freshAssigned.map(o => o.id);
+      Alerts.start({
+        title: 'LIVRAISON ASSIGNÉE',
+        lines: freshAssigned.slice(0, 3).map(o => (o.restaurants ? o.restaurants.name : 'Restaurant') + ' · ' + (o.customer_name || 'Client') + ' · ' + money(o.total)),
+        onAck: () => alertAckedAdd(ACK_KEY_DRIVER, ids)
+      });
+    } else if (newMsgs.length) {
+      Alerts.start({ title: 'NOUVEAU MESSAGE', lines: newMsgs.slice(-3).map(m => (m.sender_name || ROLE_LABEL[m.sender_role]) + ' : ' + m.body.slice(0, 90)), onAck: () => alertAckedAdd(ACK_KEY_DRIVER, newMsgs.map(m => 'm-' + m.id)) });
+    }
+    renderDeliveryExtra(o0);
   } else {
     stopGPS();
     deliveryMap = null;
@@ -1020,15 +1266,12 @@ async function refreshOrders() {
   }
 
   const availEl = document.getElementById('available-orders');
-
-  // Tant qu'une livraison est en cours, on ne montre pas les nouvelles commandes disponibles
   if (hasActiveDelivery) {
     availEl.innerHTML = '<div class="empty">Terminez votre livraison en cours avant d\'en prendre une nouvelle.</div>';
     knownAvailableIds = new Set();
     return;
   }
 
-  // Commandes disponibles
   let query = client.from('orders').select('*, restaurants(name, accent)').eq('status', 'Prête').is('driver_id', null);
   if (myDriver.restaurant_id) query = query.eq('restaurant_id', myDriver.restaurant_id);
   const { data: available, error: avErr } = await query;
@@ -1037,30 +1280,84 @@ async function refreshOrders() {
   if (!available || available.length === 0) {
     availEl.innerHTML = '<div class="empty">Aucune commande disponible pour le moment.</div>';
     knownAvailableIds = new Set();
+    if (Alerts.isRinging() && !Alerts.isTest()) Alerts.stop();
     return;
   }
 
-  const newIds = new Set(available.map(o => o.id));
-  knownAvailableIds = newIds;
-  const freshAvail = available.filter(o => !acked.has(o.id) && freshAssigned.every(a => a.id !== o.id));
-  if (freshAvail.length > 0 && freshAssigned.length === 0) {
+  knownAvailableIds = new Set(available.map(o => o.id));
+  const freshAvail = available.filter(o => !acked.has(o.id));
+  if (freshAvail.length > 0) {
     const ids = freshAvail.map(o => o.id);
     Alerts.start({
       title: freshAvail.length > 1 ? freshAvail.length + ' LIVRAISONS DISPONIBLES' : 'NOUVELLE LIVRAISON',
-      lines: freshAvail.slice(0, 3).map(o => (o.restaurants ? o.restaurants.name : 'Restaurant') + ' · ' + money(o.total)),
+      lines: freshAvail.slice(0, 3).map(o => (o.restaurants ? o.restaurants.name : 'Restaurant') + ' · ' + money(o.total) + ' à encaisser'),
       onAck: () => alertAckedAdd(ACK_KEY_DRIVER, ids)
     });
   }
 
   availEl.innerHTML = available.map(o => `
     <div class="order">
-      <div style="font-weight:700; font-size:15px;">${o.restaurants ? o.restaurants.name : ''}</div>
+      <div style="font-weight:700; font-size:15px;">${o.restaurants ? escHtml(o.restaurants.name) : ''}</div>
+      <div style="font-size:12px; color:var(--creamDim); margin-top:2px;">Prête ${timeAgo(o.ready_at || o.created_at)}</div>
       <div style="font-size:13px; margin-top:4px;">${escHtml(o.customer_name)} · ${escHtml(o.phone)}</div>
       ${o.address ? `<div style="font-size:12.5px; color:var(--creamDim); margin-top:2px;">${escHtml(o.address)}</div>` : ''}
+      ${o.location && o.location.type === 'gps' ? '<div style="font-size:12px; color:var(--palm); margin-top:4px;">Position GPS du client disponible</div>' : '<div style="font-size:12px; color:var(--mango); margin-top:4px;">Pas de GPS : il faudra appeler le client</div>'}
       <div style="margin-top:8px; font-size:13px; color:var(--creamDim);">À encaisser auprès du client : <span class="mono" style="font-weight:700; color:var(--mango); font-size:14px;">${money(o.total)}</span>${o.delivery_fee ? ` <span style="font-size:11.5px;">(livraison ${money(o.delivery_fee)} comprise)</span>` : ''}</div>
       <button class="btn-take" onclick="takeOrder('${o.id}')">Je prends cette livraison</button>
     </div>
   `).join('');
+}
+
+function requestsHtmlDriver(o) {
+  const prefs = Array.isArray(o.preferences) ? o.preferences : [];
+  if (!o.notes && !prefs.length) return '';
+  return `<div class="nogps" style="border-color:#333; color:#DDD;">Demandes du client : ${escHtml(prefs.join(', '))}${o.notes ? (prefs.length ? ' ; ' : '') + '« ' + escHtml(o.notes) + ' »' : ''}</div>`;
+}
+
+function renderDeliveryExtra(o) {
+  const el = document.getElementById('cur-extra');
+  if (!el) return;
+  const panel = driverPanel[o.id] || '';
+  const open = openThreads.has(o.id);
+  const last = curMessages.slice(-1)[0];
+  const unread = last && last.sender_role !== 'driver';
+  let html = `<div class="card-foot"><button type="button" class="msg-toggle" data-toggle-thread="${o.id}">${unread ? '<span class="dotnew"></span>' : ''}${open ? 'Fermer les messages' : 'Messages avec le client'}${curMessages.length ? ' (' + curMessages.length + ')' : ''}</button></div>`;
+  if (open) html += o.customer_id ? threadHtml(o.id, curMessages, 'driver', QUICK_DRIVER) : `<div class="nogps">Ce client a commandé sans compte : appelez-le au ${escHtml(o.phone)}.</div>`;
+  if (panel === 'release') {
+    html += `<div class="dp-box"><div class="dp-title">Je ne peux pas assurer cette livraison</div><div class="dp-sub">La commande sera proposée à un autre livreur.</div>
+      <div class="chips">${RELEASE_REASONS.map(r => `<button type="button" class="chip-s" onclick="releaseDelivery('${o.id}', ${JSON.stringify(r).replace(/"/g, '&quot;')})">${escHtml(r)}</button>`).join('')}</div>
+      <div class="row2"><input id="release-other" maxlength="120" placeholder="Autre motif…" /><button class="btn-small danger" onclick="releaseDelivery('${o.id}', null)">Confirmer</button></div>
+      <button class="link-btn" onclick="setDriverPanel('${o.id}', '')">Retour</button></div>`;
+  } else if (panel === 'fail') {
+    html += `<div class="dp-box"><div class="dp-title">Annuler la livraison</div><div class="dp-sub">À utiliser seulement après avoir essayé d'appeler le client. Le restaurant et le client seront prévenus.</div>
+      <div class="chips">${FAIL_REASONS.map(r => `<button type="button" class="chip-s" onclick="failDelivery('${o.id}', ${JSON.stringify(r).replace(/"/g, '&quot;')})">${escHtml(r)}</button>`).join('')}</div>
+      <button class="link-btn" onclick="setDriverPanel('${o.id}', '')">Retour</button></div>`;
+  } else {
+    html += `<div class="row2" style="margin-top:10px; flex-wrap:wrap;"><button class="link-btn" onclick="setDriverPanel('${o.id}', 'release')">Je ne peux pas livrer</button><button class="link-btn danger" onclick="setDriverPanel('${o.id}', 'fail')">Client injoignable ou refus</button></div>`;
+  }
+  renderKeepingFocus(el, html);
+}
+
+function setDriverPanel(id, p) { driverPanel[id] = p; refreshOrders(); }
+
+async function releaseDelivery(orderId, reason) {
+  let why = reason;
+  if (!why) { const i = document.getElementById('release-other'); why = i ? i.value.trim() : ''; }
+  if (!why || why.length < 3) { alert('Indiquez le motif.'); return; }
+  const { error } = await client.rpc('driver_release_order', { p_order: orderId, p_reason: why });
+  if (error) { alert("Impossible pour le moment. Vérifiez votre connexion et réessayez."); return; }
+  alertAckedAdd(ACK_KEY_DRIVER, [orderId]);
+  driverPanel[orderId] = '';
+  lastCurrentId = null;
+  refreshOrders();
+}
+
+async function failDelivery(orderId, reason) {
+  const { error } = await client.rpc('cancel_order', { p_order: orderId, p_reason: reason });
+  if (error) { alert("Impossible pour le moment. Vérifiez votre connexion et réessayez."); return; }
+  driverPanel[orderId] = '';
+  lastCurrentId = null;
+  refreshOrders();
 }
 
 async function takeOrder(orderId) {
@@ -1072,52 +1369,103 @@ async function takeOrder(orderId) {
     return;
   }
   alertAckedAdd(ACK_KEY_DRIVER, [orderId]);
-  const { error } = await client.from('orders').update({ driver_id: myDriver.id, status: 'En livraison' }).eq('id', orderId).is('driver_id', null);
-  if (error) { alert("Cette commande vient d'être prise par un autre livreur."); }
+  const { data: taken, error } = await client.from('orders').update({ driver_id: myDriver.id, status: 'En livraison' }).eq('id', orderId).is('driver_id', null).select('id');
+  if (error || !taken || !taken.length) { alert("Cette commande vient d'être prise par un autre livreur."); }
+  Alerts.stop();
   refreshOrders();
 }
 
 async function markDelivered(orderId) {
-  await client.from('orders').update({ status: 'Livrée' }).eq('id', orderId);
+  const { error } = await client.from('orders').update({ status: 'Livrée' }).eq('id', orderId);
+  if (error) { alert("Erreur de connexion, réessayez."); return; }
+  lastCurrentId = null;
   refreshOrders();
 }
 
-function startGPS() {
+// ---------- GPS : envoi vérifié de la position ----------
+let gpsLastSent = 0;
+let gpsLastPos = null;
+let gpsState = 'off';
+function setGpsUI(state, text) {
+  gpsState = state;
   const dot = document.getElementById('gps-dot');
-  const text = document.getElementById('gps-text');
-  if (gpsWatchId !== null) return;
-  if (!navigator.geolocation) { text.textContent = "GPS non disponible sur cet appareil"; return; }
+  const t = document.getElementById('gps-text');
+  const help = document.getElementById('gps-help');
+  if (dot) dot.className = 'gps-dot' + (state === 'ok' ? ' active' : state === 'error' ? ' bad' : '');
+  if (t) t.textContent = text;
+  if (help) {
+    if (state === 'denied') help.innerHTML = (/iphone|ipad|ipod/i.test(navigator.userAgent)
+      ? "Sur iPhone : ouvrez Réglages, puis Confidentialité et sécurité, puis Service de localisation. Activez-le, puis choisissez Safari (ou Dallas Bouff') et cochez « Lorsque l'app est active » et « Position exacte »."
+      : "Touchez le cadenas à gauche de l'adresse du site, puis Autorisations, puis Position : Autoriser.") + ' <button class="link-btn" onclick="testGPS()">Réessayer</button>';
+    else if (state === 'off' || state === 'idle') help.innerHTML = '<button class="link-btn" onclick="testGPS()">Vérifier mon GPS maintenant</button>';
+    else help.innerHTML = '';
+  }
+}
 
-  dot.classList.add('active');
-  text.textContent = "Partage de votre position en cours…";
+function distM(a, b) {
+  const R = 6371000, toR = Math.PI / 180;
+  const dLat = (b.lat - a.lat) * toR, dLng = (b.lng - a.lng) * toR;
+  const h = Math.sin(dLat / 2) ** 2 + Math.cos(a.lat * toR) * Math.cos(b.lat * toR) * Math.sin(dLng / 2) ** 2;
+  return 2 * R * Math.asin(Math.sqrt(h));
+}
 
-  gpsWatchId = navigator.geolocation.watchPosition(
-    async (pos) => {
+async function sendPosition(lat, lng, force) {
+  const now = Date.now();
+  const p = { lat, lng };
+  if (!force && gpsLastPos && now - gpsLastSent < 12000 && distM(gpsLastPos, p) < 25) return;
+  gpsLastSent = now; gpsLastPos = p;
+  const { error } = await client.rpc('driver_set_location', { p_lat: lat, p_lng: lng });
+  if (error) {
+    setGpsUI('error', "Position non envoyée : connexion perdue. Nouvelle tentative…");
+    gpsLastSent = 0;
+    getSessionSafe();
+  } else {
+    setGpsUI('ok', 'Position partagée avec le client et le restaurant (' + hhmm(new Date()) + ')');
+  }
+}
+
+function testGPS() {
+  if (!navigator.geolocation) { setGpsUI('error', "GPS non disponible sur ce téléphone"); return; }
+  setGpsUI('wait', 'Recherche de votre position…');
+  navigator.geolocation.getCurrentPosition(
+    (pos) => {
       myCurrentPos = { lat: pos.coords.latitude, lng: pos.coords.longitude };
-      await client.from('drivers').update({
-        current_lat: pos.coords.latitude,
-        current_lng: pos.coords.longitude,
-        location_updated_at: new Date().toISOString()
-      }).eq('id', myDriver.id);
-      text.textContent = `Position partagée : ${pos.coords.latitude.toFixed(4)}, ${pos.coords.longitude.toFixed(4)}`;
+      if (gpsWatchId !== null) sendPosition(pos.coords.latitude, pos.coords.longitude, true);
+      else setGpsUI('idle', 'GPS prêt. Il s\'activera automatiquement pendant vos livraisons.');
+    },
+    (err) => { setGpsUI(err && err.code === 1 ? 'denied' : 'error', err && err.code === 1 ? 'Position refusée : le client ne peut pas vous suivre' : 'Position introuvable pour le moment. Allez à découvert et réessayez.'); },
+    { enableHighAccuracy: true, timeout: 15000, maximumAge: 10000 }
+  );
+}
+
+function startGPS() {
+  if (gpsWatchId !== null) return;
+  if (!navigator.geolocation) { setGpsUI('error', "GPS non disponible sur ce téléphone"); return; }
+  setGpsUI('wait', 'Activation du partage de position…');
+  gpsWatchId = navigator.geolocation.watchPosition(
+    (pos) => {
+      myCurrentPos = { lat: pos.coords.latitude, lng: pos.coords.longitude };
+      sendPosition(pos.coords.latitude, pos.coords.longitude, false);
       if (deliveryMap && deliveryDriverMarker) {
         deliveryDriverMarker.setLatLng([myCurrentPos.lat, myCurrentPos.lng]);
-        if (deliveryCustomerMarker && !currentRouteCoords) {
-          deliveryRouteLine.setLatLngs([[myCurrentPos.lat, myCurrentPos.lng], deliveryCustomerMarker.getLatLng()]);
-        }
+        if (deliveryCustomerMarker && !currentRouteCoords) deliveryRouteLine.setLatLngs([[myCurrentPos.lat, myCurrentPos.lng], deliveryCustomerMarker.getLatLng()]);
       }
       if (fsMap && window.fsDriverMarker) {
         window.fsDriverMarker.setLatLng([myCurrentPos.lat, myCurrentPos.lng]);
-        if (window.fsRouteLine && !currentRouteCoords) {
-          window.fsRouteLine.setLatLngs([[myCurrentPos.lat, myCurrentPos.lng], window.fsCustomerMarker.getLatLng()]);
-        }
+        if (window.fsRouteLine && !currentRouteCoords) window.fsRouteLine.setLatLngs([[myCurrentPos.lat, myCurrentPos.lng], window.fsCustomerMarker.getLatLng()]);
       }
       updateNavigationBanner();
     },
-    () => { text.textContent = "Position GPS refusée — activez-la pour partager votre trajet"; dot.classList.remove('active'); },
-    { enableHighAccuracy: true, maximumAge: 5000 }
+    (err) => {
+      if (err && err.code === 1) { setGpsUI('denied', 'Position refusée : le client ne peut pas vous suivre'); if (gpsWatchId !== null) { navigator.geolocation.clearWatch(gpsWatchId); gpsWatchId = null; } }
+      else setGpsUI('error', 'Signal GPS faible, nouvelle tentative…');
+    },
+    { enableHighAccuracy: true, maximumAge: 5000, timeout: 20000 }
   );
 }
+// Si le téléphone revient au premier plan, on renvoie la position tout de suite
+document.addEventListener('visibilitychange', () => { if (document.visibilityState === 'visible' && gpsWatchId !== null && myCurrentPos) sendPosition(myCurrentPos.lat, myCurrentPos.lng, true); });
+
 
 function updateDeliveryMap(destination) {
   deliveryDestination = destination;
@@ -1156,7 +1504,9 @@ function updateDeliveryMap(destination) {
 function openFullscreenMap() {
   primeSpeech();
   if (!deliveryDestination) return;
-  document.getElementById('map-fullscreen').classList.add('open');
+  const fsEl = document.getElementById('map-fullscreen');
+  if (!fsEl) return;
+  fsEl.classList.add('open');
 
   setTimeout(() => {
     const startPos = myCurrentPos || deliveryDestination;
@@ -1175,15 +1525,18 @@ function openFullscreenMap() {
 }
 
 function closeFullscreenMap() {
-  document.getElementById('map-fullscreen').classList.remove('open');
+  const el = document.getElementById('map-fullscreen');
+  if (el) el.classList.remove('open');
 }
 
 function stopGPS() {
   if (gpsWatchId !== null) { navigator.geolocation.clearWatch(gpsWatchId); gpsWatchId = null; }
-  document.getElementById('gps-dot').classList.remove('active');
-  document.getElementById('gps-text').textContent = "Position non partagée";
+  if (gpsState !== 'denied') setGpsUI('off', 'Position non partagée (aucune livraison en cours)');
 }
 
+bindThreadEvents(() => refreshOrders());
+
+function bootDriver() {
 (async () => {
   if ('serviceWorker' in navigator) {
     navigator.serviceWorker.register('sw-driver.js').catch(() => {});
@@ -1191,6 +1544,8 @@ function stopGPS() {
   await loadRestaurantOptions();
   restoreSession(afterLogin);
 })();
+}
+if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', bootDriver); else bootDriver();
 </script>
 
 <div class="map-fullscreen" id="map-fullscreen">

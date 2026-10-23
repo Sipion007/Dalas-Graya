@@ -275,6 +275,68 @@
   .prefs textarea { margin:14px 0 0; min-height:64px; resize:vertical; }
   .prefs-count { font-size:11px; color:#6E6E6E; text-align:right; margin-top:4px; }
   .ticket-prefs { margin-top:10px; padding-top:10px; border-top:1.5px dashed #B8AA98; font-size:11.5px; line-height:1.5; color:#3A3027; }
+
+  .thread { margin-top:10px; border-top:1px solid #242424; padding-top:10px; }
+  .thread-list { max-height:240px; overflow:auto; display:flex; flex-direction:column; gap:8px; padding:2px 0 8px; }
+  .thread-empty { font-size:12.5px; color:#8F8F8F; }
+  .msg { align-self:flex-start; max-width:85%; background:#1C1C1C; border:1px solid #2A2A2A; border-radius:14px 14px 14px 4px; padding:8px 11px; }
+  .msg.mine { align-self:flex-end; background:rgba(245,192,74,.14); border-color:rgba(245,192,74,.35); border-radius:14px 14px 4px 14px; }
+  .msg-meta { font-size:10.5px; color:#8F8F8F; margin-bottom:2px; }
+  .msg-body { font-size:13.5px; color:#F2F2F2; line-height:1.4; white-space:pre-wrap; word-break:break-word; }
+  .quick-row { display:flex; gap:6px; overflow-x:auto; padding-bottom:8px; -webkit-overflow-scrolling:touch; }
+  .quick { flex-shrink:0; border:1px solid #333; background:#151515; color:#E4E4E4; border-radius:999px; padding:7px 11px; font-size:12px; cursor:pointer; font-family:inherit; }
+  .thread-send { display:flex; gap:8px; align-items:flex-end; }
+  .thread-send textarea { flex:1; margin:0; min-height:42px; resize:vertical; font-size:14px; background:#111; border:1px solid #2A2A2A; color:#fff; border-radius:10px; padding:9px 11px; font-family:inherit; }
+  .send-btn { border:none; background:#F5C04A; color:#080808; font-weight:700; border-radius:10px; padding:11px 14px; cursor:pointer; font-size:13px; font-family:inherit; }
+  .msg-toggle { background:none; border:1px solid #2E2E2E; color:#E4E4E4; border-radius:9px; padding:8px 12px; font-size:12.5px; font-weight:600; cursor:pointer; font-family:inherit; display:inline-flex; align-items:center; gap:6px; }
+  .msg-toggle .dotnew { width:8px; height:8px; border-radius:50%; background:#C4432B; }
+
+  .badge.bad { background:rgba(196,67,43,.18); color:#F0A99A; border:1px solid rgba(196,67,43,.6); }
+  .order-hist.is-cancelled { opacity:.7; }
+  .oi { font-size:12.5px; margin-top:8px; line-height:1.4; }
+  .oi.ok { color:#8FC197; } .oi.wait { color:#F5D58A; } .oi.bad { color:#F0A99A; }
+  .cp-box { margin-top:10px; border:1px solid #333; border-radius:10px; padding:11px 12px; }
+  .cp-title { font-size:13px; font-weight:700; }
+  .cp-sub { font-size:12px; color:var(--creamDim); margin:3px 0 10px; line-height:1.4; }
+  .chips2 { display:flex; flex-wrap:wrap; gap:6px; }
+  .chip2 { border:1px solid #333; background:#141414; color:#E6E6E6; border-radius:999px; padding:9px 12px; font-size:12.5px; cursor:pointer; font-family:inherit; }
+  .link-btn2 { background:none; border:none; color:var(--creamDim); font-size:12.5px; text-decoration:underline; cursor:pointer; padding:10px 0 0; font-family:inherit; }
+  .link-btn2.danger { color:#E0705A; }
+  .push-card { display:flex; align-items:center; justify-content:space-between; gap:12px; background:rgba(245,192,74,.08); border:1px solid rgba(245,192,74,.35); border-radius:12px; padding:12px 14px; margin-bottom:14px; }
+  .push-card b { display:block; font-size:13.5px; } .push-card span { display:block; font-size:11.5px; color:var(--creamDim); margin-top:2px; line-height:1.4; }
+  .push-card button { border:none; background:var(--mango); color:#080808; font-weight:700; border-radius:9px; padding:10px 13px; font-size:12.5px; cursor:pointer; flex-shrink:0; }
+  .gps-cta { display:block; width:100%; border:1px solid var(--mango); background:rgba(245,192,74,.08); color:var(--mango); border-radius:10px; padding:13px; font-weight:700; font-size:13.5px; cursor:pointer; font-family:inherit; }
+  .gps-cta.active { background:var(--palm); border-color:var(--palm); color:#fff; }
+  .gps-hint { font-size:11.5px; color:var(--creamDim); margin:6px 0 10px; line-height:1.4; }
+  .track-note { font-size:12.5px; color:var(--creamDim); background:var(--surface); border:1px solid var(--line); border-radius:10px; padding:11px 12px; margin-bottom:12px; line-height:1.45; }
+  /* Stories */
+  .st-rail { display:flex; gap:14px; overflow-x:auto; padding:2px 2px 14px; margin:0 -2px; -webkit-overflow-scrolling:touch; scrollbar-width:none; }
+  .st-rail::-webkit-scrollbar { display:none; }
+  .st-item { background:none; border:none; padding:0; display:flex; flex-direction:column; align-items:center; gap:6px; width:72px; flex-shrink:0; cursor:pointer; color:var(--cream); font-family:inherit; }
+  .st-ring { width:68px; height:68px; border-radius:50%; padding:3px; background:conic-gradient(from 210deg, #F5C04A, #F8D36B, #D4A137, #F5C04A); display:block; }
+  .st-ring.seen { background:#3A3A3A; }
+  .st-ring img { width:100%; height:100%; border-radius:50%; object-fit:cover; border:3px solid var(--bg); display:block; background:var(--raised); }
+  .st-name { font-size:11px; line-height:1.2; max-width:72px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; color:#CFCFCF; }
+  #story-viewer { position:fixed; inset:0; z-index:400; background:#000; display:none; touch-action:pan-y; }
+  #story-viewer #sv-img { position:absolute; inset:0; width:100%; height:100%; object-fit:contain; }
+  #story-viewer #sv-bg { position:absolute; inset:-40px; width:calc(100% + 80px); height:calc(100% + 80px); object-fit:cover; filter:blur(28px) brightness(.45) saturate(1.2); }
+  .sv-shade { position:absolute; inset:0; pointer-events:none; background:linear-gradient(180deg, rgba(0,0,0,.6) 0%, rgba(0,0,0,0) 18%, rgba(0,0,0,0) 62%, rgba(0,0,0,.85) 100%); }
+  .sv-bars { position:absolute; top:calc(10px + env(safe-area-inset-top)); left:12px; right:12px; display:flex; gap:4px; z-index:3; }
+  .sv-bars span { flex:1; height:3px; background:rgba(255,255,255,.3); border-radius:2px; overflow:hidden; }
+  .sv-bars i { display:block; height:100%; width:100%; background:#fff; transform:scaleX(0); transform-origin:left; }
+  .sv-bars span.done i { transform:scaleX(1); }
+  .sv-bars i.run { animation: svBar 5s linear forwards; }
+  #story-viewer.paused .sv-bars i.run { animation-play-state:paused; }
+  @keyframes svBar { to { transform:scaleX(1); } }
+  .sv-head { position:absolute; top:calc(22px + env(safe-area-inset-top)); left:14px; right:14px; display:flex; align-items:center; gap:10px; z-index:3; color:#fff; }
+  .sv-rest { font-weight:700; font-size:14px; } .sv-time { font-size:12px; color:rgba(255,255,255,.7); flex:1; }
+  .sv-close { background:rgba(0,0,0,.45); border:1px solid rgba(255,255,255,.25); color:#fff; border-radius:999px; padding:8px 13px; font-size:12.5px; font-weight:600; cursor:pointer; }
+  .sv-zone { position:absolute; top:80px; bottom:140px; width:40%; z-index:2; cursor:pointer; }
+  .sv-zone.prev { left:0; } .sv-zone.next { right:0; width:60%; }
+  .sv-foot { position:absolute; left:16px; right:16px; bottom:calc(22px + env(safe-area-inset-bottom)); z-index:3; display:flex; flex-direction:column; gap:12px; }
+  .sv-cap { color:#fff; font-size:17px; font-weight:600; line-height:1.35; text-shadow:0 1px 10px rgba(0,0,0,.6); white-space:pre-wrap; }
+  .sv-order { border:none; background:var(--mango); color:#080808; font-weight:800; font-size:15px; border-radius:14px; padding:16px; cursor:pointer; font-family:inherit; }
+  @media (prefers-reduced-motion: reduce) { .sv-bars i.run { animation-duration:5s; } }
 </style>
 </head>
 <body>
@@ -480,6 +542,8 @@ function escHtml(s) {
 function initial(name) { return (name || '?').trim().charAt(0).toUpperCase(); }
 
 function isRestaurantOpen(r) {
+  if (!r) return false;
+  if (r.accepting_orders === false) return false; // restaurant en pause
   if (!r.opens_at || !r.closes_at) return true; // pas d'horaires définis = toujours ouvert
   const now = new Date();
   const nowMin = now.getHours() * 60 + now.getMinutes();
@@ -496,6 +560,7 @@ function isRestaurantOpen(r) {
 function formatHM(t) { return t ? t.slice(0, 5) : ''; }
 
 function openStatusBadge(r) {
+  if (r.accepting_orders === false) return `<span class="status-badge status-closed">En pause pour le moment</span>`;
   if (!r.opens_at || !r.closes_at) return '';
   const open = isRestaurantOpen(r);
   return open
@@ -688,49 +753,373 @@ async function logoutCustomer() {
 
 // ---------- Historique des commandes + avis ----------
 
+// ---------- Outils communs : temps, messages par commande ----------
+function timeAgo(ts) {
+  if (!ts) return '';
+  const s = Math.max(0, Math.round((Date.now() - new Date(ts).getTime()) / 1000));
+  if (s < 60) return "à l'instant";
+  const m = Math.floor(s / 60);
+  if (m < 60) return 'il y a ' + m + ' min';
+  const h = Math.floor(m / 60);
+  if (h < 24) return 'il y a ' + h + ' h' + (m % 60 ? ' ' + String(m % 60).padStart(2, '0') : '');
+  return 'le ' + new Date(ts).toLocaleDateString('fr-FR', { day: '2-digit', month: '2-digit' });
+}
+function hhmm(ts) { return ts ? new Date(ts).toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' }) : ''; }
+function minutesSince(ts) { return ts ? Math.floor((Date.now() - new Date(ts).getTime()) / 60000) : 0; }
+
+const ROLE_LABEL = { client: 'Client', restaurant: 'Restaurant', driver: 'Livreur', admin: "Dallas Bouff'" };
+const msgDrafts = {};
+const openThreads = new Set();
+
+function threadHtml(orderId, msgs, myRole, quick) {
+  const list = (msgs || []).map(m => {
+    const mine = m.sender_role === myRole;
+    return `<div class="msg ${mine ? 'mine' : ''}"><div class="msg-meta">${escHtml(mine ? 'Vous' : (m.sender_name || ROLE_LABEL[m.sender_role] || ''))} · ${hhmm(m.created_at)}</div><div class="msg-body">${escHtml(m.body)}</div></div>`;
+  }).join('');
+  return `
+    <div class="thread" data-thread="${orderId}">
+      <div class="thread-list" id="thread-list-${orderId}">${list || '<div class="thread-empty">Aucun message pour cette commande.</div>'}</div>
+      ${quick && quick.length ? `<div class="quick-row">${quick.map(q => `<button type="button" class="quick" data-quick="${orderId}" data-text="${escHtml(q)}">${escHtml(q)}</button>`).join('')}</div>` : ''}
+      <div class="thread-send">
+        <textarea id="msg-input-${orderId}" data-draft="${orderId}" maxlength="500" rows="2" placeholder="Écrire un message…">${escHtml(msgDrafts[orderId] || '')}</textarea>
+        <button type="button" class="send-btn" data-send="${orderId}">Envoyer</button>
+      </div>
+    </div>`;
+}
+
+async function sendThreadMessage(orderId, text, onDone) {
+  const body = String(text || '').trim();
+  if (!body) return;
+  const { error } = await client.rpc('send_order_message', { p_order: orderId, p_body: body });
+  if (error) { alert("Le message n'est pas parti. Vérifiez votre connexion et réessayez."); return; }
+  msgDrafts[orderId] = '';
+  const ta = document.getElementById('msg-input-' + orderId);
+  if (ta) ta.value = '';
+  if (onDone) onDone();
+}
+
+function bindThreadEvents(onSent) {
+  document.addEventListener('input', (e) => {
+    const t = e.target;
+    if (t && t.dataset && t.dataset.draft) msgDrafts[t.dataset.draft] = t.value;
+  });
+  document.addEventListener('click', (e) => {
+    const q = e.target.closest('[data-quick]');
+    if (q) { sendThreadMessage(q.dataset.quick, q.dataset.text, onSent); return; }
+    const s = e.target.closest('[data-send]');
+    if (s) { const id = s.dataset.send; const ta = document.getElementById('msg-input-' + id); sendThreadMessage(id, ta ? ta.value : '', onSent); return; }
+    const tg = e.target.closest('[data-toggle-thread]');
+    if (tg) { const id = tg.dataset.toggleThread; if (openThreads.has(id)) openThreads.delete(id); else openThreads.add(id); if (onSent) onSent(true); }
+  });
+}
+
+// Garde le champ en cours de saisie et la position des fils quand la liste est redessinée
+function renderKeepingFocus(el, html) {
+  const a = document.activeElement;
+  const keepId = a && el.contains(a) && a.id ? a.id : null;
+  const sel = keepId && typeof a.selectionStart === 'number' ? [a.selectionStart, a.selectionEnd] : null;
+  const scrolls = {};
+  el.querySelectorAll('.thread-list').forEach(t => { scrolls[t.id] = t.scrollTop; });
+  const values = {};
+  el.querySelectorAll('select[id], input[id]').forEach(x => { values[x.id] = x.value; });
+  el.innerHTML = html;
+  Object.keys(values).forEach(id => { const x = document.getElementById(id); if (x && el.contains(x) && values[id] && x.tagName === 'SELECT' && [...x.options].some(o => o.value === values[id])) x.value = values[id]; else if (x && el.contains(x) && x.tagName === 'INPUT' && x.type !== 'file') x.value = values[id]; });
+  el.querySelectorAll('.thread-list').forEach(t => { t.scrollTop = (t.id in scrolls) ? scrolls[t.id] : t.scrollHeight; });
+  if (keepId) { const n = document.getElementById(keepId); if (n) { n.focus({ preventScroll: true }); if (sel && n.setSelectionRange) { try { n.setSelectionRange(sel[0], sel[1]); } catch (e) {} } } }
+}
+
+function compressImageFile(file, max, quality) {
+  return new Promise((resolve, reject) => {
+    const img = new Image();
+    const url = URL.createObjectURL(file);
+    img.onload = () => {
+      const ratio = Math.min(1, (max || 1280) / Math.max(img.width, img.height));
+      const cv = document.createElement('canvas');
+      cv.width = Math.max(1, Math.round(img.width * ratio));
+      cv.height = Math.max(1, Math.round(img.height * ratio));
+      cv.getContext('2d').drawImage(img, 0, 0, cv.width, cv.height);
+      URL.revokeObjectURL(url);
+      cv.toBlob(b => b ? resolve(b) : reject(new Error('compression')), 'image/jpeg', quality || 0.8);
+    };
+    img.onerror = () => { URL.revokeObjectURL(url); reject(new Error('image')); };
+    img.src = url;
+  });
+}
+
+
+// ---------- Notifications sur le téléphone du client ----------
+const PUSH_VAPID_PUBLIC = "BGQqCWf5N_IzK-p2AmEXRR3K0-TgOns-uDNKjTxJOd8zpxsUz1277aLtQr2hefzhrUIbRDTojnMZ_GAsAK_kWwo";
+let clientPushOn = false;
+function clientPushSupported() { return ('serviceWorker' in navigator) && ('PushManager' in window) && ('Notification' in window); }
+function b64ToU8c(b64) { const pad = '='.repeat((4 - b64.length % 4) % 4); const raw = atob((b64 + pad).replace(/-/g, '+').replace(/_/g, '/')); return Uint8Array.from([...raw].map(c => c.charCodeAt(0))); }
+async function registerClientPush() {
+  const reg = await navigator.serviceWorker.register('sw-driver.js');
+  await navigator.serviceWorker.ready;
+  let sub = await reg.pushManager.getSubscription();
+  const want = b64ToU8c(PUSH_VAPID_PUBLIC);
+  if (!sub) sub = await reg.pushManager.subscribe({ userVisibleOnly: true, applicationServerKey: want });
+  const { error } = await client.rpc('register_push', { p_endpoint: sub.endpoint, p_sub: sub.toJSON(), p_role: 'customer', p_restaurant_id: null, p_driver_id: null });
+  if (error) throw error;
+  clientPushOn = true;
+}
+async function syncClientPush() {
+  try { if (currentCustomer && clientPushSupported() && Notification.permission === 'granted') await registerClientPush(); } catch (e) {}
+}
+function enableClientPush() {
+  if (!clientPushSupported()) { toast(isIOS() && !isStandalone() ? "Ajoutez d'abord l'appli à l'écran d'accueil (Partager, puis Sur l'écran d'accueil)." : "Les notifications ne sont pas disponibles sur ce téléphone."); return; }
+  let p; try { p = Notification.requestPermission(); } catch (e) { p = null; }
+  Promise.resolve(p).then(async (perm) => {
+    perm = perm || Notification.permission;
+    if (perm !== 'granted') { toast("Notifications refusées. Vous pouvez les autoriser dans les réglages du téléphone."); return; }
+    try { await registerClientPush(); toast("C'est noté : vous serez prévenu sur ce téléphone."); document.querySelectorAll('.push-card').forEach(c => c.remove()); }
+    catch (e) { toast("Activation impossible pour le moment. Réessayez."); }
+  });
+}
+function clientPushCard() {
+  if (clientPushOn || !clientPushSupported() || (window.Notification && Notification.permission === 'denied')) return '';
+  return `<div class="push-card"><div><b>Être prévenu sur ce téléphone</b><span>Acceptation, départ du livreur, messages du restaurant.</span></div><button type="button" onclick="enableClientPush()">Activer</button></div>`;
+}
+
+// ---------- Mes commandes : suivi, annulation, messages ----------
+let myOrders = [];
+let myOrderMsgs = {};
+let myReviewed = new Set();
+let ordersSig = '';
+let ordersTimer = null;
+const clientPanel = {};
+const CLIENT_CANCEL_REASONS = ["J'ai changé d'avis", "C'est trop long", 'Erreur dans ma commande'];
+const QUICK_CLIENT = ['Merci !', 'Où en est ma commande ?', 'Je suis à la maison.', 'Pouvez-vous m\'appeler ?'];
+const STATUS_TEXT = { 'Reçue': 'En attente du restaurant', 'En préparation': 'En préparation', 'Prête': 'Prête, un livreur arrive', 'En livraison': 'En route vers vous', 'Livrée': 'Livrée', 'Annulée': 'Annulée' };
+
+async function loadMyOrders() {
+  if (!currentCustomer) return;
+  const { data: orders, error } = await client.from('orders').select('*, drivers(name, phone, face_photo_url)').eq('customer_id', currentCustomer.id).order('created_at', { ascending: false }).limit(50);
+  if (error) return;
+  myOrders = orders || [];
+  const ids = myOrders.filter(o => minutesSince(o.created_at) < 3 * 24 * 60).map(o => o.id);
+  myOrderMsgs = {};
+  if (ids.length) {
+    const { data: msgs } = await client.from('order_messages').select('*').in('order_id', ids).order('created_at');
+    (msgs || []).forEach(m => { (myOrderMsgs[m.order_id] = myOrderMsgs[m.order_id] || []).push(m); });
+  }
+  const { data: myReviews } = await client.from('reviews').select('order_id').eq('customer_id', currentCustomer.id);
+  myReviewed = new Set((myReviews || []).map(r => r.order_id));
+}
+
 async function renderOrders() {
   const el = document.getElementById('view-orders');
   if (!currentCustomer) { show('account'); renderAccount(); return; }
-
   el.innerHTML = `
     <div class="section">
       <button class="btn-back" onclick="show('account'); renderAccount();">← Mon compte</button>
       <div class="display" style="font-size:26px; margin-bottom:14px;">Mes commandes</div>
-      <div id="orders-hist-list"></div>
-    </div>
-  `;
-
-  const { data: orders } = await client.from('orders').select('*, drivers(name, face_photo_url)').eq('phone', currentCustomer.phone).order('created_at', { ascending: false });
-  const { data: myReviews } = await client.from('reviews').select('order_id').eq('customer_id', currentCustomer.id);
-  const reviewedOrderIds = new Set((myReviews || []).map(r => r.order_id));
-
-  const listEl = document.getElementById('orders-hist-list');
-  if (!orders || orders.length === 0) {
-    listEl.innerHTML = '<div class="empty">Vous n\'avez pas encore commandé.</div>';
-    return;
-  }
-
-  listEl.innerHTML = orders.map(o => {
-    const r = restaurants.find(x => x.id === o.restaurant_id);
-    const date = new Date(o.created_at).toLocaleDateString('fr-FR', { day:'2-digit', month:'2-digit', year:'numeric' });
-    const canReview = o.status === 'Livrée' && !reviewedOrderIds.has(o.id);
-    const canTrack = o.status === 'En livraison' && o.driver_id;
-    return `
-      <div class="order-hist">
-        <div class="order-hist-top">
-          <div class="mono" style="font-weight:700; font-size:12.5px;">#${o.id.slice(0,8).toUpperCase()}</div>
-          <div class="badge ${o.status === 'Livrée' ? 'done' : ''}">${o.status}</div>
-        </div>
-        <div style="font-size:13.5px; margin-top:4px;">${r ? r.name : '—'} · ${date}</div>
-        <div class="mono" style="font-size:13px; margin-top:4px; color:var(--mango);">${money(o.total)}</div>
-        ${o.drivers ? `<div style="display:flex; align-items:center; gap:10px; margin-top:8px;">${driverAvatar(o.drivers, 34)}<div style="font-size:12.5px; color:var(--creamDim);">${o.status === 'Livrée' ? 'Livrée par' : 'Livreur :'} <span style="color:var(--cream); font-weight:600;">${o.drivers.name}</span></div></div>` : ''}
-        ${canTrack ? `<button class="btn-secondary" style="margin-top:8px;" onclick="trackDelivery('${o.id}')">Suivre le trajet en direct</button>` : ''}
-        ${canReview ? `<button class="btn-secondary" style="margin-top:8px;" onclick='openReview(${JSON.stringify({id:o.id, restaurant_id:o.restaurant_id, rname:(r?r.name:'')}).replace(/'/g,"&apos;")})'>Noter ce restaurant</button>` : ''}
-      </div>
-    `;
-  }).join('');
+      ${clientPushCard()}
+      <div id="orders-hist-list"><div class="empty">Chargement…</div></div>
+    </div>`;
+  ordersSig = '';
+  await loadMyOrders();
+  paintMyOrders();
+  if (ordersTimer) clearInterval(ordersTimer);
+  ordersTimer = setInterval(async () => {
+    if (document.getElementById('view-orders').style.display === 'none') { clearInterval(ordersTimer); ordersTimer = null; return; }
+    await loadMyOrders();
+    paintMyOrders();
+  }, 10000);
 }
 
+function paintMyOrders(force) {
+  const listEl = document.getElementById('orders-hist-list');
+  if (!listEl) return;
+  const sig = JSON.stringify([myOrders, myOrderMsgs, [...openThreads], clientPanel]);
+  if (!force && sig === ordersSig) return;
+  ordersSig = sig;
+  if (!myOrders.length) { listEl.innerHTML = '<div class="empty">Vous n\'avez pas encore commandé.</div>'; return; }
+  renderKeepingFocus(listEl, myOrders.map(clientOrderCard).join(''));
+}
+
+function clientOrderCard(o) {
+  const r = restaurants.find(x => x.id === o.restaurant_id);
+  const date = new Date(o.created_at).toLocaleDateString('fr-FR', { day: '2-digit', month: '2-digit' }) + ' à ' + hhmm(o.created_at);
+  const msgs = myOrderMsgs[o.id] || [];
+  const last = msgs.slice(-1)[0];
+  const unread = last && last.sender_role !== 'client';
+  const finished = o.status === 'Livrée' || o.status === 'Annulée';
+  let info = '';
+  if (o.status === 'Reçue') info = `<div class="oi wait">Le restaurant n'a pas encore confirmé (envoyée ${timeAgo(o.created_at)}).</div>`;
+  else if (o.status === 'En préparation' && o.accepted_at && o.prep_minutes) info = `<div class="oi ok">Acceptée. Prête vers ${hhmm(new Date(new Date(o.accepted_at).getTime() + o.prep_minutes * 60000))}.</div>`;
+  else if (o.status === 'Annulée') info = `<div class="oi bad">Annulée${o.cancelled_by === 'client' ? ' par vous' : o.cancelled_by === 'restaurant' ? ' par le restaurant' : o.cancelled_by === 'driver' ? ' par le livreur' : ''}${o.cancel_reason ? ' : ' + escHtml(o.cancel_reason) : ''}</div>`;
+  if (o.cancel_requested_at && !finished) info += `<div class="oi wait">Demande d'annulation envoyée. Le restaurant va répondre.</div>`;
+
+  let actions = '';
+  const panel = clientPanel[o.id];
+  if (!finished && (o.status === 'Reçue' || ((o.status === 'En préparation' || o.status === 'Prête') && !o.cancel_requested_at))) {
+    const direct = o.status === 'Reçue';
+    actions += panel === 'cancel' ? `
+      <div class="cp-box"><div class="cp-title">${direct ? 'Annuler ma commande' : "Demander l'annulation"}</div>
+        <div class="cp-sub">${direct ? "Le restaurant n'a pas encore commencé : l'annulation est immédiate." : 'Le restaurant a déjà commencé à cuisiner : il doit accepter votre demande.'}</div>
+        <div class="chips2">${CLIENT_CANCEL_REASONS.map(x => `<button type="button" class="chip2" onclick="clientCancel('${o.id}', ${JSON.stringify(x).replace(/"/g, '&quot;')})">${escHtml(x)}</button>`).join('')}</div>
+        <button class="link-btn2" onclick="setClientPanel('${o.id}', '')">Garder ma commande</button></div>`
+      : `<button class="link-btn2 danger" onclick="setClientPanel('${o.id}', 'cancel')">${direct ? 'Annuler ma commande' : "Demander l'annulation"}</button>`;
+  }
+  if (o.status === 'En livraison') {
+    actions = `<button class="btn-secondary" style="margin-top:8px;" onclick="trackDelivery('${o.id}')">Suivre le trajet en direct</button>
+      <button class="btn-primary" style="margin-top:8px;" onclick="confirmReceived('${o.id}')">J'ai reçu ma commande</button>`;
+  }
+  const canReview = o.status === 'Livrée' && !myReviewed.has(o.id);
+  if (canReview) actions += `<button class="btn-secondary" style="margin-top:8px;" onclick='openReview(${JSON.stringify({ id: o.id, restaurant_id: o.restaurant_id, rname: (r ? r.name : '') }).replace(/'/g, "&apos;")})'>Noter ce restaurant</button>`;
+
+  const showThread = !finished || msgs.length;
+  const open = openThreads.has(o.id);
+  return `
+    <div class="order-hist ${o.status === 'Annulée' ? 'is-cancelled' : ''}">
+      <div class="order-hist-top">
+        <div class="mono" style="font-weight:700; font-size:12.5px;">#${o.id.slice(0, 8).toUpperCase()}</div>
+        <div class="badge ${o.status === 'Livrée' ? 'done' : o.status === 'Annulée' ? 'bad' : ''}">${escHtml(STATUS_TEXT[o.status] || o.status)}</div>
+      </div>
+      <div style="font-size:13.5px; margin-top:4px;">${r ? escHtml(r.name) : '—'} · ${date}</div>
+      <div class="mono" style="font-size:13px; margin-top:4px; color:var(--mango);">${money(o.total)}</div>
+      ${info}
+      ${o.drivers ? `<div style="display:flex; align-items:center; gap:10px; margin-top:8px;">${driverAvatar(o.drivers, 34)}<div style="font-size:12.5px; color:var(--creamDim);">${o.status === 'Livrée' ? 'Livrée par' : 'Livreur :'} <span style="color:var(--cream); font-weight:600;">${escHtml(o.drivers.name)}</span></div></div>` : ''}
+      ${actions}
+      ${showThread ? `<div style="margin-top:10px;"><button type="button" class="msg-toggle" data-toggle-thread="${o.id}">${unread ? '<span class="dotnew"></span>' : ''}${open ? 'Fermer les messages' : 'Écrire au restaurant'}${msgs.length ? ' (' + msgs.length + ')' : ''}</button></div>` : ''}
+      ${open ? threadHtml(o.id, msgs, 'client', QUICK_CLIENT) : ''}
+    </div>`;
+}
+
+function setClientPanel(id, p) { clientPanel[id] = p; paintMyOrders(true); }
+
+async function clientCancel(orderId, reason) {
+  const { data, error } = await client.rpc('cancel_order', { p_order: orderId, p_reason: reason });
+  if (error) { toast(String(error.message || '').includes('trop_tard') ? 'Le livreur est déjà en route : appelez-le directement.' : "L'annulation n'a pas pu être envoyée. Réessayez."); return; }
+  clientPanel[orderId] = '';
+  toast(data === 'requested' ? "Demande envoyée au restaurant." : 'Commande annulée.');
+  await loadMyOrders(); paintMyOrders(true);
+}
+
+async function confirmReceived(orderId) {
+  const { error } = await client.rpc('client_confirm_delivery', { p_order: orderId });
+  if (error) { toast("Confirmation impossible pour le moment. Réessayez."); return; }
+  toast('Merci ! Bon appétit.');
+  if (document.getElementById('view-tracking').style.display !== 'none') { show('orders'); renderOrders(); return; }
+  await loadMyOrders(); paintMyOrders(true);
+}
+
+// ---------- Stories des restaurants ----------
+let liveStories = [];
+let storyGroups = [];
+let sv = null;
+function storySeen() { try { return new Set(JSON.parse(localStorage.getItem('dbf-story-seen') || '[]')); } catch (e) { return new Set(); } }
+function markStorySeen(id) { try { const s = storySeen(); s.add(id); localStorage.setItem('dbf-story-seen', JSON.stringify([...s].slice(-400))); } catch (e) {} }
+function viewerKey() { try { let k = localStorage.getItem('dbf-viewer'); if (!k) { k = crypto.randomUUID(); localStorage.setItem('dbf-viewer', k); } return k; } catch (e) { return 'anon-' + Math.random().toString(36).slice(2); } }
+
+async function loadStories() {
+  const { data } = await client.from('restaurant_stories').select('*').gt('expires_at', new Date().toISOString()).order('created_at');
+  liveStories = (data || []).filter(s => restaurants.some(r => r.id === s.restaurant_id));
+  const byR = {};
+  liveStories.forEach(s => { (byR[s.restaurant_id] = byR[s.restaurant_id] || []).push(s); });
+  const seen = storySeen();
+  storyGroups = Object.keys(byR).map(rid => ({ rid, stories: byR[rid], allSeen: byR[rid].every(s => seen.has(s.id)), latest: byR[rid][byR[rid].length - 1].created_at }))
+    .sort((a, b) => (a.allSeen - b.allSeen) || (new Date(b.latest) - new Date(a.latest)));
+}
+
+function storiesRailHtml() {
+  if (!storyGroups.length) return '';
+  return `<div class="st-rail" role="list" aria-label="Stories des restaurants">${storyGroups.map((g, i) => {
+    const r = restaurants.find(x => x.id === g.rid) || {};
+    const s0 = g.stories[g.stories.length - 1];
+    return `<button type="button" class="st-item" role="listitem" onclick="openStories(${i})"><span class="st-ring ${g.allSeen ? 'seen' : ''}"><img src="${escHtml(s0.image_url)}" alt="" loading="lazy" /></span><span class="st-name">${escHtml(r.name || '')}</span></button>`;
+  }).join('')}</div>`;
+}
+
+function refreshStoryRail() {
+  const el = document.getElementById('st-rail-slot');
+  if (el) el.innerHTML = storiesRailHtml();
+}
+
+function openStories(groupIndex) {
+  const g = storyGroups[groupIndex];
+  if (!g) return;
+  const seen = storySeen();
+  let start = g.stories.findIndex(s => !seen.has(s.id));
+  if (start < 0) start = 0;
+  sv = { g: groupIndex, i: start, timer: null, startedAt: 0, remaining: 5000, paused: false };
+  let ov = document.getElementById('story-viewer');
+  if (!ov) {
+    ov = document.createElement('div');
+    ov.id = 'story-viewer';
+    ov.innerHTML = `<img id="sv-bg" alt="" aria-hidden="true" /><div class="sv-bars" id="sv-bars"></div><div class="sv-head"><span class="sv-rest" id="sv-rest"></span><span class="sv-time" id="sv-time"></span><button type="button" class="sv-close" aria-label="Fermer" onclick="closeStories()">Fermer</button></div><img id="sv-img" alt="" /><div class="sv-shade"></div><div class="sv-zone prev" id="sv-prev"></div><div class="sv-zone next" id="sv-next"></div><div class="sv-foot"><div class="sv-cap" id="sv-cap"></div><button type="button" class="sv-order" id="sv-order">Commander</button></div>`;
+    document.body.appendChild(ov);
+    let y0 = null, x0 = null;
+    ov.addEventListener('touchstart', e => { y0 = e.touches[0].clientY; x0 = e.touches[0].clientX; pauseStory(); }, { passive: true });
+    ov.addEventListener('touchend', e => {
+      const t = e.changedTouches[0];
+      if (y0 !== null && t.clientY - y0 > 90 && Math.abs(t.clientX - x0) < 80) { closeStories(); y0 = null; return; }
+      y0 = null; resumeStory();
+    }, { passive: true });
+    document.getElementById('sv-prev').addEventListener('click', () => stepStory(-1));
+    document.getElementById('sv-next').addEventListener('click', () => stepStory(1));
+    document.getElementById('sv-order').addEventListener('click', orderFromStory);
+    document.addEventListener('keydown', e => { if (!sv || document.getElementById('story-viewer').style.display === 'none') return; if (e.key === 'Escape') closeStories(); if (e.key === 'ArrowRight') stepStory(1); if (e.key === 'ArrowLeft') stepStory(-1); });
+  }
+  ov.style.display = 'block';
+  document.body.style.overflow = 'hidden';
+  showStory();
+}
+
+function showStory() {
+  if (!sv) return;
+  const g = storyGroups[sv.g];
+  const s = g.stories[sv.i];
+  const r = restaurants.find(x => x.id === g.rid) || {};
+  document.getElementById('sv-img').src = s.image_url;
+  document.getElementById('sv-bg').src = s.image_url;
+  document.getElementById('sv-rest').textContent = r.name || '';
+  document.getElementById('sv-time').textContent = timeAgo(s.created_at);
+  document.getElementById('sv-cap').textContent = s.caption || '';
+  const dish = s.menu_item_id ? (allDishPhotos.find(d => d.id === s.menu_item_id) || null) : null;
+  document.getElementById('sv-order').textContent = isRestaurantOpen(r) ? (s.menu_item_id ? 'Commander ce plat' : 'Voir le menu') : 'Voir le menu (fermé)';
+  document.getElementById('sv-bars').innerHTML = g.stories.map((x, k) => `<span class="${k < sv.i ? 'done' : ''}"><i class="${k === sv.i ? 'run' : ''}"></i></span>`).join('');
+  markStorySeen(s.id);
+  client.rpc('record_story_view', { p_story: s.id, p_viewer: viewerKey() }).then(() => {}, () => {});
+  clearTimeout(sv.timer);
+  sv.remaining = 5000; sv.startedAt = Date.now(); sv.paused = false;
+  document.getElementById('story-viewer').classList.remove('paused');
+  sv.timer = setTimeout(() => stepStory(1), 5000);
+}
+
+function pauseStory() { if (!sv || sv.paused) return; sv.paused = true; clearTimeout(sv.timer); sv.remaining = Math.max(300, sv.remaining - (Date.now() - sv.startedAt)); document.getElementById('story-viewer').classList.add('paused'); }
+function resumeStory() { if (!sv || !sv.paused) return; sv.paused = false; sv.startedAt = Date.now(); document.getElementById('story-viewer').classList.remove('paused'); sv.timer = setTimeout(() => stepStory(1), sv.remaining); }
+
+function stepStory(d) {
+  if (!sv) return;
+  const g = storyGroups[sv.g];
+  const ni = sv.i + d;
+  if (ni >= 0 && ni < g.stories.length) { sv.i = ni; showStory(); return; }
+  const ng = sv.g + (d > 0 ? 1 : -1);
+  if (ng >= 0 && ng < storyGroups.length) { sv.g = ng; sv.i = d > 0 ? 0 : storyGroups[ng].stories.length - 1; showStory(); return; }
+  if (d > 0) closeStories(); else showStory();
+}
+
+function closeStories() {
+  if (sv) clearTimeout(sv.timer);
+  sv = null;
+  const ov = document.getElementById('story-viewer');
+  if (ov) ov.style.display = 'none';
+  document.body.style.overflow = '';
+  loadStories().then(refreshStoryRail);
+}
+
+async function orderFromStory() {
+  if (!sv) return;
+  const g = storyGroups[sv.g];
+  const s = g.stories[sv.i];
+  closeStories();
+  await openRestaurant(g.rid);
+  if (s.menu_item_id && isRestaurantOpen(currentRestaurant) && menuItems.some(m => m.id === s.menu_item_id)) addItem(s.menu_item_id);
+}
+
+
+bindThreadEvents((toggleOnly) => { if (toggleOnly) paintMyOrders(true); else loadMyOrders().then(() => paintMyOrders(true)); });
 let reviewTarget = null;
 let selectedRating = 0;
 
@@ -779,6 +1168,7 @@ async function submitReview() {
   if (error) { toast("Erreur lors de l'envoi de l'avis."); return; }
   closeReview();
   toast("Merci pour votre avis !");
+  myReviewed.add(reviewTarget.id);
   renderOrders();
 }
 
@@ -854,9 +1244,12 @@ async function trackDelivery(orderId) {
       <div class="track-status" id="track-status" style="margin-bottom:18px;">Localisation du livreur…</div>
       <div id="track-driver-slot"></div>
       <div id="track-timeline"></div>
-      <div id="tracking-map"></div>
+      <div id="track-note"></div>
+      <div id="tracking-map" style="display:none;"></div>
+      <div id="track-actions"></div>
     </div>
   `;
+  trackingMap = null; trackingMarker = null; trackingDestMarker = null;
 
   await updateTrackingView(orderId);
   if (trackingTimer) clearInterval(trackingTimer);
@@ -892,7 +1285,7 @@ async function updateTrackingView(orderId) {
         <div style="display:flex; align-items:center; gap:12px;">
           ${driverAvatar(d, 52)}
           <div>
-            <div style="font-weight:700; font-size:14.5px;">${d.name}</div>
+            <div style="font-weight:700; font-size:14.5px;">${escHtml(d.name)}</div>
             <div style="font-size:12px; color:var(--creamDim);">Votre livreur</div>
           </div>
         </div>
@@ -903,11 +1296,21 @@ async function updateTrackingView(orderId) {
     slotEl.innerHTML = '';
   }
 
-  if (!d || !d.current_lat) {
+  const noteEl = document.getElementById('track-note');
+  const actEl = document.getElementById('track-actions');
+  if (actEl) actEl.innerHTML = o.status === 'En livraison' ? `<button class="btn-primary" onclick="confirmReceived('${o.id}')">J'ai reçu ma commande</button>` : '';
+  const fresh = d && d.current_lat && d.location_updated_at && minutesSince(d.location_updated_at) <= 10;
+  if (!d || o.status !== 'En livraison' || !fresh) {
+    if (noteEl) noteEl.innerHTML = o.status === 'Livrée' ? '' : `<div class="track-note">${!d ? "Un livreur va être désigné. Vous serez prévenu dès qu'il part." : (o.status !== 'En livraison' ? '' : "La position du livreur n'est pas disponible pour le moment (réseau ou GPS de son téléphone). Vous pouvez l'appeler avec le bouton ci-dessus.")}</div>`;
+    const mapBox = document.getElementById('tracking-map');
+    if (mapBox) mapBox.style.display = 'none';
     return;
+  } else if (noteEl) {
+    noteEl.innerHTML = `<div class="track-note">Position du livreur mise à jour ${timeAgo(d.location_updated_at)}.</div>`;
   }
 
   const mapEl = document.getElementById('tracking-map');
+  mapEl.style.display = 'block';
   if (!trackingMap) {
     trackingMap = L.map(mapEl).setView([d.current_lat, d.current_lng], 16);
     equipMap(trackingMap);
@@ -1170,6 +1573,8 @@ async function loadRestaurants() {
   allDishPhotos = (photos || []).filter(p => p.photo_url);
   allDishPhotos.forEach(p => { if (!restaurantCoverMap[p.restaurant_id]) restaurantCoverMap[p.restaurant_id] = p; });
 
+  try { await loadStories(); } catch (e) { liveStories = []; storyGroups = []; }
+
   const { data: revs } = await client.from('reviews').select('restaurant_id, rating');
   const grouped = {};
   (revs || []).forEach(r => { (grouped[r.restaurant_id] = grouped[r.restaurant_id] || []).push(r.rating); });
@@ -1188,6 +1593,7 @@ function renderList() {
     <div class="hero">
       <div class="hero-title">Vos envies,<span class="hero-title-accent">livrées à temps</span></div>
       <div class="hero-sub">Commandez vos plats préférés en quelques clics.</div>
+      <div id="st-rail-slot">${storiesRailHtml()}</div>
       ${Showcase.html()}
       <div class="search-bar">
         <div class="search-bar-left">
@@ -1300,7 +1706,7 @@ function renderMenu() {
       <div class="display" style="font-size:28px; color:${r.accent}">${r.name}</div>
       <div style="font-size:13px; color:var(--creamDim); margin-bottom:8px;">${r.tagline || ''}</div>
       <div class="fee-line"><strong>${money(DELIVERY_FEE)}</strong><span>de frais de livraison, ajoutés au prix de vos plats et payés à la réception.</span></div>
-      ${!open ? `<div class="closed-banner">Ce restaurant est actuellement fermé. Horaires : ${formatHM(r.opens_at)} – ${formatHM(r.closes_at)}. Vous pouvez consulter le menu, mais la commande n'est pas possible pour le moment.</div>` : ''}
+      ${!open ? (r.accepting_orders === false ? `<div class="closed-banner">Ce restaurant a mis les commandes en pause pour le moment. Vous pouvez consulter le menu et revenir un peu plus tard.</div>` : `<div class="closed-banner">Ce restaurant est actuellement fermé. Horaires : ${formatHM(r.opens_at)} – ${formatHM(r.closes_at)}. Vous pouvez consulter le menu, mais la commande n'est pas possible pour le moment.</div>`) : ''}
       <div id="menu-items"></div>
     </div>
     <div id="cart-bar"></div>
@@ -1368,7 +1774,7 @@ function renderMenuItems() {
 }
 
 function addItem(id) {
-  if (!isRestaurantOpen(currentRestaurant)) { toast("Ce restaurant est fermé pour le moment."); renderMenu(); return; }
+  if (!isRestaurantOpen(currentRestaurant)) { toast(currentRestaurant && currentRestaurant.accepting_orders === false ? "Ce restaurant est en pause pour le moment." : "Ce restaurant est fermé pour le moment."); renderMenu(); return; }
   const item = menuItems.find(i => i.id === id);
   if (!item) return;
   const wasEmpty = cartCount() === 0;
@@ -1466,9 +1872,8 @@ function renderCheckout() {
       <input id="f-phone" placeholder="07 00 00 00 00" value="${currentCustomer.phone || ''}" />
 
       <label>Position de livraison</label>
-      <div class="loc-btns">
-        <button class="loc-btn" id="btn-gps" onclick="useGPS()">Utiliser ma position</button>
-      </div>
+      <button type="button" class="gps-cta" id="btn-gps" onclick="useGPS()">Partager ma position GPS (recommandé)</button>
+      <div class="gps-hint">Le livreur arrive directement chez vous, sans devoir vous appeler pour trouver le chemin.</div>
       <div id="loc-status" style="margin-bottom:10px;"></div>
 
       <label>Repère (optionnel)</label>
@@ -1555,7 +1960,9 @@ function useGPS() {
       document.getElementById('loc-status').innerHTML = `<div class="mono" style="font-size:11.5px; color:var(--palm);">GPS : ${location_.lat.toFixed(4)}, ${location_.lng.toFixed(4)}</div>`;
       document.getElementById('btn-gps').classList.add('active');
     },
-    () => { toast("Position refusée — indiquez un repère ci-dessous"); },
+    (err) => {
+      document.getElementById('loc-status').innerHTML = `<div style="font-size:12px; color:#F0A99A; line-height:1.45;">${err && err.code === 1 ? (isIOS() ? "Position refusée. Sur iPhone : Réglages, puis Confidentialité et sécurité, puis Service de localisation, puis Safari : « Lorsque l'app est active ». Sinon, décrivez votre repère ci-dessous." : "Position refusée. Autorisez la position pour ce site, ou décrivez votre repère ci-dessous.") : "Position introuvable pour le moment. Décrivez votre repère ci-dessous."}</div>`;
+    },
     { enableHighAccuracy: true, timeout: 8000 }
   );
 }
@@ -1567,6 +1974,7 @@ async function placeOrder() {
   const phone = document.getElementById('f-phone').value.trim();
   const address = document.getElementById('f-address').value.trim();
   if (!name || !phone || !(location_ || address)) { toast("Complétez au moins le nom, le téléphone et une position"); return; }
+  if (!location_ && address.length < 8) { toast("Sans GPS, décrivez précisément votre repère (quartier, rue, couleur du portail…)."); return; }
 
   const items = Object.values(cart).map(i => ({ itemId: i.id, name: i.name, price: i.price, qty: i.qty }));
   const total = orderTotal();
@@ -1595,7 +2003,7 @@ async function placeOrder() {
 
   if (error) {
     if (btn) { btn.disabled = false; btn.style.opacity = ''; }
-    toast("La commande n'est pas partie. Vérifiez votre connexion et réessayez.");
+    toast(String(error.message || '').includes('restaurant_en_pause') ? "Ce restaurant vient de mettre les commandes en pause. Réessayez plus tard." : "La commande n'est pas partie. Vérifiez votre connexion et réessayez.");
     console.error(error);
     return;
   }
@@ -1636,7 +2044,9 @@ function renderConfirmation(order) {
         ${(order.preferences && order.preferences.length) || order.notes ? `<div class="ticket-prefs"><b>Vos demandes :</b> ${escHtml((order.preferences || []).join(', '))}${order.notes ? `${order.preferences && order.preferences.length ? ' ; ' : ''}${escHtml(order.notes)}` : ''}</div>` : ''}
       </div>
       ${waLink ? `<a href="${waLink}" target="_blank" style="display:block; text-align:center; margin-top:14px; background:var(--palm); color:var(--cream); padding:13px; border-radius:10px; text-decoration:none; font-weight:600; font-size:13px;">Confirmer par WhatsApp</a>` : ''}
-      <button class="btn-secondary" style="margin-top:12px;" onclick="resetOrder()">Commander ailleurs</button>
+      <div style="margin-top:14px;">${clientPushCard()}</div>
+      <button class="btn-primary" style="margin-top:4px;" onclick="setActiveNav('commandes'); show('orders'); renderOrders();">Suivre ma commande</button>
+      <button class="btn-secondary" style="margin-top:10px;" onclick="resetOrder()">Commander ailleurs</button>
     </div>
   `;
 }
@@ -1696,7 +2106,9 @@ function dismissInstallBanner() {
 (async () => {
   await loadRestaurants();
   await refreshCustomer();
-  if (!currentCustomer && hasSessionBackup()) restoreSession(async () => { await refreshCustomer(); });
+  if (!currentCustomer && hasSessionBackup()) restoreSession(async () => { await refreshCustomer(); syncClientPush(); });
+  syncClientPush();
+  if (location.hash === '#commandes') navTo('commandes');
   if (isIOS() && !isStandalone()) showInstallBanner('ios');
 })();
 </script>

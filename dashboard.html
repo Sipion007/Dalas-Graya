@@ -69,6 +69,74 @@
   .req-chip { font-size:12px; font-weight:600; padding:5px 10px; border-radius:999px; background:#1C1C1C; border:1px solid #2E2E2E; color:#E6E6E6; }
   .req-chip.allergy { background:#C4432B; border-color:#C4432B; color:#fff; font-weight:700; }
   .req-note { font-size:13px; color:#E6E6E6; margin-top:8px; line-height:1.45; }
+  .open-bar { display:flex; align-items:center; justify-content:space-between; gap:12px; border-radius:12px; padding:12px 14px; margin-bottom:14px; border:1px solid; }
+  .open-bar.on { background:rgba(92,138,99,.10); border-color:rgba(92,138,99,.45); }
+  .open-bar.off { background:rgba(196,67,43,.12); border-color:rgba(196,67,43,.6); }
+  .ob-title { font-size:13.5px; font-weight:700; }
+  .open-bar.on .ob-title { color:#8FC197; } .open-bar.off .ob-title { color:#F0A99A; }
+  .ob-sub { font-size:11.5px; color:var(--creamDim); margin-top:2px; line-height:1.4; }
+  .ob-btn { border:1px solid #3A3A3A; background:#171717; color:#fff; border-radius:9px; padding:10px 14px; font-weight:700; font-size:12.5px; cursor:pointer; flex-shrink:0; }
+  .ob-btn.go { background:var(--mango); color:#080808; border-color:var(--mango); }
+  .pending { display:flex; justify-content:space-between; align-items:center; gap:10px; background:rgba(245,192,74,.12); border:1px solid rgba(245,192,74,.5); color:#F5D58A; border-radius:12px; padding:12px 14px; margin-bottom:14px; font-size:13px; }
+  .pending.late { background:rgba(196,67,43,.16); border-color:#C4432B; color:#F0A99A; animation: pendPulse 1.4s infinite; }
+  @keyframes pendPulse { 50% { box-shadow:0 0 0 4px rgba(196,67,43,.25); } }
+  @media (prefers-reduced-motion: reduce) { .pending.late { animation:none; } }
+  .order.is-new { border-color:rgba(245,192,74,.6); }
+  .order.is-cancelled { opacity:.62; }
+  .since { font-size:11.5px; color:var(--creamDim); margin-bottom:6px; }
+  .badge.st-0 { background:var(--mango); color:#080808; } .badge.st-1, .badge.st-2, .badge.st-3 { background:var(--bg); color:var(--mango); border:1px solid var(--mango); }
+  .badge.st-4 { background:var(--palm); color:#fff; } .badge.st-9 { background:rgba(196,67,43,.2); color:#F0A99A; border:1px solid rgba(196,67,43,.6); }
+  .accept-box, .cancel-box, .cr-box { margin-top:10px; border-top:1px solid var(--line); padding-top:10px; }
+  .ab-title { font-size:12.5px; font-weight:700; color:var(--creamDim); margin-bottom:8px; }
+  .chips { display:flex; flex-wrap:wrap; gap:6px; margin-bottom:10px; }
+  .chip-s { border:1px solid #333; background:#141414; color:#E6E6E6; border-radius:999px; padding:8px 12px; font-size:12.5px; cursor:pointer; font-family:inherit; }
+  .chip-s.on { background:var(--mango); border-color:var(--mango); color:#080808; font-weight:700; }
+  .btn-accept { width:100%; border:none; border-radius:10px; padding:14px; font-weight:800; font-size:14.5px; cursor:pointer; color:#fff; background:var(--palm); font-family:inherit; }
+  .eta { font-size:12.5px; color:#8FC197; margin-top:10px; }
+  .cr-box { background:rgba(196,67,43,.10); border:1px solid rgba(196,67,43,.5); border-radius:10px; padding:11px 12px; }
+  .cr-title { font-size:13px; font-weight:700; color:#F0A99A; }
+  .cr-text { font-size:12.5px; color:#E6E6E6; margin:4px 0 10px; }
+  .row2 { display:flex; gap:8px; align-items:center; }
+  .row2 input { margin:0; flex:1; }
+  .btn-small { border:1px solid #3A3A3A; background:#171717; color:#fff; border-radius:9px; padding:10px 12px; font-weight:700; font-size:12.5px; cursor:pointer; font-family:inherit; white-space:nowrap; }
+  .btn-small.danger { background:#C4432B; border-color:#C4432B; }
+  .link-btn { background:none; border:none; color:var(--creamDim); font-size:12.5px; text-decoration:underline; cursor:pointer; padding:8px 0; font-family:inherit; }
+  .link-btn.danger { color:#E0705A; }
+  .card-foot { display:flex; justify-content:space-between; align-items:center; gap:10px; flex-wrap:wrap; margin-top:10px; }
+  .cancel-info { margin-top:10px; font-size:12.5px; color:#F0A99A; border-top:1px solid var(--line); padding-top:8px; }
+  .link-gps { display:inline-block; color:var(--palm); font-size:12.5px; text-decoration:none; margin-top:6px; }
+  a.tel { color:var(--cream); text-decoration:none; border-bottom:1px dotted #666; }
+  .stories-box { background:var(--surface); border:1px solid var(--line); border-radius:12px; padding:14px; margin-bottom:16px; }
+  .sb-head { display:flex; flex-direction:column; gap:2px; margin-bottom:10px; }
+  .sb-sub { font-size:11.5px; color:var(--creamDim); }
+  .sb-form { display:flex; flex-direction:column; gap:8px; }
+  .sb-form textarea, .sb-form select { margin:0; width:100%; background:var(--bg); border:1px solid var(--line); color:var(--cream); border-radius:8px; padding:10px 12px; font-size:14px; font-family:inherit; }
+  .file-pick { display:flex; align-items:center; justify-content:center; height:46px; border:1px dashed #444; border-radius:10px; color:var(--mango); font-weight:700; font-size:13px; cursor:pointer; }
+  #story-preview { width:100%; max-height:260px; object-fit:cover; border-radius:10px; }
+  .sb-status { font-size:12px; color:var(--palm); min-height:0; }
+  .sb-list { display:flex; flex-direction:column; gap:8px; margin-top:12px; border-top:1px solid var(--line); padding-top:12px; }
+  .sb-item { display:flex; gap:10px; align-items:center; }
+  .sb-item img { width:52px; height:52px; border-radius:10px; object-fit:cover; flex-shrink:0; }
+  .sb-info { flex:1; min-width:0; }
+  .sb-cap { font-size:13px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+  .sb-meta { font-size:11.5px; color:var(--creamDim); margin-top:2px; }
+  .sb-empty { font-size:12.5px; color:var(--creamDim); margin-top:10px; line-height:1.45; }
+
+  .thread { margin-top:10px; border-top:1px solid #242424; padding-top:10px; }
+  .thread-list { max-height:240px; overflow:auto; display:flex; flex-direction:column; gap:8px; padding:2px 0 8px; }
+  .thread-empty { font-size:12.5px; color:#8F8F8F; }
+  .msg { align-self:flex-start; max-width:85%; background:#1C1C1C; border:1px solid #2A2A2A; border-radius:14px 14px 14px 4px; padding:8px 11px; }
+  .msg.mine { align-self:flex-end; background:rgba(245,192,74,.14); border-color:rgba(245,192,74,.35); border-radius:14px 14px 4px 14px; }
+  .msg-meta { font-size:10.5px; color:#8F8F8F; margin-bottom:2px; }
+  .msg-body { font-size:13.5px; color:#F2F2F2; line-height:1.4; white-space:pre-wrap; word-break:break-word; }
+  .quick-row { display:flex; gap:6px; overflow-x:auto; padding-bottom:8px; -webkit-overflow-scrolling:touch; }
+  .quick { flex-shrink:0; border:1px solid #333; background:#151515; color:#E4E4E4; border-radius:999px; padding:7px 11px; font-size:12px; cursor:pointer; font-family:inherit; }
+  .thread-send { display:flex; gap:8px; align-items:flex-end; }
+  .thread-send textarea { flex:1; margin:0; min-height:42px; resize:vertical; font-size:14px; background:#111; border:1px solid #2A2A2A; color:#fff; border-radius:10px; padding:9px 11px; font-family:inherit; }
+  .send-btn { border:none; background:#F5C04A; color:#080808; font-weight:700; border-radius:10px; padding:11px 14px; cursor:pointer; font-size:13px; font-family:inherit; }
+  .msg-toggle { background:none; border:1px solid #2E2E2E; color:#E4E4E4; border-radius:9px; padding:8px 12px; font-size:12.5px; font-weight:600; cursor:pointer; font-family:inherit; display:inline-flex; align-items:center; gap:6px; }
+  .msg-toggle .dotnew { width:8px; height:8px; border-radius:50%; background:#C4432B; }
+
 </style>
 </head>
 <body>
@@ -103,6 +171,8 @@
       <button class="btn-logout" onclick="logout()">Déconnexion</button>
     </div>
 
+    <div id="open-toggle"></div>
+    <div id="pending-banner"></div>
     <div id="alert-panel"></div>
 
     <div class="hours-box" id="hours-box">
@@ -121,6 +191,8 @@
       <button class="btn-advance" style="background:var(--mango); margin-top:10px;" onclick="saveHours()">Enregistrer les horaires</button>
       <div id="hours-status" style="font-size:12px; color:var(--palm); margin-top:8px; display:none;">Horaires enregistrés ✓</div>
     </div>
+
+    <div class="stories-box" id="stories-box"></div>
 
     <div id="orders-list"></div>
     <div class="refresh">Actualisation automatique toutes les 5 secondes</div>
@@ -237,6 +309,40 @@ const Alerts = (() => {
   let wakeLock = null;
   const baseTitle = document.title;
 
+  // ----- Appli Android « Dallas Bouff' Pro » : alarme qui sonne même téléphone en poche -----
+  const NATIVE = window.DBFAndroid || null;
+  const APK_URL = 'dallas-bouff-pro.apk';
+  let nativeState = null;
+  let nativeErr = '';
+  let nativeBusy = false;
+  let nativeTimer = null;
+  function isAndroid() { return /android/i.test(navigator.userAgent); }
+  function nativeStatus() { try { return JSON.parse(NATIVE.status()); } catch (e) { return null; } }
+  function refreshNative() { if (NATIVE) { nativeState = nativeStatus(); renderPanel(); } }
+  async function registerNative() {
+    if (!NATIVE || nativeBusy) return;
+    const id = identityFn ? identityFn() : null;
+    if (!id || (id.role !== 'restaurant' && id.role !== 'driver')) return;
+    nativeBusy = true;
+    try {
+      let old = '';
+      try { old = NATIVE.getToken() || ''; } catch (e) {}
+      const { data, error } = await client.rpc('register_alarm_device', {
+        p_role: id.role, p_restaurant_id: id.restaurant_id || null, p_driver_id: id.driver_id || null,
+        p_old: old || null, p_model: (navigator.userAgent || '').slice(0, 80)
+      });
+      if (error || !data) throw new Error((error && error.message) || 'enregistrement');
+      NATIVE.setDevice(String(data), id.role, '');
+      nativeErr = '';
+    } catch (e) {
+      nativeErr = (e && e.message) ? e.message : String(e);
+      setTimeout(registerNative, 20000);
+    } finally {
+      nativeBusy = false;
+      refreshNative();
+    }
+  }
+
   function esc(s) {
     return String(s == null ? '' : s).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
   }
@@ -316,6 +422,7 @@ const Alerts = (() => {
       .ap-row { display:flex; justify-content:space-between; gap:10px; padding:4px 0; }
       .ap-row b { font-weight:700; text-align:right; }
       .ap .ok { color:#5C8A63; } .ap .warn { color:#F5C04A; } .ap .bad { color:#C4432B; }
+      .ap-apk { display:inline-flex; align-items:center; justify-content:center; min-height:44px; padding:10px 16px; border-radius:10px; background:#F5C04A; color:#0A0A0A; font-weight:700; text-decoration:none; }
       .ap-note { font-size:11.5px; line-height:1.45; margin-top:6px; color:#8F8F8F; }
       .ap-btns { display:flex; gap:8px; margin-top:8px; flex-wrap:wrap; }
       .ap-btns button { flex:1; min-width:140px; border:1px solid #303030; background:#171717; color:#fff; border-radius:9px; padding:12px 10px; font-size:13px; font-weight:700; cursor:pointer; touch-action: manipulation; }
@@ -471,6 +578,10 @@ const Alerts = (() => {
   }
 
   async function unregisterPush() {
+    if (NATIVE) {
+      try { const t = NATIVE.getToken(); if (t) await client.rpc('unregister_alarm_device', { p_token: t }); } catch (e) {}
+      try { NATIVE.clearDevice(); } catch (e) {}
+    }
     try {
       if (!('serviceWorker' in navigator)) return;
       const reg = await navigator.serviceWorker.getRegistration();
@@ -502,8 +613,12 @@ const Alerts = (() => {
         if (!b) return;
         if (b.dataset.act === 'test') test();
         else if (b.dataset.act === 'push') enablePush();
+        else if (b.dataset.act === 'ntest' && NATIVE) { NATIVE.testAlarm(); b.textContent = 'Verrouillez le téléphone : il sonne dans 8 s'; }
+        else if (b.dataset.act === 'nfix' && NATIVE) NATIVE.fix(b.dataset.w);
+        else if (b.dataset.act === 'nswitch' && NATIVE) NATIVE.switchSpace();
       });
     }
+    if (NATIVE) { renderNativePanel(el); return; }
     let pushTxt, pushCls, note = '';
     if (pushState === 'on') { pushTxt = 'Activées'; pushCls = 'ok'; }
     else if (pushBusy) { pushTxt = 'Activation…'; pushCls = 'warn'; }
@@ -520,6 +635,9 @@ const Alerts = (() => {
     else if (pushState === 'error') { pushTxt = 'Erreur, réessayez'; pushCls = 'bad'; note = pushError ? 'Détail : ' + pushError : ''; }
     else { pushTxt = 'À activer'; pushCls = 'warn'; }
     const showPushBtn = pushState !== 'on' && pushState !== 'unsupported';
+    const apkNote = isAndroid() && identityFn && ['restaurant', 'driver'].includes((identityFn() || {}).role)
+      ? `<div class="ap-note">Sur Android, installez l'appli <b>Dallas Bouff' Pro</b> : l'alarme sonne alors même téléphone verrouillé, dans la poche.</div>
+         <div class="ap-btns"><a class="ap-apk" href="${APK_URL}" download>Télécharger l'appli Android</a></div>` : '';
     const html = `<div class="ap">
       <div class="ap-row"><span>Son d'alerte</span><b class="${unlocked ? 'ok' : 'warn'}">${unlocked ? 'Activé' : 'Touchez Tester l\'alarme'}</b></div>
       <div class="ap-row"><span>Notifications (appli fermée)</span><b class="${pushCls}">${esc(pushTxt)}</b></div>
@@ -527,6 +645,41 @@ const Alerts = (() => {
       <div class="ap-btns">
         <button type="button" data-act="test">Tester l'alarme</button>
         ${showPushBtn ? `<button type="button" class="primary" data-act="push"${pushBusy ? ' disabled' : ''}>Activer les notifications</button>` : ''}
+      </div>${apkNote}</div>`;
+    if (html === panelHtml) return;
+    panelHtml = html;
+    el.innerHTML = html;
+  }
+
+  function renderNativePanel(el) {
+    const st = nativeState || {};
+    const rows = [];
+    const fixes = [];
+    let alarmTxt, alarmCls;
+    if (st.running && st.connected) { alarmTxt = 'Active'; alarmCls = 'ok'; }
+    else if (st.running) { alarmTxt = 'Connexion…'; alarmCls = 'warn'; }
+    else if (nativeErr) { alarmTxt = 'Erreur, nouvel essai automatique'; alarmCls = 'bad'; }
+    else { alarmTxt = 'Démarrage…'; alarmCls = 'warn'; }
+    rows.push(['Alarme téléphone en poche', alarmTxt, alarmCls]);
+    rows.push(['Notifications', st.notif ? 'Autorisées' : 'Bloquées', st.notif ? 'ok' : 'bad']);
+    if (!st.notif) fixes.push(['notif', 'Autoriser les notifications']);
+    rows.push(['Économie de batterie', st.battery ? "Ne bloque pas l'appli" : 'À désactiver', st.battery ? 'ok' : 'warn']);
+    if (!st.battery) fixes.push(['battery', "Ne plus bloquer l'appli"]);
+    if (st.fullscreen === false) { rows.push(['Alarme sur écran verrouillé', 'À autoriser', 'warn']); fixes.push(['fullscreen', "Autoriser l'écran d'alarme"]); }
+    if (st.role === 'driver') {
+      rows.push(['Position GPS', st.location ? 'Autorisée' : 'À autoriser', st.location ? 'ok' : 'warn']);
+      if (!st.location) fixes.push(['location', 'Autoriser la position']);
+    }
+    const note = !st.battery
+      ? "Sur Tecno, Infinix, itel et Samsung : autorisez aussi le démarrage automatique et l'activité en arrière-plan de Dallas Bouff' Pro dans les réglages de la batterie."
+      : (nativeErr ? 'Détail : ' + nativeErr : "Touchez Tester l'alarme puis verrouillez votre téléphone : il doit sonner au bout de 8 secondes.");
+    const html = `<div class="ap">
+      ${rows.map(r => `<div class="ap-row"><span>${esc(r[0])}</span><b class="${r[2]}">${esc(r[1])}</b></div>`).join('')}
+      <div class="ap-note">${esc(note)}</div>
+      <div class="ap-btns">
+        <button type="button" data-act="ntest">Tester l'alarme</button>
+        ${fixes.map(f => `<button type="button" class="primary" data-act="nfix" data-w="${f[0]}">${esc(f[1])}</button>`).join('')}
+        <button type="button" data-act="nswitch">Changer d'espace</button>
       </div></div>`;
     if (html === panelHtml) return;
     panelHtml = html;
@@ -538,8 +691,17 @@ const Alerts = (() => {
     panelId = opts.panelId;
     identityFn = opts.identity;
     injectStyle();
-    renderPanel();
-    syncPush();
+    if (NATIVE) {
+      refreshNative();
+      registerNative();
+      if (!nativeTimer) {
+        nativeTimer = setInterval(refreshNative, 3000);
+        window.addEventListener('dbf-native-resume', refreshNative);
+      }
+    } else {
+      renderPanel();
+      syncPush();
+    }
     keepAwake();
     if (!swBound && navigator.serviceWorker) {
       swBound = true;
@@ -553,7 +715,7 @@ const Alerts = (() => {
   document.addEventListener('touchend', unlock, { passive: true });
   document.addEventListener('click', unlock);
 
-  return { init, start, stop, test, unlock, unregisterPush, isRinging: () => ringing };
+  return { init, start, stop, test, unlock, unregisterPush, isRinging: () => ringing, isTest: () => testTimer !== null };
 })();
 
 function alertAckedGet(key) {
@@ -641,33 +803,14 @@ async function afterLogin() {
     identity: () => ({ role: 'restaurant', restaurant_id: myRestaurant.id }),
     onPush: () => loadOrders()
   });
+  renderOpenToggle();
+  loadStories();
 }
 
 function onResumeLoggedIn() { loadOrders(); }
 
 function escHtml(s) {
   return String(s == null ? '' : s).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
-}
-
-const ACK_KEY_REST = 'dbf-ack-restaurant';
-let lastOrdersSig = '';
-
-function checkNewOrders(list) {
-  const acked = alertAckedGet(ACK_KEY_REST);
-  const limit = Date.now() - 12 * 3600 * 1000;
-  const fresh = list.filter(o => o.status === 'Reçue' && !acked.has(o.id) && new Date(o.created_at).getTime() > limit);
-  if (fresh.length === 0) return;
-  const ids = fresh.map(o => o.id);
-  Alerts.start({
-    title: fresh.length > 1 ? fresh.length + ' NOUVELLES COMMANDES' : 'NOUVELLE COMMANDE',
-    lines: fresh.slice(0, 4).reduce((acc, o) => {
-      acc.push((o.customer_name || 'Client') + ' · ' + money(o.total));
-      const allergies = (o.preferences || []).filter(p => p.startsWith('Allergie'));
-      if (allergies.length) acc.push('Attention : ' + allergies.join(', ').toLowerCase());
-      return acc;
-    }, []),
-    onAck: () => alertAckedAdd(ACK_KEY_REST, ids)
-  });
 }
 
 async function saveHours() {
@@ -693,9 +836,202 @@ async function logout() {
   document.getElementById('login-password').value = '';
 }
 
+// ---------- Outils communs : temps, messages par commande ----------
+function timeAgo(ts) {
+  if (!ts) return '';
+  const s = Math.max(0, Math.round((Date.now() - new Date(ts).getTime()) / 1000));
+  if (s < 60) return "à l'instant";
+  const m = Math.floor(s / 60);
+  if (m < 60) return 'il y a ' + m + ' min';
+  const h = Math.floor(m / 60);
+  if (h < 24) return 'il y a ' + h + ' h' + (m % 60 ? ' ' + String(m % 60).padStart(2, '0') : '');
+  return 'le ' + new Date(ts).toLocaleDateString('fr-FR', { day: '2-digit', month: '2-digit' });
+}
+function hhmm(ts) { return ts ? new Date(ts).toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' }) : ''; }
+function minutesSince(ts) { return ts ? Math.floor((Date.now() - new Date(ts).getTime()) / 60000) : 0; }
+
+const ROLE_LABEL = { client: 'Client', restaurant: 'Restaurant', driver: 'Livreur', admin: "Dallas Bouff'" };
+const msgDrafts = {};
+const openThreads = new Set();
+
+function threadHtml(orderId, msgs, myRole, quick) {
+  const list = (msgs || []).map(m => {
+    const mine = m.sender_role === myRole;
+    return `<div class="msg ${mine ? 'mine' : ''}"><div class="msg-meta">${escHtml(mine ? 'Vous' : (m.sender_name || ROLE_LABEL[m.sender_role] || ''))} · ${hhmm(m.created_at)}</div><div class="msg-body">${escHtml(m.body)}</div></div>`;
+  }).join('');
+  return `
+    <div class="thread" data-thread="${orderId}">
+      <div class="thread-list" id="thread-list-${orderId}">${list || '<div class="thread-empty">Aucun message pour cette commande.</div>'}</div>
+      ${quick && quick.length ? `<div class="quick-row">${quick.map(q => `<button type="button" class="quick" data-quick="${orderId}" data-text="${escHtml(q)}">${escHtml(q)}</button>`).join('')}</div>` : ''}
+      <div class="thread-send">
+        <textarea id="msg-input-${orderId}" data-draft="${orderId}" maxlength="500" rows="2" placeholder="Écrire un message…">${escHtml(msgDrafts[orderId] || '')}</textarea>
+        <button type="button" class="send-btn" data-send="${orderId}">Envoyer</button>
+      </div>
+    </div>`;
+}
+
+async function sendThreadMessage(orderId, text, onDone) {
+  const body = String(text || '').trim();
+  if (!body) return;
+  const { error } = await client.rpc('send_order_message', { p_order: orderId, p_body: body });
+  if (error) { alert("Le message n'est pas parti. Vérifiez votre connexion et réessayez."); return; }
+  msgDrafts[orderId] = '';
+  const ta = document.getElementById('msg-input-' + orderId);
+  if (ta) ta.value = '';
+  if (onDone) onDone();
+}
+
+function bindThreadEvents(onSent) {
+  document.addEventListener('input', (e) => {
+    const t = e.target;
+    if (t && t.dataset && t.dataset.draft) msgDrafts[t.dataset.draft] = t.value;
+  });
+  document.addEventListener('click', (e) => {
+    const q = e.target.closest('[data-quick]');
+    if (q) { sendThreadMessage(q.dataset.quick, q.dataset.text, onSent); return; }
+    const s = e.target.closest('[data-send]');
+    if (s) { const id = s.dataset.send; const ta = document.getElementById('msg-input-' + id); sendThreadMessage(id, ta ? ta.value : '', onSent); return; }
+    const tg = e.target.closest('[data-toggle-thread]');
+    if (tg) { const id = tg.dataset.toggleThread; if (openThreads.has(id)) openThreads.delete(id); else openThreads.add(id); if (onSent) onSent(true); }
+  });
+}
+
+// Garde le champ en cours de saisie et la position des fils quand la liste est redessinée
+function renderKeepingFocus(el, html) {
+  const a = document.activeElement;
+  const keepId = a && el.contains(a) && a.id ? a.id : null;
+  const sel = keepId && typeof a.selectionStart === 'number' ? [a.selectionStart, a.selectionEnd] : null;
+  const scrolls = {};
+  el.querySelectorAll('.thread-list').forEach(t => { scrolls[t.id] = t.scrollTop; });
+  const values = {};
+  el.querySelectorAll('select[id], input[id]').forEach(x => { values[x.id] = x.value; });
+  el.innerHTML = html;
+  Object.keys(values).forEach(id => { const x = document.getElementById(id); if (x && el.contains(x) && values[id] && x.tagName === 'SELECT' && [...x.options].some(o => o.value === values[id])) x.value = values[id]; else if (x && el.contains(x) && x.tagName === 'INPUT' && x.type !== 'file') x.value = values[id]; });
+  el.querySelectorAll('.thread-list').forEach(t => { t.scrollTop = (t.id in scrolls) ? scrolls[t.id] : t.scrollHeight; });
+  if (keepId) { const n = document.getElementById(keepId); if (n) { n.focus({ preventScroll: true }); if (sel && n.setSelectionRange) { try { n.setSelectionRange(sel[0], sel[1]); } catch (e) {} } } }
+}
+
+function compressImageFile(file, max, quality) {
+  return new Promise((resolve, reject) => {
+    const img = new Image();
+    const url = URL.createObjectURL(file);
+    img.onload = () => {
+      const ratio = Math.min(1, (max || 1280) / Math.max(img.width, img.height));
+      const cv = document.createElement('canvas');
+      cv.width = Math.max(1, Math.round(img.width * ratio));
+      cv.height = Math.max(1, Math.round(img.height * ratio));
+      cv.getContext('2d').drawImage(img, 0, 0, cv.width, cv.height);
+      URL.revokeObjectURL(url);
+      cv.toBlob(b => b ? resolve(b) : reject(new Error('compression')), 'image/jpeg', quality || 0.8);
+    };
+    img.onerror = () => { URL.revokeObjectURL(url); reject(new Error('image')); };
+    img.src = url;
+  });
+}
+
+
+const ACK_KEY_REST = 'dbf-ack-restaurant';
+let lastOrdersSig = '';
+let currentOrders = [];
+let orderMessages = {};
+const snoozeUntil = {};
+const PREP_CHOICES = [10, 15, 20, 30, 45, 60];
+const prepChoice = {};
+const cancelOpen = {};
+const REFUSE_REASONS = ['Plat épuisé', 'Trop de commandes en ce moment', 'Restaurant fermé', 'Adresse trop éloignée'];
+const QUICK_REST = [
+  'Désolé pour le retard, votre commande arrive très vite.',
+  'Votre commande est en préparation.',
+  'Un plat est épuisé, nous vous appelons pour le remplacer.',
+  'Votre commande sera prête dans 15 minutes.',
+  'Merci pour votre commande, bon appétit !'
+];
+
+function checkNewOrders(list) {
+  const now = Date.now();
+  const limit = now - 12 * 3600 * 1000;
+  const waiting = list.filter(o => o.status === 'Reçue' && new Date(o.created_at).getTime() > limit);
+  const ringing = waiting.filter(o => !(snoozeUntil[o.id] > now));
+  const acked = alertAckedGet(ACK_KEY_REST);
+  const cancelReq = list.filter(o => o.cancel_requested_at && !['Livrée', 'Annulée'].includes(o.status) && !acked.has('cr-' + o.id));
+  const cancelled = list.filter(o => o.status === 'Annulée' && o.cancelled_by && o.cancelled_by !== 'restaurant' && o.cancelled_at && new Date(o.cancelled_at).getTime() > limit && !acked.has('ca-' + o.id));
+  const newMsgs = [];
+  Object.keys(orderMessages).forEach(id => (orderMessages[id] || []).forEach(m => {
+    if (m.sender_role !== 'restaurant' && new Date(m.created_at).getTime() > limit && !acked.has('m-' + m.id)) newMsgs.push(m);
+  }));
+
+  if (ringing.length) {
+    const ids = ringing.map(o => o.id);
+    const oldest = Math.max(...ringing.map(o => minutesSince(o.created_at)));
+    Alerts.start({
+      title: ringing.length > 1 ? ringing.length + ' COMMANDES À ACCEPTER' : 'NOUVELLE COMMANDE',
+      lines: ringing.slice(0, 4).reduce((acc, o) => {
+        acc.push((o.customer_name || 'Client') + ' · ' + money(o.total) + (minutesSince(o.created_at) >= 1 ? ' · en attente depuis ' + minutesSince(o.created_at) + ' min' : ''));
+        const allergies = (o.preferences || []).filter(p => p.startsWith('Allergie'));
+        if (allergies.length) acc.push('Attention : ' + allergies.join(', ').toLowerCase());
+        return acc;
+      }, []).concat(['Acceptez la commande pour arrêter l\'alarme. « J\'ai vu » la coupe 90 secondes.']),
+      onAck: () => { const until = Date.now() + 90000; ids.forEach(id => { snoozeUntil[id] = until; }); }
+    });
+  } else if (cancelReq.length) {
+    Alerts.start({
+      title: "DEMANDE D'ANNULATION",
+      lines: cancelReq.map(o => (o.customer_name || 'Client') + ' : ' + (o.cancel_request_reason || 'souhaite annuler')),
+      onAck: () => alertAckedAdd(ACK_KEY_REST, cancelReq.map(o => 'cr-' + o.id))
+    });
+  } else if (cancelled.length) {
+    Alerts.start({
+      title: 'COMMANDE ANNULÉE',
+      lines: cancelled.map(o => '#' + o.id.slice(0, 8).toUpperCase() + ' · ' + (o.cancel_reason || 'annulée')),
+      onAck: () => alertAckedAdd(ACK_KEY_REST, cancelled.map(o => 'ca-' + o.id))
+    });
+  } else if (newMsgs.length) {
+    Alerts.start({
+      title: 'NOUVEAU MESSAGE',
+      lines: newMsgs.slice(-3).map(m => (m.sender_name || ROLE_LABEL[m.sender_role]) + ' : ' + m.body.slice(0, 90)),
+      onAck: () => alertAckedAdd(ACK_KEY_REST, newMsgs.map(m => 'm-' + m.id))
+    });
+  } else if (Alerts.isRinging() && !Alerts.isTest()) {
+    Alerts.stop();
+  }
+}
+
+function renderOpenToggle() {
+  const el = document.getElementById('open-toggle');
+  if (!el || !myRestaurant) return;
+  const open = myRestaurant.accepting_orders !== false;
+  const auto = myRestaurant.paused_reason === 'auto';
+  el.innerHTML = open
+    ? `<div class="open-bar on"><div><div class="ob-title">Vous recevez les commandes</div><div class="ob-sub">Touchez « Pause » si vous êtes débordé ou absent.</div></div><button type="button" class="ob-btn" onclick="toggleOpen(false)">Pause</button></div>`
+    : `<div class="open-bar off"><div><div class="ob-title">${auto ? 'Commandes bloquées automatiquement' : 'En pause : aucune nouvelle commande'}</div><div class="ob-sub">${auto ? "Une commande est restée 15 min sans réponse. Les clients ne peuvent plus commander chez vous." : 'Les clients voient votre restaurant en pause.'}</div></div><button type="button" class="ob-btn go" onclick="toggleOpen(true)">Rouvrir</button></div>`;
+}
+
+async function toggleOpen(open) {
+  const { error } = await client.rpc('set_restaurant_open', { p_rest: myRestaurant.id, p_open: open });
+  if (error) { alert("Impossible de changer l'état. Vérifiez votre connexion."); return; }
+  myRestaurant.accepting_orders = open;
+  myRestaurant.paused_reason = open ? null : 'manuel';
+  renderOpenToggle();
+}
+
+async function refreshRestaurant() {
+  const { data } = await client.from('restaurants').select('*').eq('id', myRestaurant.id).maybeSingle();
+  if (data) { const changed = data.accepting_orders !== myRestaurant.accepting_orders || data.paused_reason !== myRestaurant.paused_reason; myRestaurant = data; if (changed) renderOpenToggle(); }
+}
+
+function renderPendingBanner() {
+  const el = document.getElementById('pending-banner');
+  if (!el) return;
+  const waiting = currentOrders.filter(o => o.status === 'Reçue');
+  if (!waiting.length) { el.innerHTML = ''; return; }
+  const oldest = Math.max(...waiting.map(o => minutesSince(o.created_at)));
+  el.innerHTML = `<div class="pending ${oldest >= 5 ? 'late' : ''}"><b>${waiting.length > 1 ? waiting.length + ' commandes attendent' : 'Une commande attend'} votre réponse</b><span>${oldest >= 1 ? 'depuis ' + oldest + ' min' : "à l'instant"}</span></div>`;
+}
+
 async function loadOrders() {
   if (!myRestaurant) return;
-  const { data, error } = await client.from('orders').select('*, drivers(name, phone, face_photo_url)').eq('restaurant_id', myRestaurant.id).order('created_at', { ascending: false });
+  const since = new Date(Date.now() - 7 * 24 * 3600 * 1000).toISOString();
+  const { data, error } = await client.from('orders').select('*, drivers(name, phone, face_photo_url, current_lat, current_lng, location_updated_at)').eq('restaurant_id', myRestaurant.id).gte('created_at', since).order('created_at', { ascending: false }).limit(120);
   const el = document.getElementById('orders-list');
   if (error) {
     if (!el.innerHTML.trim()) el.innerHTML = '<div class="empty">Connexion lente, nouvelle tentative…</div>';
@@ -703,104 +1039,275 @@ async function loadOrders() {
   }
   const { data: drvData, error: drvErr } = await client.from('drivers').select('id, name, phone, restaurant_id, face_photo_url').eq('verification', 'approved').order('name');
   if (!drvErr) myDrivers = drvData || [];
+  const activeIds = (data || []).filter(o => !['Livrée', 'Annulée'].includes(o.status) || minutesSince(o.created_at) < 24 * 60).map(o => o.id);
+  if (activeIds.length) {
+    const { data: msgs, error: mErr } = await client.from('order_messages').select('*').in('order_id', activeIds).order('created_at');
+    if (!mErr) { orderMessages = {}; (msgs || []).forEach(m => { (orderMessages[m.order_id] = orderMessages[m.order_id] || []).push(m); }); }
+  } else orderMessages = {};
+  currentOrders = data || [];
+  refreshRestaurant();
+  checkNewOrders(currentOrders);
+  renderPendingBanner();
+  renderOrders(false);
+}
 
-  checkNewOrders(data || []);
+function orderRank(o) {
+  return { 'Reçue': 0, 'En préparation': 1, 'Prête': 2, 'En livraison': 3, 'Livrée': 4, 'Annulée': 5 }[o.status] ?? 6;
+}
 
-  const sig = JSON.stringify([data, myDrivers.map(d => d.id)]);
-  if (sig === lastOrdersSig) return;
+function renderOrders(force) {
+  const el = document.getElementById('orders-list');
+  const data = currentOrders;
+  const sig = JSON.stringify([data, myDrivers.map(d => d.id), orderMessages, [...openThreads], cancelOpen, prepChoice]);
+  if (!force && sig === lastOrdersSig) return;
   lastOrdersSig = sig;
-
-  if (!data || data.length === 0) { el.innerHTML = '<div class="empty">Aucune commande pour le moment.</div>'; return; }
-
+  if (!data.length) { el.innerHTML = '<div class="empty">Aucune commande ces 7 derniers jours.</div>'; return; }
   const ownDrivers = myDrivers.filter(d => d.restaurant_id === myRestaurant.id);
   const freeDrivers = myDrivers.filter(d => !d.restaurant_id);
+  const sorted = data.slice().sort((a, b) => (orderRank(a) - orderRank(b)) || (new Date(b.created_at) - new Date(a.created_at)));
+  renderKeepingFocus(el, sorted.map(o => orderCard(o, ownDrivers, freeDrivers)).join(''));
+}
 
-  el.innerHTML = data.map(o => {
-    const idx = STATUSES.indexOf(o.status);
-    const isLast = idx === STATUSES.length - 1;
-    const gpsLink = o.location && o.location.type === 'gps' ? `<a href="https://www.google.com/maps?q=${o.location.lat},${o.location.lng}" target="_blank" style="color:var(--palm); font-size:12px; text-decoration:none;">Position GPS du client →</a>` : '';
+function orderCard(o, ownDrivers, freeDrivers) {
+  const idx = STATUSES.indexOf(o.status);
+  const cancelled = o.status === 'Annulée';
+  const done = o.status === 'Livrée';
+  const gpsLink = o.location && o.location.type === 'gps' ? `<a href="https://www.google.com/maps?q=${o.location.lat},${o.location.lng}" target="_blank" rel="noopener" class="link-gps">Position GPS du client</a>` : '';
+  const msgs = orderMessages[o.id] || [];
+  const lastOther = msgs.filter(m => m.sender_role !== 'restaurant').slice(-1)[0];
+  const lastMine = msgs.filter(m => m.sender_role === 'restaurant').slice(-1)[0];
+  const unread = lastOther && (!lastMine || new Date(lastOther.created_at) > new Date(lastMine.created_at));
+  let actionZone = '';
 
-    let actionZone = '';
-    if (idx < READY_IDX) {
-      actionZone = `<button class="btn-advance" style="background:${myRestaurant.accent};" onclick="advance('${o.id}','${STATUSES[idx+1]}')">Marquer « ${STATUSES[idx+1]} »</button>`;
-    } else if (idx === READY_IDX && !o.driver_id) {
-      const optOwn = ownDrivers.map(d => `<option value="${d.id}">${escHtml(d.name)}</option>`).join('');
-      const optFree = freeDrivers.map(d => `<option value="${d.id}">${escHtml(d.name)}</option>`).join('');
-      actionZone = `
-        <div class="driver-assign">
-          <div style="font-size:13px; font-weight:700; color:var(--mango); margin-bottom:8px;">Faire livrer par un livreur</div>
-          ${myDrivers.length > 0 ? `
-            <select id="driver-select-${o.id}">
-              <option value="">Choisir un livreur…</option>
-              ${optOwn ? `<optgroup label="Vos livreurs">${optOwn}</optgroup>` : ''}
-              ${optFree ? `<optgroup label="Livreurs indépendants">${optFree}</optgroup>` : ''}
-            </select>
-            <button class="btn-advance" style="background:${myRestaurant.accent || 'var(--mango)'}; margin-top:0;" onclick="assignDriver('${o.id}')">Assigner ce livreur</button>
-            <div class="waiting-note">Ou attendez : les livreurs disponibles voient aussi cette commande</div>
-          ` : `
-            <div class="waiting-note" style="margin-top:0;">Aucun livreur validé pour le moment. Dès qu'un livreur sera disponible, il verra cette commande.</div>
-          `}
-        </div>
-      `;
-    } else if (idx === STATUSES.indexOf('En livraison')) {
-      actionZone = `<div class="driver-info" style="display:flex; align-items:center; gap:10px;">${driverAvatar(o.drivers, 40)}<span>En livraison par ${o.drivers ? o.drivers.name + ' · ' + o.drivers.phone : 'un livreur'}</span></div>`;
-    } else if (isLast) {
-      actionZone = o.drivers
-        ? `<div class="driver-info" style="display:flex; align-items:center; gap:10px; color:var(--creamDim);">${driverAvatar(o.drivers, 40)}<span>Livrée par ${o.drivers.name} · ${o.drivers.phone}</span></div>`
-        : `<div style="text-align:center; font-size:12px; color:var(--creamDim); margin-top:8px;">Commande terminée</div>`;
-    }
+  if (cancelled) {
+    const by = { client: 'le client', restaurant: 'vous', driver: 'le livreur', admin: "Dallas Bouff'" }[o.cancelled_by] || '';
+    actionZone = `<div class="cancel-info">Annulée${by ? ' par ' + by : ''}${o.cancel_reason ? ' : ' + escHtml(o.cancel_reason) : ''}</div>`;
+  } else if (o.status === 'Reçue') {
+    const sel = prepChoice[o.id] || 20;
+    actionZone = `
+      <div class="accept-box">
+        <div class="ab-title">Temps de préparation</div>
+        <div class="chips">${PREP_CHOICES.map(m => `<button type="button" class="chip-s ${m === sel ? 'on' : ''}" onclick="setPrep('${o.id}', ${m})">${m} min</button>`).join('')}</div>
+        <button class="btn-accept" onclick="acceptOrder('${o.id}')">Accepter · prête dans ${sel} min</button>
+      </div>`;
+  } else if (o.status === 'En préparation') {
+    const eta = o.accepted_at && o.prep_minutes ? new Date(new Date(o.accepted_at).getTime() + o.prep_minutes * 60000) : null;
+    actionZone = `${eta ? `<div class="eta">Annoncée prête vers ${hhmm(eta)}</div>` : ''}<button class="btn-advance" style="background:${myRestaurant.accent || 'var(--mango)'};" onclick="advance('${o.id}','Prête')">Marquer « Prête »</button>`;
+  } else if (o.status === 'Prête' && !o.driver_id) {
+    const optOwn = ownDrivers.map(d => `<option value="${d.id}">${escHtml(d.name)}</option>`).join('');
+    const optFree = freeDrivers.map(d => `<option value="${d.id}">${escHtml(d.name)}</option>`).join('');
+    actionZone = `
+      <div class="driver-assign">
+        <div style="font-size:13px; font-weight:700; color:var(--mango); margin-bottom:8px;">Faire livrer par un livreur</div>
+        ${myDrivers.length > 0 ? `
+          <select id="driver-select-${o.id}">
+            <option value="">Choisir un livreur…</option>
+            ${optOwn ? `<optgroup label="Vos livreurs">${optOwn}</optgroup>` : ''}
+            ${optFree ? `<optgroup label="Livreurs indépendants">${optFree}</optgroup>` : ''}
+          </select>
+          <button class="btn-advance" style="background:${myRestaurant.accent || 'var(--mango)'}; margin-top:0;" onclick="assignDriver('${o.id}')">Assigner ce livreur</button>
+          <div class="waiting-note">Ou attendez : les livreurs disponibles voient aussi cette commande</div>
+        ` : `<div class="waiting-note" style="margin-top:0;">Aucun livreur validé pour le moment. Dès qu'un livreur sera disponible, il verra cette commande.</div>`}
+      </div>`;
+  } else if (o.status === 'En livraison') {
+    const d = o.drivers;
+    const fresh = d && d.current_lat && d.location_updated_at && minutesSince(d.location_updated_at) <= 15;
+    actionZone = `<div class="driver-info" style="display:flex; align-items:center; gap:10px;">${driverAvatar(d, 40)}<span>En livraison par ${d ? escHtml(d.name) + ' · ' + escHtml(d.phone) : 'un livreur'}</span></div>
+      ${d ? (fresh ? `<a class="link-gps" target="_blank" rel="noopener" href="https://www.google.com/maps?q=${d.current_lat},${d.current_lng}">Voir le livreur sur la carte (position ${timeAgo(d.location_updated_at)})</a>` : `<div class="waiting-note" style="text-align:left;">Position du livreur indisponible pour le moment.</div>`) : ''}`;
+  } else if (done) {
+    actionZone = o.drivers
+      ? `<div class="driver-info" style="display:flex; align-items:center; gap:10px; color:var(--creamDim);">${driverAvatar(o.drivers, 40)}<span>Livrée par ${escHtml(o.drivers.name)} · ${escHtml(o.drivers.phone)}</span></div>`
+      : `<div style="text-align:center; font-size:12px; color:var(--creamDim); margin-top:8px;">Commande terminée</div>`;
+  }
 
-    return `
-      <div class="order">
-        <div class="order-top">
-          <div class="mono" style="font-weight:700; font-size:13px;">#${o.id.slice(0,8).toUpperCase()}</div>
-          <div class="badge" style="background:${isLast ? 'var(--palm)' : 'var(--bg)'}; color:${isLast ? 'var(--cream)' : 'var(--mango)'}; border:${isLast ? 'none' : '1px solid var(--mango)'};">${o.status}</div>
-        </div>
-        <div style="font-size:13px; margin-bottom:2px;">${escHtml(o.customer_name)} · ${escHtml(o.phone)}</div>
-        ${o.address ? `<div style="font-size:12.5px; color:var(--creamDim); margin-bottom:6px;">${escHtml(o.address)}</div>` : ''}
-        ${gpsLink}
-        ${requestsHtml(o)}
-        <div style="border-top:1px solid var(--line); padding-top:8px; margin-top:8px;">
-          ${(o.items || []).map(i => `<div class="line-item"><span>${i.qty}× ${escHtml(i.name)}</span><span>${money(i.price*i.qty)}</span></div>`).join('')}
-          ${o.delivery_fee ? `<div class="line-item"><span>Livraison</span><span>${money(o.delivery_fee)}</span></div>` : ''}
-          <div class="line-item" style="font-weight:700; color:var(--cream); margin-top:4px;"><span>${o.delivery_fee ? 'Total payé par le client' : 'Total'}</span><span>${money(o.total)}</span></div>
-        </div>
-        ${actionZone}
+  const cancelReq = o.cancel_requested_at && !cancelled && !done ? `
+    <div class="cr-box">
+      <div class="cr-title">Le client demande l'annulation</div>
+      <div class="cr-text">${escHtml(o.cancel_request_reason || '')}</div>
+      <div class="row2"><button class="btn-small danger" onclick="answerCancel('${o.id}', true)">Accepter l'annulation</button><button class="btn-small" onclick="answerCancel('${o.id}', false)">Refuser</button></div>
+    </div>` : '';
+
+  const canCancel = !cancelled && !done;
+  const cancelZone = canCancel ? (cancelOpen[o.id] ? `
+    <div class="cancel-box">
+      <div class="ab-title">${o.status === 'Reçue' ? 'Refuser la commande' : 'Annuler la commande'} : choisissez le motif</div>
+      <div class="chips">${REFUSE_REASONS.map(r => `<button type="button" class="chip-s" onclick="cancelByRestaurant('${o.id}', ${JSON.stringify(r).replace(/"/g, '&quot;')})">${escHtml(r)}</button>`).join('')}</div>
+      <div class="row2"><input id="cancel-other-${o.id}" maxlength="120" placeholder="Autre motif…" /><button class="btn-small danger" onclick="cancelByRestaurant('${o.id}', null)">Annuler</button></div>
+      <button class="link-btn" onclick="toggleCancel('${o.id}')">Garder la commande</button>
+    </div>` : `<button class="link-btn danger" onclick="toggleCancel('${o.id}')">${o.status === 'Reçue' ? 'Refuser la commande' : 'Annuler la commande'}</button>`) : '';
+
+  const threadOpen = openThreads.has(o.id);
+  const showThread = !cancelled || msgs.length;
+  return `
+    <div class="order ${cancelled ? 'is-cancelled' : ''} ${o.status === 'Reçue' ? 'is-new' : ''}">
+      <div class="order-top">
+        <div class="mono" style="font-weight:700; font-size:13px;">#${o.id.slice(0, 8).toUpperCase()}</div>
+        <div class="badge st-${STATUSES.indexOf(o.status) >= 0 ? STATUSES.indexOf(o.status) : 9}">${escHtml(o.status)}</div>
       </div>
-    `;
-  }).join('');
+      <div class="since" data-since="${o.created_at}">Reçue ${timeAgo(o.created_at)} · ${hhmm(o.created_at)}</div>
+      <div style="font-size:13px; margin-bottom:2px;">${escHtml(o.customer_name)} · <a class="tel" href="tel:${escHtml(o.phone)}">${escHtml(o.phone)}</a></div>
+      ${o.address ? `<div style="font-size:12.5px; color:var(--creamDim); margin-bottom:6px;">${escHtml(o.address)}</div>` : ''}
+      ${gpsLink}
+      ${requestsHtml(o)}
+      <div style="border-top:1px solid var(--line); padding-top:8px; margin-top:8px;">
+        ${(o.items || []).map(i => `<div class="line-item"><span>${i.qty}× ${escHtml(i.name)}</span><span>${money(i.price * i.qty)}</span></div>`).join('')}
+        ${o.delivery_fee ? `<div class="line-item"><span>Livraison</span><span>${money(o.delivery_fee)}</span></div>` : ''}
+        <div class="line-item" style="font-weight:700; color:var(--cream); margin-top:4px;"><span>${o.delivery_fee ? 'Total payé par le client' : 'Total'}</span><span>${money(o.total)}</span></div>
+      </div>
+      ${cancelReq}
+      ${actionZone}
+      ${showThread ? `<div class="card-foot"><button type="button" class="msg-toggle" data-toggle-thread="${o.id}">${unread ? '<span class="dotnew"></span>' : ''}${threadOpen ? 'Fermer les messages' : (o.customer_id ? 'Écrire au client' : 'Messages')}${msgs.length ? ' (' + msgs.length + ')' : ''}</button>${cancelZone}</div>` : cancelZone}
+      ${threadOpen ? (o.customer_id ? threadHtml(o.id, msgs, 'restaurant', QUICK_REST) : `<div class="waiting-note" style="text-align:left;">Ce client a commandé sans compte : appelez-le au ${escHtml(o.phone)}.</div>`) : ''}
+    </div>`;
 }
 
 function requestsHtml(o) {
   const prefs = Array.isArray(o.preferences) ? o.preferences : [];
   if (!prefs.length && !o.notes) return '';
   const hasAllergy = prefs.some(p => p.startsWith('Allergie'));
-  const sorted = prefs.slice().sort((a, b) => (b.startsWith('Allergie') ? 1 : 0) - (a.startsWith('Allergie') ? 1 : 0));
+  const sortedP = prefs.slice().sort((a, b) => (b.startsWith('Allergie') ? 1 : 0) - (a.startsWith('Allergie') ? 1 : 0));
   return `
     <div class="req${hasAllergy ? ' has-allergy' : ''}">
       <div class="req-title">${hasAllergy ? 'Allergie signalée : à respecter absolument' : 'Demandes du client'}</div>
-      ${sorted.length ? `<div class="req-chips">${sorted.map(p => `<span class="req-chip${p.startsWith('Allergie') ? ' allergy' : ''}">${escHtml(p)}</span>`).join('')}</div>` : ''}
+      ${sortedP.length ? `<div class="req-chips">${sortedP.map(p => `<span class="req-chip${p.startsWith('Allergie') ? ' allergy' : ''}">${escHtml(p)}</span>`).join('')}</div>` : ''}
       ${o.notes ? `<div class="req-note">« ${escHtml(o.notes)} »</div>` : ''}
     </div>`;
 }
 
+function setPrep(id, m) { prepChoice[id] = m; renderOrders(true); }
+function toggleCancel(id) { cancelOpen[id] = !cancelOpen[id]; if (!cancelOpen[id]) delete cancelOpen[id]; renderOrders(true); }
+
+async function acceptOrder(orderId) {
+  const m = prepChoice[orderId] || 20;
+  const { error } = await client.from('orders').update({ status: 'En préparation', prep_minutes: m }).eq('id', orderId).eq('status', 'Reçue');
+  if (error) { alert("Erreur de connexion, réessayez."); return; }
+  Alerts.stop();
+  delete snoozeUntil[orderId];
+  loadOrders();
+}
+
 async function advance(orderId, newStatus) {
-  alertAckedAdd(ACK_KEY_REST, [orderId]);
   const { error } = await client.from('orders').update({ status: newStatus }).eq('id', orderId);
   if (error) alert("Erreur de connexion, réessayez.");
-  lastOrdersSig = '';
   loadOrders();
 }
 
 async function assignDriver(orderId) {
   const sel = document.getElementById('driver-select-' + orderId);
-  const driverId = sel.value;
+  const driverId = sel ? sel.value : '';
   if (!driverId) { alert("Choisissez un livreur dans la liste."); return; }
-  const { error } = await client.from('orders').update({ driver_id: driverId, status: 'En livraison' }).eq('id', orderId);
+  const { error } = await client.from('orders').update({ driver_id: driverId, status: 'En livraison' }).eq('id', orderId).is('driver_id', null);
   if (error) { alert("Impossible d'assigner ce livreur, réessayez."); return; }
-  lastOrdersSig = '';
   loadOrders();
 }
+
+async function cancelByRestaurant(orderId, reason) {
+  let why = reason;
+  if (!why) { const inp = document.getElementById('cancel-other-' + orderId); why = inp ? inp.value.trim() : ''; }
+  if (!why || why.length < 3) { alert('Indiquez le motif de l\'annulation.'); return; }
+  const { error } = await client.rpc('cancel_order', { p_order: orderId, p_reason: why });
+  if (error) { alert("L'annulation n'a pas pu être faite. Réessayez."); return; }
+  delete cancelOpen[orderId];
+  Alerts.stop();
+  loadOrders();
+}
+
+async function answerCancel(orderId, accept) {
+  const { error } = await client.rpc('respond_cancel_request', { p_order: orderId, p_accept: accept });
+  if (error) { alert("Réponse non envoyée. Réessayez."); return; }
+  alertAckedAdd(ACK_KEY_REST, ['cr-' + orderId]);
+  Alerts.stop();
+  loadOrders();
+}
+
+// Mise à jour des « il y a X min » sans tout redessiner
+setInterval(() => {
+  document.querySelectorAll('[data-since]').forEach(el => { el.textContent = 'Reçue ' + timeAgo(el.dataset.since) + ' · ' + hhmm(el.dataset.since); });
+  renderPendingBanner();
+  if (currentOrders.length) checkNewOrders(currentOrders);
+}, 15000);
+
+// ---------- Stories du restaurant ----------
+let myStories = [];
+let myMenuForStories = [];
+
+async function loadStories() {
+  if (!myRestaurant) return;
+  const { data } = await client.from('restaurant_stories').select('*').eq('restaurant_id', myRestaurant.id).gt('expires_at', new Date().toISOString()).order('created_at', { ascending: false });
+  myStories = data || [];
+  const { data: menu } = await client.from('menu_items').select('id, name, price').eq('restaurant_id', myRestaurant.id).order('name');
+  myMenuForStories = menu || [];
+  renderStoriesBox();
+}
+
+function renderStoriesBox() {
+  const el = document.getElementById('stories-box');
+  if (!el) return;
+  const dishOpts = myMenuForStories.map(d => `<option value="${d.id}">${escHtml(d.name)} · ${money(d.price)}</option>`).join('');
+  el.innerHTML = `
+    <div class="sb-head"><div class="hours-title" style="margin:0;">Mes stories du jour</div><span class="sb-sub">Visibles 24 h en haut de l'accueil des clients</span></div>
+    <div class="sb-form">
+      <label class="file-pick" for="story-file"><span id="story-file-label">Choisir ou prendre une photo</span></label>
+      <input type="file" id="story-file" accept="image/*" style="display:none;" onchange="onStoryFile(this)" />
+      <img id="story-preview" alt="" style="display:none;" />
+      <textarea id="story-caption" maxlength="140" rows="2" placeholder="Texte (facultatif) : plat du jour, promo, nouveauté…"></textarea>
+      <select id="story-dish"><option value="">Plat mis en avant (facultatif)</option>${dishOpts}</select>
+      <button class="btn-advance" id="story-publish" style="background:var(--mango); margin-top:0;" onclick="publishStory()">Publier la story</button>
+      <div id="story-status" class="sb-status"></div>
+    </div>
+    ${myStories.length ? `<div class="sb-list">${myStories.map(s => `
+      <div class="sb-item">
+        <img src="${escHtml(s.image_url)}" alt="" />
+        <div class="sb-info"><div class="sb-cap">${escHtml(s.caption || 'Sans texte')}</div><div class="sb-meta">${s.views} vue${s.views > 1 ? 's' : ''} · publiée ${timeAgo(s.created_at)} · disparaît à ${hhmm(s.expires_at)}</div></div>
+        <button class="link-btn danger" onclick="deleteStory('${s.id}')">Retirer</button>
+      </div>`).join('')}</div>` : '<div class="sb-empty">Aucune story en ce moment. Publiez votre plat du jour : les clients la verront dès l\'ouverture de l\'appli.</div>'}`;
+}
+
+let storyBlob = null;
+async function onStoryFile(input) {
+  const f = input.files && input.files[0];
+  const st = document.getElementById('story-status');
+  if (!f) return;
+  try {
+    storyBlob = await compressImageFile(f, 1080, 0.8);
+    const pv = document.getElementById('story-preview');
+    pv.src = URL.createObjectURL(storyBlob);
+    pv.style.display = 'block';
+    document.getElementById('story-file-label').textContent = 'Changer de photo';
+    st.textContent = '';
+  } catch (e) { storyBlob = null; st.textContent = "Cette photo ne peut pas être lue. Essayez une autre."; }
+}
+
+async function publishStory() {
+  const st = document.getElementById('story-status');
+  const btn = document.getElementById('story-publish');
+  if (!storyBlob) { st.textContent = 'Choisissez d\'abord une photo.'; return; }
+  btn.disabled = true; btn.textContent = 'Publication…';
+  const path = `${myRestaurant.id}/${crypto.randomUUID()}.jpg`;
+  const up = await client.storage.from('stories').upload(path, storyBlob, { contentType: 'image/jpeg' });
+  if (up.error) { btn.disabled = false; btn.textContent = 'Publier la story'; st.textContent = "La photo n'a pas pu être envoyée. Vérifiez votre connexion."; return; }
+  const url = client.storage.from('stories').getPublicUrl(path).data.publicUrl;
+  const caption = document.getElementById('story-caption').value.trim() || null;
+  const dish = document.getElementById('story-dish').value || null;
+  const { error } = await client.from('restaurant_stories').insert({ restaurant_id: myRestaurant.id, image_url: url, image_path: path, caption, menu_item_id: dish });
+  btn.disabled = false; btn.textContent = 'Publier la story';
+  if (error) { await client.storage.from('stories').remove([path]); st.textContent = "La story n'a pas pu être publiée. Réessayez."; return; }
+  storyBlob = null;
+  await loadStories();
+  const st2 = document.getElementById('story-status');
+  if (st2) st2.textContent = 'Story publiée. Elle restera visible 24 h.';
+}
+
+async function deleteStory(id) {
+  const s = myStories.find(x => x.id === id);
+  if (!s) return;
+  const { error } = await client.from('restaurant_stories').delete().eq('id', id);
+  if (error) { alert("Impossible de retirer la story. Réessayez."); return; }
+  await client.storage.from('stories').remove([s.image_path]);
+  loadStories();
+}
+
+bindThreadEvents((toggleOnly) => { if (toggleOnly) renderOrders(true); else loadOrders(); });
 
 // Si déjà connecté (session existante), on saute directement au dashboard
 restoreSession(afterLogin);
