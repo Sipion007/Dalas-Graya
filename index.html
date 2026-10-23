@@ -143,9 +143,52 @@
   .order-hist-top { display:flex; justify-content:space-between; align-items:baseline; margin-bottom:4px; }
   .badge { font-size:10.5px; font-weight:700; padding:3px 8px; border-radius:20px; background:var(--bg); color:var(--mango); border:1px solid var(--mango); }
   .badge.done { background:var(--palm); color:var(--cream); border:none; }
-  .stars { display:flex; gap:4px; margin: 8px 0; }
-  .star { font-size:22px; cursor:pointer; color: var(--line); }
-  .star.filled { color: var(--mango); }
+  .stars-row { display:inline-flex; gap:2px; vertical-align:middle; }
+  .stars-row .st { display:block; }
+  .rcard2-rc { color: var(--creamDim); font-size: 11.5px; margin-left: 2px; }
+  .rcard2-new { color: var(--mango); font-size: 11px; font-weight: 700; letter-spacing: .03em; }
+  .rest-rating { margin: 2px 0 12px; }
+  .rr-empty { display:flex; align-items:center; gap:10px; font-size:12.5px; color:var(--creamDim); line-height:1.4; }
+  .rr-sum { width:100%; display:flex; align-items:center; gap:12px; background:var(--surface); border:1px solid var(--line); border-radius:14px; padding:12px 14px; color:var(--cream); cursor:pointer; font-family:inherit; text-align:left; }
+  .rr-avg { font-family:'Bebas Neue', sans-serif; font-size:36px; line-height:1; color:var(--mango); }
+  .rr-mid { flex:1; display:flex; flex-direction:column; gap:4px; }
+  .rr-count { font-size:12px; color:var(--creamDim); }
+  .rr-more { font-size:12.5px; font-weight:700; color:var(--mango); }
+  .rr-panel { margin-top:10px; background:var(--surface); border:1px solid var(--line); border-radius:14px; padding:14px; }
+  .rr-dist { display:flex; flex-direction:column; gap:5px; margin-bottom:12px; }
+  .rr-bar { display:grid; grid-template-columns: 12px 1fr 24px; gap:8px; align-items:center; font-size:11.5px; color:var(--creamDim); }
+  .rr-bar i { display:block; height:6px; border-radius:3px; background:#242424; overflow:hidden; }
+  .rr-bar b { display:block; height:100%; background:var(--mango); border-radius:3px; }
+  .rv-item { border-top:1px solid var(--line); padding:12px 0 2px; }
+  .rv-top { display:flex; align-items:center; gap:8px; flex-wrap:wrap; }
+  .rv-who { font-weight:700; font-size:13px; }
+  .rv-when { font-size:11.5px; color:var(--creamDim); margin-left:auto; }
+  .rv-text { font-size:13.5px; line-height:1.5; margin-top:6px; color:#E6E6E6; }
+  .rv-reply { margin-top:8px; border-left:3px solid var(--mango); padding:6px 10px; font-size:12.5px; color:#CFCFCF; background:#151515; border-radius:0 8px 8px 0; line-height:1.45; }
+  .rv-reply b { display:block; font-size:11px; color:var(--mango); margin-bottom:2px; }
+  .rate-cta { margin-top:10px; border:1px solid rgba(245,192,74,.45); background:rgba(245,192,74,.06); border-radius:12px; padding:12px; text-align:center; }
+  .rate-cta-t { font-weight:700; font-size:14px; }
+  .rate-cta-stars { display:flex; justify-content:center; gap:4px; margin:8px 0 4px; }
+  .rate-cta-stars button { background:none; border:none; padding:2px; cursor:pointer; }
+  .rate-cta-stars path { fill:#3A3A3A; transition: fill .12s; }
+  .rate-cta-stars button:hover path, .rate-cta-stars button:focus-visible path { fill: var(--mango); }
+  .rate-cta-s { font-size:11.5px; color:var(--creamDim); }
+  .my-review { margin-top:10px; display:flex; align-items:center; gap:8px; flex-wrap:wrap; font-size:12.5px; color:var(--creamDim); }
+  .rv-modal { position:fixed; inset:0; z-index:200; background:rgba(0,0,0,.72); display:flex; align-items:flex-end; justify-content:center; }
+  .rv-sheet { width:100%; max-width:460px; background:var(--surface); border:1px solid var(--line); border-radius:20px 20px 0 0; padding:22px 20px calc(18px + env(safe-area-inset-bottom)); max-height:92vh; overflow:auto; }
+  @media (min-width: 600px) { .rv-modal { align-items:center; } .rv-sheet { border-radius:20px; } }
+  .rv-k { font-family:'JetBrains Mono', monospace; font-size:10.5px; letter-spacing:.18em; color:var(--mango); text-align:center; }
+  .rv-title { font-size:22px; text-align:center; margin-top:4px; }
+  .rv-picker { display:flex; justify-content:center; gap:6px; margin-top:14px; }
+  .rv-star { background:none; border:none; padding:2px; cursor:pointer; }
+  .rv-star path { fill:#333; transition: fill .12s, transform .12s; }
+  .rv-star.filled path { fill: var(--mango); }
+  .rv-label { text-align:center; font-size:13px; font-weight:700; color:var(--cream); min-height:18px; margin:6px 0 12px; }
+  .rv-tags { display:flex; flex-wrap:wrap; gap:6px; justify-content:center; margin-bottom:12px; }
+  .rv-tag { border:1px solid #3A3A3A; background:#171717; color:#DDD; border-radius:20px; padding:7px 12px; font-size:12.5px; cursor:pointer; font-family:inherit; }
+  .rv-tag.on { border-color: var(--mango); color:#080808; background: var(--mango); font-weight:700; }
+  .rv-sheet textarea { width:100%; box-sizing:border-box; background:var(--bg); border:1px solid var(--line); border-radius:10px; color:var(--cream); padding:10px 12px; font-family:inherit; font-size:14px; resize:vertical; }
+  .rv-note { font-size:11.5px; color:var(--creamDim); margin:8px 0 12px; text-align:center; }
   .promo-card { background: linear-gradient(155deg, var(--raised), var(--surface)); border:1px solid var(--mango);
     border-radius:12px; padding:14px; margin-bottom:12px; }
   .promo-rest { font-size:11px; color:var(--mango); font-weight:700; margin-bottom:4px; }
@@ -884,6 +927,7 @@ function clientPushCard() {
 let myOrders = [];
 let myOrderMsgs = {};
 let myReviewed = new Set();
+let myReviewMap = {};
 let ordersSig = '';
 let ordersTimer = null;
 const clientPanel = {};
@@ -902,8 +946,10 @@ async function loadMyOrders() {
     const { data: msgs } = await client.from('order_messages').select('*').in('order_id', ids).order('created_at');
     (msgs || []).forEach(m => { (myOrderMsgs[m.order_id] = myOrderMsgs[m.order_id] || []).push(m); });
   }
-  const { data: myReviews } = await client.from('reviews').select('order_id').eq('customer_id', currentCustomer.id);
+  const { data: myReviews } = await client.from('reviews').select('id, order_id, rating, comment, created_at').eq('customer_id', currentCustomer.id);
   myReviewed = new Set((myReviews || []).map(r => r.order_id));
+  myReviewMap = {};
+  (myReviews || []).forEach(r => { myReviewMap[r.order_id] = r; });
 }
 
 async function renderOrders() {
@@ -919,6 +965,8 @@ async function renderOrders() {
   ordersSig = '';
   await loadMyOrders();
   paintMyOrders();
+  const toRate = myOrders.find(o => o.status === 'Livrée' && !myReviewed.has(o.id) && minutesSince(o.delivered_at || o.created_at) < 3 * 24 * 60);
+  if (toRate && !document.getElementById('review-modal')) maybeAskReview(toRate);
   if (ordersTimer) clearInterval(ordersTimer);
   ordersTimer = setInterval(async () => {
     if (document.getElementById('view-orders').style.display === 'none') { clearInterval(ordersTimer); ordersTimer = null; return; }
@@ -965,8 +1013,7 @@ function clientOrderCard(o) {
     actions = `<button class="btn-secondary" style="margin-top:8px;" onclick="trackDelivery('${o.id}')">Suivre le trajet en direct</button>
       <button class="btn-primary" style="margin-top:8px;" onclick="confirmReceived('${o.id}')">J'ai reçu ma commande</button>`;
   }
-  const canReview = o.status === 'Livrée' && !myReviewed.has(o.id);
-  if (canReview) actions += `<button class="btn-secondary" style="margin-top:8px;" onclick='openReview(${JSON.stringify({ id: o.id, restaurant_id: o.restaurant_id, rname: (r ? r.name : '') }).replace(/'/g, "&apos;")})'>Noter ce restaurant</button>`;
+  if (o.status === 'Livrée') actions += reviewAreaHtml(o, r);
 
   const showThread = !finished || msgs.length;
   const open = openThreads.has(o.id);
@@ -1000,8 +1047,10 @@ async function confirmReceived(orderId) {
   const { error } = await client.rpc('client_confirm_delivery', { p_order: orderId });
   if (error) { toast("Confirmation impossible pour le moment. Réessayez."); return; }
   toast('Merci ! Bon appétit.');
-  if (document.getElementById('view-tracking').style.display !== 'none') { show('orders'); renderOrders(); return; }
-  await loadMyOrders(); paintMyOrders(true);
+  if (document.getElementById('view-tracking').style.display !== 'none') { show('orders'); await renderOrders(); }
+  else { await loadMyOrders(); paintMyOrders(true); }
+  const o = myOrders.find(x => x.id === orderId);
+  if (o && o.status === 'Livrée') setTimeout(() => maybeAskReview(o), 600);
 }
 
 // ---------- Stories des restaurants ----------
@@ -1120,34 +1169,79 @@ async function orderFromStory() {
 
 
 bindThreadEvents((toggleOnly) => { if (toggleOnly) paintMyOrders(true); else loadMyOrders().then(() => paintMyOrders(true)); });
+// ---------- Avis et notes des restaurants ----------
 let reviewTarget = null;
 let selectedRating = 0;
+let reviewTags = new Set();
+const RATING_LABELS = ['', 'Très décevant', 'Décevant', 'Correct', 'Bon', 'Excellent'];
+const TAGS_GOOD = ['Délicieux', 'Portion généreuse', 'Bien emballé', 'Livraison rapide', 'Bon rapport qualité-prix'];
+const TAGS_BAD = ['Froid à l\'arrivée', 'Trop long', 'Portion petite', 'Commande incomplète', 'Trop épicé', 'Trop gras'];
+const STAR_PATH = 'M12 2.6l2.9 6.1 6.6.8-4.9 4.5 1.3 6.6L12 17.3l-5.9 3.3 1.3-6.6-4.9-4.5 6.6-.8z';
 
-function openReview(order) {
+function starsHtml(value, size) {
+  const v = Math.max(0, Math.min(5, Number(value) || 0));
+  let out = '';
+  for (let i = 1; i <= 5; i++) {
+    const fill = Math.max(0, Math.min(1, v - (i - 1)));
+    const gid = 'sg' + Math.random().toString(36).slice(2, 8);
+    out += `<svg class="st" viewBox="0 0 24 24" width="${size}" height="${size}" aria-hidden="true"><defs><linearGradient id="${gid}"><stop offset="${fill * 100}%" stop-color="var(--mango)"/><stop offset="${fill * 100}%" stop-color="#3A3A3A"/></linearGradient></defs><path d="${STAR_PATH}" fill="url(#${gid})"/></svg>`;
+  }
+  return `<span class="stars-row" aria-label="${v.toFixed(1)} sur 5">${out}</span>`;
+}
+
+function reviewAreaHtml(o, r) {
+  const mine = myReviewMap[o.id];
+  const payload = JSON.stringify({ id: o.id, restaurant_id: o.restaurant_id, rname: (r ? r.name : '') }).replace(/'/g, '&apos;');
+  if (mine) {
+    const canEdit = minutesSince(mine.created_at) < 72 * 60;
+    return `<div class="my-review">${starsHtml(mine.rating, 16)}<span>Votre avis${mine.comment ? ' : « ' + escHtml(mine.comment.slice(0, 80)) + (mine.comment.length > 80 ? '…' : '') + ' »' : ''}</span>${canEdit ? `<button class="link-btn2" onclick='openReview(${payload})'>Modifier</button>` : ''}</div>`;
+  }
+  if (minutesSince(o.delivered_at || o.created_at) > 30 * 24 * 60) return '';
+  return `<div class="rate-cta"><div class="rate-cta-t">Comment était votre commande ?</div><div class="rate-cta-stars">${[1,2,3,4,5].map(n => `<button type="button" aria-label="${n} étoile${n > 1 ? 's' : ''}" onclick='openReview(${payload}, ${n})'><svg viewBox="0 0 24 24" width="30" height="30"><path d="${STAR_PATH}"/></svg></button>`).join('')}</div><div class="rate-cta-s">Votre note aide les autres clients à bien choisir.</div></div>`;
+}
+
+function openReview(order, preset) {
   reviewTarget = order;
-  selectedRating = 0;
+  const mine = myReviewMap[order.id];
+  selectedRating = preset || (mine ? mine.rating : 0);
+  reviewTags = new Set();
+  closeReview();
   const modal = document.createElement('div');
   modal.id = 'review-modal';
-  modal.style.cssText = 'position:fixed; inset:0; background:rgba(0,0,0,.7); z-index:200; display:flex; align-items:center; justify-content:center; padding:20px;';
+  modal.className = 'rv-modal';
   modal.innerHTML = `
-    <div style="background:var(--surface); border:1px solid var(--line); border-radius:14px; padding:20px; max-width:340px; width:100%;">
-      <div class="display" style="font-size:20px; margin-bottom:4px;">Noter ${order.rname}</div>
-      <div class="stars" id="star-picker">
-        ${[1,2,3,4,5].map(n => `<span class="star" data-n="${n}" onclick="setRating(${n})">★</span>`).join('')}
-      </div>
-      <textarea id="review-comment" placeholder="Un commentaire (optionnel)" rows="3"></textarea>
-      <button class="btn-primary" onclick="submitReview()">Envoyer</button>
-      <button class="btn-secondary" style="margin-top:8px;" onclick="closeReview()">Annuler</button>
-    </div>
-  `;
+    <div class="rv-sheet" role="dialog" aria-label="Donner mon avis">
+      <div class="rv-k">VOTRE AVIS</div>
+      <div class="display rv-title">${escHtml(order.rname || 'Ce restaurant')}</div>
+      <div class="rv-picker" id="star-picker">${[1,2,3,4,5].map(n => `<button type="button" class="rv-star" data-n="${n}" aria-label="${n} étoile${n > 1 ? 's' : ''}" onclick="setRating(${n})"><svg viewBox="0 0 24 24" width="40" height="40"><path d="${STAR_PATH}"/></svg></button>`).join('')}</div>
+      <div class="rv-label" id="rv-label">Touchez une étoile</div>
+      <div class="rv-tags" id="rv-tags"></div>
+      <textarea id="review-comment" maxlength="400" rows="3" placeholder="Racontez en quelques mots (facultatif)">${mine && mine.comment ? escHtml(mine.comment) : ''}</textarea>
+      <div class="rv-note">Votre avis sera visible par tous les clients, avec votre prénom.</div>
+      <button class="btn-primary" id="rv-send" onclick="submitReview()">Publier mon avis</button>
+      <button class="btn-secondary" style="margin-top:8px;" onclick="closeReview()">Plus tard</button>
+    </div>`;
+  modal.addEventListener('click', (e) => { if (e.target === modal) closeReview(); });
   document.body.appendChild(modal);
+  setRating(selectedRating);
 }
 
 function setRating(n) {
   selectedRating = n;
-  document.querySelectorAll('#star-picker .star').forEach(s => {
-    s.classList.toggle('filled', Number(s.dataset.n) <= n);
-  });
+  document.querySelectorAll('#star-picker .rv-star').forEach(s => s.classList.toggle('filled', Number(s.dataset.n) <= n));
+  const lab = document.getElementById('rv-label');
+  if (lab) lab.textContent = n ? RATING_LABELS[n] : 'Touchez une étoile';
+  const tagsEl = document.getElementById('rv-tags');
+  if (tagsEl) {
+    const list = !n ? [] : (n >= 4 ? TAGS_GOOD : (n <= 2 ? TAGS_BAD : TAGS_GOOD.slice(0, 2).concat(TAGS_BAD.slice(0, 3))));
+    reviewTags.forEach(t => { if (!list.includes(t)) reviewTags.delete(t); });
+    tagsEl.innerHTML = list.map(t => `<button type="button" class="rv-tag ${reviewTags.has(t) ? 'on' : ''}" onclick="toggleReviewTag(this, ${JSON.stringify(t).replace(/"/g, '&quot;')})">${escHtml(t)}</button>`).join('');
+  }
+}
+
+function toggleReviewTag(btn, t) {
+  if (reviewTags.has(t)) reviewTags.delete(t); else reviewTags.add(t);
+  btn.classList.toggle('on', reviewTags.has(t));
 }
 
 function closeReview() {
@@ -1156,20 +1250,95 @@ function closeReview() {
 }
 
 async function submitReview() {
-  if (selectedRating === 0) { toast("Choisissez une note (1 à 5 étoiles)"); return; }
-  const comment = document.getElementById('review-comment').value.trim();
-  const { error } = await client.from('reviews').insert({
-    restaurant_id: reviewTarget.restaurant_id,
-    customer_id: currentCustomer.id,
-    order_id: reviewTarget.id,
-    rating: selectedRating,
-    comment
-  });
-  if (error) { toast("Erreur lors de l'envoi de l'avis."); return; }
+  if (!selectedRating) { toast('Choisissez une note de 1 à 5 étoiles'); return; }
+  const free = (document.getElementById('review-comment').value || '').trim();
+  const comment = [Array.from(reviewTags).join(', '), free].filter(Boolean).join(reviewTags.size && free ? '. ' : '').slice(0, 400);
+  const btn = document.getElementById('rv-send');
+  if (btn) { btn.disabled = true; btn.textContent = 'Envoi…'; }
+  const { error } = await client.rpc('submit_review', { p_order: reviewTarget.id, p_rating: selectedRating, p_comment: comment || null });
+  if (error) {
+    if (btn) { btn.disabled = false; btn.textContent = 'Publier mon avis'; }
+    const m = String(error.message || '');
+    toast(m.includes('modification_impossible') ? 'Un avis ne peut plus être modifié après 3 jours.' : m.includes('non_livree') ? 'Vous pourrez noter dès que la commande sera livrée.' : "Envoi impossible pour le moment. Réessayez.");
+    return;
+  }
+  try { const s = new Set(JSON.parse(localStorage.getItem('dbf-review-asked') || '[]')); s.add(reviewTarget.id); localStorage.setItem('dbf-review-asked', JSON.stringify([...s].slice(-200))); } catch (e) {}
   closeReview();
-  toast("Merci pour votre avis !");
-  myReviewed.add(reviewTarget.id);
-  renderOrders();
+  toast('Merci, votre avis est publié.');
+  delete restaurantReviewsCache[reviewTarget.restaurant_id];
+  await loadMyOrders();
+  paintMyOrders(true);
+  loadRatings();
+}
+
+// Invitation automatique à noter une commande livrée (une seule fois par commande)
+function maybeAskReview(o) {
+  if (!o || o.status !== 'Livrée' || myReviewed.has(o.id)) return;
+  let asked;
+  try { asked = new Set(JSON.parse(localStorage.getItem('dbf-review-asked') || '[]')); } catch (e) { asked = new Set(); }
+  if (asked.has(o.id)) return;
+  asked.add(o.id);
+  try { localStorage.setItem('dbf-review-asked', JSON.stringify([...asked].slice(-200))); } catch (e) {}
+  const r = restaurants.find(x => x.id === o.restaurant_id);
+  openReview({ id: o.id, restaurant_id: o.restaurant_id, rname: r ? r.name : '' });
+}
+
+// Avis affichés sur la page du restaurant
+const restaurantReviewsCache = {};
+async function loadRestaurantReviews(id) {
+  if (restaurantReviewsCache[id]) return restaurantReviewsCache[id];
+  const { data } = await client.from('reviews').select('id, rating, comment, author_name, created_at, reply, reply_at').eq('restaurant_id', id).order('created_at', { ascending: false }).limit(60);
+  restaurantReviewsCache[id] = data || [];
+  return restaurantReviewsCache[id];
+}
+
+function reviewDate(ts) { return new Date(ts).toLocaleDateString('fr-FR', { day: 'numeric', month: 'long', year: 'numeric' }); }
+
+async function renderRestaurantRating() {
+  const r = currentRestaurant;
+  const el = document.getElementById('rest-rating');
+  if (!el || !r) return;
+  const list = await loadRestaurantReviews(r.id);
+  if (!currentRestaurant || currentRestaurant.id !== r.id) return;
+  if (!list.length) {
+    el.innerHTML = `<div class="rr-empty">${starsHtml(0, 15)}<span>Pas encore d'avis. Soyez le premier à noter ce restaurant après votre commande.</span></div>`;
+    return;
+  }
+  const avg = list.reduce((a, b) => a + b.rating, 0) / list.length;
+  const dist = [5, 4, 3, 2, 1].map(n => ({ n, c: list.filter(x => x.rating === n).length }));
+  const open = el.dataset.open === '1';
+  el.innerHTML = `
+    <button type="button" class="rr-sum" onclick="toggleRestReviews()">
+      <span class="rr-avg">${avg.toFixed(1).replace('.', ',')}</span>
+      <span class="rr-mid">${starsHtml(avg, 16)}<span class="rr-count">${list.length} avis client${list.length > 1 ? 's' : ''}</span></span>
+      <span class="rr-more">${open ? 'Masquer' : 'Lire les avis'}</span>
+    </button>
+    ${open ? `<div class="rr-panel">
+      <div class="rr-dist">${dist.map(d => `<div class="rr-bar"><span>${d.n}</span><i><b style="width:${Math.round(d.c / list.length * 100)}%"></b></i><span>${d.c}</span></div>`).join('')}</div>
+      ${list.map(v => `<div class="rv-item">
+        <div class="rv-top">${starsHtml(v.rating, 13)}<span class="rv-who">${escHtml(v.author_name || 'Client')}</span><span class="rv-when">${reviewDate(v.created_at)}</span></div>
+        ${v.comment ? `<div class="rv-text">${escHtml(v.comment)}</div>` : ''}
+        ${v.reply ? `<div class="rv-reply"><b>Réponse du restaurant</b>${escHtml(v.reply)}</div>` : ''}
+      </div>`).join('')}
+    </div>` : ''}`;
+}
+
+function toggleRestReviews() {
+  const el = document.getElementById('rest-rating');
+  if (!el) return;
+  el.dataset.open = el.dataset.open === '1' ? '' : '1';
+  renderRestaurantRating();
+}
+
+async function loadRatings() {
+  const { data: revs } = await client.from('reviews').select('restaurant_id, rating');
+  Object.keys(restaurantRatingMap).forEach(k => delete restaurantRatingMap[k]);
+  const grouped = {};
+  (revs || []).forEach(r => { (grouped[r.restaurant_id] = grouped[r.restaurant_id] || []).push(r.rating); });
+  Object.keys(grouped).forEach(id => {
+    const arr = grouped[id];
+    restaurantRatingMap[id] = { avg: (arr.reduce((a, b) => a + b, 0) / arr.length).toFixed(1), count: arr.length };
+  });
 }
 
 // ---------- Offres ----------
@@ -1575,13 +1744,7 @@ async function loadRestaurants() {
 
   try { await loadStories(); } catch (e) { liveStories = []; storyGroups = []; }
 
-  const { data: revs } = await client.from('reviews').select('restaurant_id, rating');
-  const grouped = {};
-  (revs || []).forEach(r => { (grouped[r.restaurant_id] = grouped[r.restaurant_id] || []).push(r.rating); });
-  Object.keys(grouped).forEach(id => {
-    const arr = grouped[id];
-    restaurantRatingMap[id] = { avg: (arr.reduce((a,b)=>a+b,0)/arr.length).toFixed(1), count: arr.length };
-  });
+  await loadRatings();
 
   renderList();
 }
@@ -1657,7 +1820,7 @@ function restaurantCardsHtml(list) {
               <div class="rcard2-name">${r.name}</div>
               <div class="rcard2-cat">${r.category || ''}</div>
               <div class="rcard2-meta">
-                ${rating ? `<svg viewBox="0 0 24 24" width="14" height="14" fill="var(--mango)"><path d="M12 2l3 7h7l-5.5 4.5L18.5 21 12 16.5 5.5 21 7.5 13.5 2 9h7z"/></svg><span>${rating.avg}</span><span class="rcard2-dot"></span>` : ''}
+                ${rating ? `<svg viewBox="0 0 24 24" width="14" height="14" fill="var(--mango)"><path d="M12 2l3 7h7l-5.5 4.5L18.5 21 12 16.5 5.5 21 7.5 13.5 2 9h7z"/></svg><span>${rating.avg.replace('.', ',')}</span><span class="rcard2-rc">(${rating.count} avis)</span><span class="rcard2-dot"></span>` : `<span class="rcard2-new">Nouveau</span><span class="rcard2-dot"></span>`}
                 <svg viewBox="0 0 24 24" width="14" height="14" stroke="var(--creamDim)" stroke-width="1.6" fill="none"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 3"/></svg>
                 <span>${r.delivery_time || ''}</span>
               </div>
@@ -1705,6 +1868,7 @@ function renderMenu() {
       <button class="btn-back" onclick="setActiveNav('home'); show('list')">← Tous les restaurants</button>
       <div class="display" style="font-size:28px; color:${r.accent}">${r.name}</div>
       <div style="font-size:13px; color:var(--creamDim); margin-bottom:8px;">${r.tagline || ''}</div>
+      <div id="rest-rating" class="rest-rating"></div>
       <div class="fee-line"><strong>${money(DELIVERY_FEE)}</strong><span>de frais de livraison, ajoutés au prix de vos plats et payés à la réception.</span></div>
       ${!open ? (r.accepting_orders === false ? `<div class="closed-banner">Ce restaurant a mis les commandes en pause pour le moment. Vous pouvez consulter le menu et revenir un peu plus tard.</div>` : `<div class="closed-banner">Ce restaurant est actuellement fermé. Horaires : ${formatHM(r.opens_at)} – ${formatHM(r.closes_at)}. Vous pouvez consulter le menu, mais la commande n'est pas possible pour le moment.</div>`) : ''}
       <div id="menu-items"></div>
@@ -1712,6 +1876,7 @@ function renderMenu() {
     <div id="cart-bar"></div>
   `;
   renderMenuItems();
+  renderRestaurantRating();
 }
 
 function openPhotoViewer(url, name) {

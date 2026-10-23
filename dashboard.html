@@ -51,6 +51,20 @@
   .hours-title { font-size:13px; font-weight:700; color: var(--mango); margin-bottom:10px; }
   .hours-row { display:flex; gap:10px; }
   .hours-row input[type=time] { margin-bottom:0; }
+  .rv-avg { font-size:13px; color:var(--cream); display:inline-flex; align-items:center; gap:6px; }
+  .rv-avg small { color:var(--creamDim); font-weight:500; }
+  .rvs { display:inline-flex; gap:1px; vertical-align:middle; }
+  .rv-card { border-top:1px solid var(--line); padding:11px 0; }
+  .rv-card.is-hidden { opacity:.55; }
+  .rv-head { display:flex; align-items:center; gap:8px; font-size:13px; }
+  .rv-d { margin-left:auto; font-size:11.5px; color:var(--creamDim); }
+  .rv-new { font-size:10.5px; font-weight:700; color:#080808; background:var(--mango); border-radius:10px; padding:2px 7px; }
+  .rv-c { font-size:13px; line-height:1.5; margin-top:5px; color:#E6E6E6; }
+  .rv-h { font-size:11.5px; color:var(--chili); margin-top:4px; }
+  .rv-r { margin-top:7px; border-left:3px solid var(--mango); padding:5px 9px; font-size:12.5px; color:#CFCFCF; background:#151515; border-radius:0 8px 8px 0; }
+  .rv-r b { display:block; font-size:11px; color:var(--mango); }
+  .rv-btn { background:none; border:none; color:var(--mango); font-size:12.5px; font-weight:700; padding:8px 0 0; cursor:pointer; font-family:inherit; }
+  #reviews-box textarea { width:100%; box-sizing:border-box; margin-top:8px; background:var(--bg); border:1px solid var(--line); border-radius:9px; color:var(--cream); padding:9px 11px; font-family:inherit; font-size:13.5px; }
   .loc-box.need { border-color: rgba(245,192,74,.55); }
   .loc-state { font-size:11px; font-weight:700; letter-spacing:.02em; }
   .loc-state.ok { color: var(--palm); } .loc-state.warn { color: var(--mango); }
@@ -201,6 +215,8 @@
     <div class="hours-box loc-box" id="loc-box"></div>
 
     <div class="stories-box" id="stories-box"></div>
+
+    <div class="hours-box" id="reviews-box"></div>
 
     <div id="orders-list"></div>
     <div class="refresh">Actualisation automatique toutes les 5 secondes</div>
@@ -814,6 +830,7 @@ async function afterLogin() {
   renderOpenToggle();
   renderLocationBox();
   loadStories();
+  loadReviews();
 }
 
 function onResumeLoggedIn() { loadOrders(); }
@@ -884,6 +901,54 @@ async function saveLocation() {
   locNoteDraft = null;
   locState = { busy: false, fix: null, msg: `Position enregistrée (à ${Math.round(f.acc)} m près). Les livreurs seront guidés jusqu'à vous.`, err: '' };
   renderLocationBox();
+}
+
+// ---------- Avis des clients ----------
+let myReviews = [];
+const replyOpen = {};
+const STAR_D = 'M12 2.6l2.9 6.1 6.6.8-4.9 4.5 1.3 6.6L12 17.3l-5.9 3.3 1.3-6.6-4.9-4.5 6.6-.8z';
+function starsLine(v, size) {
+  let o = '';
+  for (let i = 1; i <= 5; i++) o += `<svg viewBox="0 0 24 24" width="${size}" height="${size}"><path d="${STAR_D}" fill="${i <= Math.round(v) ? 'var(--mango)' : '#3A3A3A'}"/></svg>`;
+  return `<span class="rvs">${o}</span>`;
+}
+async function loadReviews() {
+  if (!myRestaurant) return;
+  const { data, error } = await client.from('reviews').select('id, rating, comment, author_name, created_at, reply, reply_at, hidden').eq('restaurant_id', myRestaurant.id).order('created_at', { ascending: false }).limit(40);
+  if (error) return;
+  myReviews = data || [];
+  renderReviews();
+}
+function renderReviews() {
+  const el = document.getElementById('reviews-box');
+  if (!el) return;
+  const vis = myReviews.filter(r => !r.hidden);
+  let seen = 0;
+  try { seen = Number(localStorage.getItem('dbf-rev-seen-' + myRestaurant.id) || 0); } catch (e) {}
+  const avg = vis.length ? vis.reduce((a, b) => a + b.rating, 0) / vis.length : 0;
+  el.innerHTML = `
+    <div class="hours-title" style="display:flex; justify-content:space-between; align-items:center;"><span>Avis de vos clients</span>${vis.length ? `<span class="rv-avg">${avg.toFixed(1).replace('.', ',')} ${starsLine(avg, 14)} <small>${vis.length} avis</small></span>` : ''}</div>
+    ${!myReviews.length ? '<div class="hours-hint" style="margin-top:0;">Aucun avis pour le moment. Après chaque livraison, vos clients sont invités à noter leur commande. Les avis et votre note sont visibles par tous les clients.</div>' :
+    myReviews.map(v => `
+      <div class="rv-card ${v.hidden ? 'is-hidden' : ''}">
+        <div class="rv-head">${starsLine(v.rating, 13)}<b>${escHtml(v.author_name || 'Client')}</b>${new Date(v.created_at).getTime() > seen ? '<span class="rv-new">Nouveau</span>' : ''}<span class="rv-d">${new Date(v.created_at).toLocaleDateString('fr-FR', { day: '2-digit', month: '2-digit' })}</span></div>
+        ${v.comment ? `<div class="rv-c">${escHtml(v.comment)}</div>` : ''}
+        ${v.hidden ? '<div class="rv-h">Masqué par Dallas Bouff\' (contenu inapproprié). Les clients ne le voient pas.</div>' : ''}
+        ${v.reply && !replyOpen[v.id] ? `<div class="rv-r"><b>Votre réponse</b>${escHtml(v.reply)}</div>` : ''}
+        ${replyOpen[v.id] ? `<textarea id="rep-${v.id}" maxlength="400" rows="2" placeholder="Remerciez le client ou expliquez-vous poliment…">${escHtml(v.reply || '')}</textarea>
+          <div style="display:flex; gap:8px; margin-top:6px;"><button class="btn-advance" style="background:var(--mango); flex:1;" onclick="sendReply('${v.id}')">Publier la réponse</button><button class="btn-advance" style="flex:1; background:none; border:1px solid #3A3A3A; color:var(--cream);" onclick="toggleReply('${v.id}')">Annuler</button></div>`
+        : `<button class="rv-btn" onclick="toggleReply('${v.id}')">${v.reply ? 'Modifier ma réponse' : 'Répondre publiquement'}</button>`}
+      </div>`).join('')}`;
+  if (myReviews.length) { try { localStorage.setItem('dbf-rev-seen-' + myRestaurant.id, String(Date.now())); } catch (e) {} }
+}
+function toggleReply(id) { replyOpen[id] = !replyOpen[id]; renderReviews(); const t = document.getElementById('rep-' + id); if (t) t.focus(); }
+async function sendReply(id) {
+  const t = document.getElementById('rep-' + id);
+  const txt = t ? t.value.trim() : '';
+  const { error } = await client.rpc('reply_review', { p_review: id, p_reply: txt });
+  if (error) { alert("Réponse impossible pour le moment. Réessayez."); return; }
+  replyOpen[id] = false;
+  await loadReviews();
 }
 
 async function saveHours() {
