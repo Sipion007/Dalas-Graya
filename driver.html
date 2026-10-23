@@ -89,6 +89,15 @@
   .notif-ok { text-align:center; font-size:12px; color:var(--palm); margin-bottom:16px; }
   .gps-dot.bad { background:var(--chili); }
   .gps-help { font-size:11.5px; color:var(--creamDim); margin:-8px 0 14px; line-height:1.45; }
+  .leg-steps { display:flex; gap:6px; margin-bottom:12px; }
+  .leg { flex:1; display:flex; align-items:center; gap:7px; font-size:11.5px; font-weight:600; color:var(--creamDim); background:var(--raised, #171717); border:1px solid var(--line); border-radius:9px; padding:7px 9px; }
+  .leg span { width:19px; height:19px; border-radius:50%; border:1px solid #3A3A3A; display:inline-flex; align-items:center; justify-content:center; font-size:10.5px; flex-shrink:0; }
+  .leg.on { color:var(--cream); border-color:var(--mango); }
+  .leg.on span { background:var(--mango); color:#080808; border-color:var(--mango); }
+  .leg.done { color:var(--palm); }
+  .leg.done span { background:var(--palm); color:#080808; border-color:var(--palm); }
+  .btn-backup { border-color:#2E2E2E !important; color:var(--creamDim) !important; font-weight:500 !important; font-size:12.5px !important; }
+  .dist-chip { display:inline-block; margin-top:6px; font-size:12px; font-weight:700; color:var(--mango); border:1px solid rgba(245,192,74,.45); border-radius:20px; padding:3px 10px; }
   .nogps { margin-top:10px; font-size:12.5px; color:#F5D58A; border:1px solid rgba(245,192,74,.4); background:rgba(245,192,74,.08); border-radius:9px; padding:9px 11px; line-height:1.4; }
   .chips { display:flex; flex-wrap:wrap; gap:6px; margin-bottom:10px; }
   .chip-s { border:1px solid #333; background:#141414; color:#E6E6E6; border-radius:999px; padding:9px 12px; font-size:12.5px; cursor:pointer; font-family:inherit; }
@@ -847,7 +856,7 @@ function updateNavigationBanner() {
   if (!banner || !myCurrentPos || currentRouteSteps.length === 0) return;
 
   if (upcomingStepIndex >= currentRouteSteps.length) {
-    banner.innerHTML = `<div class="nav-instruction">Vous êtes arrivé chez le client</div>`;
+    banner.innerHTML = `<div class="nav-instruction">${deliveryDestLabel === 'Restaurant' ? 'Vous êtes arrivé au restaurant' : 'Vous êtes arrivé chez le client'}</div>`;
     return;
   }
 
@@ -878,7 +887,10 @@ let deliveryDriverMarker = null;
 let deliveryCustomerMarker = null;
 let deliveryRouteLine = null;
 let currentDeliveryOrderId = null;
+let currentDeliveryKey = null;
 let deliveryDestination = null;
+let deliveryDestLabel = 'Client';
+let lastFixAt = 0;
 let fsMap = null;
 
 function money(n) { return Number(n || 0).toLocaleString('fr-FR') + ' F'; }
@@ -1195,7 +1207,7 @@ function mapsLink(o) {
 
 async function refreshOrders() {
   if (!myDriver) return;
-  const { data: current, error: curErr } = await client.from('orders').select('*, restaurants(name, accent, whatsapp)').eq('driver_id', myDriver.id).eq('status', 'En livraison');
+  const { data: current, error: curErr } = await client.from('orders').select('*, restaurants(name, accent, whatsapp, lat, lng, location_note)').eq('driver_id', myDriver.id).eq('status', 'En livraison');
   if (curErr) return;
   const acked = alertAckedGet(ACK_KEY_DRIVER);
   const freshAssigned = (current || []).filter(o => !acked.has(o.id));
@@ -1215,26 +1227,17 @@ async function refreshOrders() {
   if (hasActiveDelivery) {
     startGPS();
     const o0 = current[0];
-    if (o0.id !== currentDeliveryOrderId) {
+    const leg = o0.collected_at ? 'client' : 'restaurant';
+    const legKey = o0.id + ':' + leg;
+    if (legKey !== currentDeliveryKey) {
+      const legChanged = currentDeliveryOrderId === o0.id;
+      currentDeliveryKey = legKey;
       currentDeliveryOrderId = o0.id;
-      deliveryMap = null;
-      curEl.innerHTML = current.slice(0, 1).map(o => `
-        <div class="order">
-          <div style="font-weight:700; font-size:15px;">${o.restaurants ? escHtml(o.restaurants.name) : ''}</div>
-          <div style="font-size:13px; margin-top:4px;">${escHtml(o.customer_name)}</div>
-          ${o.address ? `<div style="font-size:12.5px; color:var(--creamDim); margin-top:2px;">${escHtml(o.address)}</div>` : ''}
-          <div style="margin-top:8px; font-size:13px; color:var(--creamDim);">À encaisser auprès du client : <span class="mono" style="font-weight:700; color:var(--mango); font-size:14px;">${money(o.total)}</span>${o.delivery_fee ? ` <span style="font-size:11.5px;">(livraison ${money(o.delivery_fee)} comprise)</span>` : ''}</div>
-          ${requestsHtmlDriver(o)}
-          <a href="tel:${escHtml(o.phone)}" class="btn-call" onclick="primeSpeech()">Appeler le client</a>
-          ${o.restaurants && o.restaurants.whatsapp ? `<a href="tel:+${escHtml(o.restaurants.whatsapp)}" class="btn-call" style="border-color:#3A3A3A; color:var(--cream);">Appeler le restaurant</a>` : ''}
-          <a href="${mapsLink(o)}" target="_blank" rel="noopener" class="btn-call" style="border-color:var(--mango); color:var(--mango);">Itinéraire dans Google Maps</a>
-          ${o.location && o.location.type === 'gps' ? '' : '<div class="nogps">Le client n\'a pas partagé sa position GPS. Appelez-le pour qu\'il vous guide jusqu\'à lui.</div>'}
-          <button class="btn-done" onclick="markDelivered('${o.id}')">Marquer comme livrée</button>
-          ${o.location && o.location.type === 'gps' ? '<div class="map-wrap"><button class="btn-fullscreen-map" onclick="openFullscreenMap()">Plein écran</button><div id="delivery-map"></div></div>' : ''}
-          <div id="cur-extra"></div>
-        </div>
-      `).join('');
-      if (o0.location && o0.location.type === 'gps') updateDeliveryMap(o0.location);
+      resetDeliveryMap();
+      curEl.innerHTML = leg === 'restaurant' ? restaurantLegHtml(o0) : clientLegHtml(o0);
+      const dest = legDestination(o0, leg);
+      if (dest) updateDeliveryMap(dest, leg === 'restaurant' ? 'Restaurant' : 'Client');
+      if (legChanged && leg === 'client') speakInstruction('Commande récupérée. Direction le client.');
     }
     // Messages de la livraison en cours
     const { data: msgs, error: mErr } = await client.from('order_messages').select('*').eq('order_id', o0.id).order('created_at');
@@ -1253,15 +1256,9 @@ async function refreshOrders() {
     renderDeliveryExtra(o0);
   } else {
     stopGPS();
-    deliveryMap = null;
+    resetDeliveryMap();
     currentDeliveryOrderId = null;
-    deliveryDestination = null;
-    currentRouteCoords = null;
-    currentRouteSteps = [];
-    upcomingStepIndex = 1;
-    announcedSteps = new Set();
-    closeFullscreenMap();
-    if (fsMap) { fsMap.remove(); fsMap = null; }
+    currentDeliveryKey = null;
     curEl.innerHTML = '<div class="empty">Aucune livraison en cours.</div>';
   }
 
@@ -1272,7 +1269,7 @@ async function refreshOrders() {
     return;
   }
 
-  let query = client.from('orders').select('*, restaurants(name, accent)').eq('status', 'Prête').is('driver_id', null);
+  let query = client.from('orders').select('*, restaurants(name, accent, lat, lng, location_note)').eq('status', 'Prête').is('driver_id', null);
   if (myDriver.restaurant_id) query = query.eq('restaurant_id', myDriver.restaurant_id);
   const { data: available, error: avErr } = await query;
   if (avErr) return;
@@ -1295,17 +1292,109 @@ async function refreshOrders() {
     });
   }
 
-  availEl.innerHTML = available.map(o => `
+  refreshFixForDistances(() => refreshOrders());
+  available.sort((a, b) => { const da = distanceToRest(a), db = distanceToRest(b); return (da == null ? 1e12 : da) - (db == null ? 1e12 : db); });
+  availEl.innerHTML = available.map(o => { const dr = distanceToRest(o); return `
     <div class="order">
       <div style="font-weight:700; font-size:15px;">${o.restaurants ? escHtml(o.restaurants.name) : ''}</div>
       <div style="font-size:12px; color:var(--creamDim); margin-top:2px;">Prête ${timeAgo(o.ready_at || o.created_at)}</div>
+      ${dr != null ? `<div class="dist-chip">Restaurant à ${formatDistance(dr)} de vous</div>` : (restGps(o) ? '' : '<div style="font-size:12px; color:var(--creamDim); margin-top:4px;">Position du restaurant non enregistrée</div>')}
       <div style="font-size:13px; margin-top:4px;">${escHtml(o.customer_name)} · ${escHtml(o.phone)}</div>
       ${o.address ? `<div style="font-size:12.5px; color:var(--creamDim); margin-top:2px;">${escHtml(o.address)}</div>` : ''}
       ${o.location && o.location.type === 'gps' ? '<div style="font-size:12px; color:var(--palm); margin-top:4px;">Position GPS du client disponible</div>' : '<div style="font-size:12px; color:var(--mango); margin-top:4px;">Pas de GPS : il faudra appeler le client</div>'}
       <div style="margin-top:8px; font-size:13px; color:var(--creamDim);">À encaisser auprès du client : <span class="mono" style="font-weight:700; color:var(--mango); font-size:14px;">${money(o.total)}</span>${o.delivery_fee ? ` <span style="font-size:11.5px;">(livraison ${money(o.delivery_fee)} comprise)</span>` : ''}</div>
       <button class="btn-take" onclick="takeOrder('${o.id}')">Je prends cette livraison</button>
     </div>
-  `).join('');
+  `; }).join('');
+}
+
+// ---------- Trajet en deux étapes : restaurant, puis client ----------
+function restGps(o) {
+  const r = o.restaurants;
+  return r && typeof r.lat === 'number' && typeof r.lng === 'number' ? { lat: r.lat, lng: r.lng } : null;
+}
+function legDestination(o, leg) {
+  if (leg === 'restaurant') return restGps(o);
+  return o.location && o.location.type === 'gps' ? { lat: o.location.lat, lng: o.location.lng } : null;
+}
+function mapsLinkRest(o) {
+  const g = restGps(o);
+  if (g) return `https://www.google.com/maps/dir/?api=1&destination=${g.lat},${g.lng}&travelmode=driving`;
+  return `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(((o.restaurants && o.restaurants.name) || '') + ' Daloa')}`;
+}
+function legStepsHtml(leg) {
+  return `<div class="leg-steps"><div class="leg ${leg === 'restaurant' ? 'on' : 'done'}"><span>1</span>Récupérer au restaurant</div><div class="leg ${leg === 'client' ? 'on' : ''}"><span>2</span>Livrer le client</div></div>`;
+}
+function moneyLine(o) {
+  return `<div style="margin-top:8px; font-size:13px; color:var(--creamDim);">À encaisser auprès du client : <span class="mono" style="font-weight:700; color:var(--mango); font-size:14px;">${money(o.total)}</span>${o.delivery_fee ? ` <span style="font-size:11.5px;">(livraison ${money(o.delivery_fee)} comprise)</span>` : ''}</div>`;
+}
+function restaurantLegHtml(o) {
+  const r = o.restaurants || {};
+  const g = restGps(o);
+  return `
+    <div class="order">
+      ${legStepsHtml('restaurant')}
+      <div style="font-weight:700; font-size:15px;">${escHtml(r.name || 'Restaurant')}</div>
+      ${r.location_note ? `<div style="font-size:12.5px; color:var(--creamDim); margin-top:2px;">Repère : ${escHtml(r.location_note)}</div>` : ''}
+      <div style="font-size:13px; margin-top:4px;">Commande de ${escHtml(o.customer_name || 'Client')}</div>
+      ${moneyLine(o)}
+      ${requestsHtmlDriver(o)}
+      ${g ? '' : '<div class="nogps">Ce restaurant n\'a pas encore enregistré sa position. Appelez-le pour qu\'il vous guide.</div>'}
+      ${g ? '<div class="map-wrap"><button class="btn-fullscreen-map" onclick="openFullscreenMap()">Plein écran</button><div id="delivery-map"></div></div>' : ''}
+      <button class="btn-done" onclick="markCollected('${o.id}')">J'ai récupéré la commande</button>
+      ${r.whatsapp ? `<a href="tel:+${escHtml(r.whatsapp)}" class="btn-call" style="border-color:#3A3A3A; color:var(--cream);">Appeler le restaurant</a>` : ''}
+      <a href="${mapsLinkRest(o)}" target="_blank" rel="noopener" class="btn-call btn-backup">Dépannage : itinéraire dans Google Maps</a>
+      <div id="cur-extra"></div>
+    </div>`;
+}
+function clientLegHtml(o) {
+  const gps = o.location && o.location.type === 'gps';
+  return `
+    <div class="order">
+      ${legStepsHtml('client')}
+      <div style="font-weight:700; font-size:15px;">${escHtml(o.customer_name || 'Client')}</div>
+      ${o.address ? `<div style="font-size:12.5px; color:var(--creamDim); margin-top:2px;">${escHtml(o.address)}</div>` : ''}
+      <div style="font-size:12.5px; color:var(--creamDim); margin-top:2px;">Commande ${o.restaurants ? escHtml(o.restaurants.name) : ''}</div>
+      ${moneyLine(o)}
+      ${requestsHtmlDriver(o)}
+      ${gps ? '<div class="map-wrap"><button class="btn-fullscreen-map" onclick="openFullscreenMap()">Plein écran</button><div id="delivery-map"></div></div>' : '<div class="nogps">Le client n\'a pas partagé sa position GPS. Appelez-le pour qu\'il vous guide jusqu\'à lui.</div>'}
+      <a href="tel:${escHtml(o.phone)}" class="btn-call" onclick="primeSpeech()">Appeler le client</a>
+      <button class="btn-done" onclick="markDelivered('${o.id}')">Marquer comme livrée</button>
+      ${o.restaurants && o.restaurants.whatsapp ? `<a href="tel:+${escHtml(o.restaurants.whatsapp)}" class="btn-call" style="border-color:#3A3A3A; color:var(--cream);">Appeler le restaurant</a>` : ''}
+      <a href="${mapsLink(o)}" target="_blank" rel="noopener" class="btn-call btn-backup">Dépannage : itinéraire dans Google Maps</a>
+      <div id="cur-extra"></div>
+    </div>`;
+}
+async function markCollected(id) {
+  primeSpeech();
+  const { error } = await client.rpc('driver_mark_collected', { p_order: id });
+  if (error) { toastDriver("Impossible d'enregistrer. Vérifiez votre connexion et réessayez."); return; }
+  toastDriver('Commande récupérée. Direction le client.');
+  refreshOrders();
+}
+function resetDeliveryMap() {
+  closeFullscreenMap();
+  if (fsMap) { try { fsMap.remove(); } catch (e) {} fsMap = null; }
+  if (deliveryMap) { try { deliveryMap.remove(); } catch (e) {} }
+  deliveryMap = null;
+  deliveryDestination = null;
+  currentRouteCoords = null;
+  currentRouteSteps = [];
+  upcomingStepIndex = 1;
+  announcedSteps = new Set();
+}
+// Position ponctuelle pour afficher la distance jusqu'aux restaurants (sans livraison en cours)
+function refreshFixForDistances(cb) {
+  if (!navigator.geolocation || gpsState === 'denied' || Date.now() - lastFixAt < 60000) return;
+  lastFixAt = Date.now();
+  navigator.geolocation.getCurrentPosition((pos) => {
+    myCurrentPos = { lat: pos.coords.latitude, lng: pos.coords.longitude };
+    if (cb) cb();
+  }, () => {}, { enableHighAccuracy: false, timeout: 15000, maximumAge: 120000 });
+}
+function distanceToRest(o) {
+  const g = restGps(o);
+  return g && myCurrentPos ? haversine(myCurrentPos, g) : null;
 }
 
 function requestsHtmlDriver(o) {
@@ -1467,8 +1556,9 @@ function startGPS() {
 document.addEventListener('visibilitychange', () => { if (document.visibilityState === 'visible' && gpsWatchId !== null && myCurrentPos) sendPosition(myCurrentPos.lat, myCurrentPos.lng, true); });
 
 
-function updateDeliveryMap(destination) {
+function updateDeliveryMap(destination, label) {
   deliveryDestination = destination;
+  deliveryDestLabel = label || 'Client';
   currentRouteCoords = null;
   currentRouteSteps = [];
   upcomingStepIndex = 1;
@@ -1476,13 +1566,13 @@ function updateDeliveryMap(destination) {
 
   setTimeout(async () => {
     const mapEl = document.getElementById('delivery-map');
-    if (!mapEl) return;
+    if (!mapEl || deliveryDestination !== destination) return;
     const startPos = myCurrentPos || destination;
 
     deliveryMap = L.map(mapEl).setView([destination.lat, destination.lng], 16);
     equipMap(deliveryMap);
 
-    deliveryCustomerMarker = L.marker([destination.lat, destination.lng]).addTo(deliveryMap).bindPopup('Client');
+    deliveryCustomerMarker = L.marker([destination.lat, destination.lng]).addTo(deliveryMap).bindPopup(deliveryDestLabel);
     deliveryDriverMarker = L.marker([startPos.lat, startPos.lng]).addTo(deliveryMap).bindPopup('Vous');
     deliveryRouteLine = L.polyline([[startPos.lat, startPos.lng], [destination.lat, destination.lng]], { color: '#F5C04A', weight: 3, dashArray: '6,6' }).addTo(deliveryMap);
     deliveryMap.fitBounds([[startPos.lat, startPos.lng], [destination.lat, destination.lng]], { padding: [30,30] });
@@ -1513,7 +1603,7 @@ function openFullscreenMap() {
     if (!fsMap) {
       fsMap = L.map('fs-map').setView([deliveryDestination.lat, deliveryDestination.lng], 17);
       equipMap(fsMap);
-      window.fsCustomerMarker = L.marker([deliveryDestination.lat, deliveryDestination.lng]).addTo(fsMap).bindPopup('Client');
+      window.fsCustomerMarker = L.marker([deliveryDestination.lat, deliveryDestination.lng]).addTo(fsMap).bindPopup(deliveryDestLabel);
       window.fsDriverMarker = L.marker([startPos.lat, startPos.lng]).addTo(fsMap).bindPopup('Vous');
       const initialLine = currentRouteCoords || [[startPos.lat, startPos.lng], [deliveryDestination.lat, deliveryDestination.lng]];
       window.fsRouteLine = L.polyline(initialLine, { color: '#F5C04A', weight: 5, dashArray: currentRouteCoords ? null : '8,8' }).addTo(fsMap);

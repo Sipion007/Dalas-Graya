@@ -950,7 +950,8 @@ async function loadWatch() {
   }
   const cov = (coverage || []).map(c => ({ ...c, level: c.android_active > 0 ? 'ok' : (c.push_devices > 0 ? 'warn' : 'bad') }))
     .sort((a, b) => ({ bad: 0, warn: 1, ok: 2 }[a.level] - { bad: 0, warn: 1, ok: 2 }[b.level]) || String(a.name).localeCompare(String(b.name)));
-  const sig = JSON.stringify([problems.map(p => [p.key, p.text]), paused.map(r => [r.id, r.paused_reason]), adminCancelOpen, cov.map(c => [c.id, c.level])]);
+  const noLoc = (rests || []).filter(r => typeof r.lat !== 'number' || typeof r.lng !== 'number');
+  const sig = JSON.stringify([problems.map(p => [p.key, p.text]), paused.map(r => [r.id, r.paused_reason]), adminCancelOpen, cov.map(c => [c.id, c.level]), noLoc.map(r => r.id)]);
   if (sig === watchSig) return;
   watchSig = sig;
   const el = document.getElementById('watch-box');
@@ -960,6 +961,9 @@ async function loadWatch() {
     ${paused.length ? `<div class="w-group"><div class="w-title">Restaurants en pause</div>${paused.map(r => `
       <div class="w-item ${r.paused_reason === 'auto' ? 'bad' : 'warn'}"><div class="w-main"><b>${escHtml(r.name)}</b><span>${r.paused_reason === 'auto' ? 'Bloqué automatiquement : une commande est restée 15 min sans réponse' : 'Mis en pause par le restaurant'}${r.paused_at ? ' · ' + timeAgo(r.paused_at) : ''}</span></div>
       <div class="w-acts">${r.whatsapp ? `<a class="w-btn" href="tel:+${escHtml(r.whatsapp)}">Appeler</a>` : ''}<button class="w-btn go" onclick="adminReopen('${r.id}')">Rouvrir</button></div></div>`).join('')}</div>` : ''}
+    ${noLoc.length ? `<div class="w-group"><div class="w-title">Restaurants sans position GPS · les livreurs ne sont pas guidés jusqu'à eux</div>${noLoc.map(r => `
+      <div class="w-item warn"><div class="w-main"><b>${escHtml(r.name)}</b><span>Le restaurateur doit toucher « Enregistrer ma position ici » dans son espace, depuis le restaurant.</span></div>
+      ${r.whatsapp ? `<div class="w-acts"><a class="w-btn" href="tel:+${escHtml(r.whatsapp)}">Appeler</a></div>` : ''}</div>`).join('')}</div>` : ''}
     ${cov.length ? `<details class="w-group w-cov"${cov.some(c => c.level === 'bad') ? ' open' : ''}><summary class="w-title">Alertes des partenaires · ${cov.filter(c => c.level !== 'bad').length} sur ${cov.length} reçoivent les alertes appli fermée</summary>${cov.map(c => `
       <div class="w-item ${c.level === 'ok' ? 'ok' : c.level}"><div class="w-main"><b>${escHtml(c.name || '')}</b><span>${c.kind === 'driver' ? 'Livreur' : 'Restaurant'} · ${c.level === 'ok' ? 'Appli Android active : sonne même téléphone en poche' : (c.level === 'warn' ? 'Notifications activées, sans l\'appli Android' + (c.android_last ? ' (appli vue ' + timeAgo(c.android_last) + ')' : '') : 'Ne reçoit rien quand l\'appli est fermée' + (c.android_last ? ' (appli vue ' + timeAgo(c.android_last) + ')' : ''))}</span></div></div>`).join('')}</details>` : ''}
     <div class="w-group"><div class="w-title">Commandes à surveiller</div>
