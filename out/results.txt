@@ -1,0 +1,28 @@
+PASS installation de l'appli
+PASS écran de choix restaurateur / livreur
+PASS service d'alarme démarré au premier plan
+PASS le service interroge le serveur
+PASS la page restaurant s'affiche dans l'appli
+PASS aucune alarme sans commande
+PASS sonne appli fermée (18 s après la commande)
+PASS son joué sur le canal réveil (passe le mode silencieux)
+PASS notification d'alarme affichée
+PASS bouton J'ai vu de la notification
+PASS silence pendant la pause
+PASS l'alarme revient après la pause (91 s)
+PASS acceptation : l'alarme s'arrête toute seule
+PASS message : alarme
+PASS message vu : ne sonne plus
+PASS appli à l'écran : pas d'alarme du service
+PASS appli quittée sans accepter : sonne (82 s après)
+PASS écran éteint + veille profonde : sonne (8 s)
+PASS écran d'alarme affiché par-dessus le verrouillage
+PASS l'écran s'allume tout seul
+PASS bouton J'ai vu de l'écran d'alarme
+PASS la page livreur s'affiche dans l'appli
+PASS suivi GPS du livreur actif appli fermée
+PASS service livreur au premier plan (type position)
+PASS type position accepté par Android 14
+PASS service relancé après redémarrage
+PASS sonne après redémarrage sans ouvrir l'appli
+TOTAL 27 tests, 0 échec(s)

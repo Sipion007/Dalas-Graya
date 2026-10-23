@@ -1,0 +1,8 @@
+--------- beginning of main
+10-23 13:41:45.576  3467  3467 I DBF     : BOOT android.intent.action.BOOT_COMPLETED
+10-23 13:41:45.769  3467  3467 I DBF     : SERVICE create
+10-23 13:41:46.606  3467  3552 I DBF     : POLL ok items=0
+10-23 13:42:06.968  3467  3552 I DBF     : POLL ok items=1
+10-23 13:42:06.972  3467  3552 I DBF     : RING start NOUVELLE COMMANDE n=1
+10-23 13:42:07.672  3467  3467 I DBF     : TEST receiver ci.dallasbouff.pro.ACK
+10-23 13:42:07.676  3467  3552 I DBF     : RING ack

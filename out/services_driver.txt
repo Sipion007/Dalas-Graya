@@ -1,0 +1,59 @@
+ACTIVITY MANAGER SERVICES (dumpsys activity services)
+  User 0 active services:
+  * ServiceRecord{36ca336 u0 ci.dallasbouff.pro/org.chromium.content.app.SandboxedProcessService0:0}
+    intent={cmp=ci.dallasbouff.pro/org.chromium.content.app.SandboxedProcessService0:0}
+    packageName=ci.dallasbouff.pro
+    processName=com.google.android.webview:sandboxed_process0:org.chromium.content.app.SandboxedProcessService0:0
+    baseDir=/data/app/~~Qgmv-y7S054guttSRDwSpA==/com.google.android.webview-O3I5qWDancGKFJKNUsQpuQ==/WebViewGoogle.apk
+    dataDir=/data/user/0/com.google.android.webview
+    app=ProcessRecord{2f52d79 4266:com.google.android.webview:sandboxed_process0:org.chromium.content.app.SandboxedProcessService0:0/u0a192i0}
+    isolationHostProc=ProcessRecord{2f52d79 4266:com.google.android.webview:sandboxed_process0:org.chromium.content.app.SandboxedProcessService0:0/u0a192i0}
+    mAllowWhileInUsePermissionInFgsReason=PROC_STATE_TOP
+    allowUiJobScheduling=false
+    recentCallingPackage=ci.dallasbouff.pro
+    recentCallingUid=10192
+    allowStartForeground=PROC_STATE_TOP
+    startForegroundCount=0
+    infoAllowStartForeground=[callingPackage: ci.dallasbouff.pro; callingUid: 10192; uidState: TOP ; uidBFSL: [BFSL]; intent: Intent { cmp=ci.dallasbouff.pro/org.chromium.content.app.SandboxedProcessService0:0 (has extras) }; code:PROC_STATE_TOP; tempAllowListReason:<null>; targetSdkVersion:34; callerTargetSdkVersion:34; startForegroundCount:0; bindFromPackage:null: isBindService:true]
+    createTime=-8m41s188ms startingBgTimeout=--
+    lastActivity=-8m40s180ms restartTime=-8m40s789ms createdFromFg=true
+    Bindings:
+    * IntentBindRecord{55ab686 CREATE}:
+      intent={cmp=ci.dallasbouff.pro/org.chromium.content.app.SandboxedProcessService0:0}
+      binder=android.os.BinderProxy@ce0bb47
+      requested=true received=true hasBound=true doRebind=false
+      * Client AppBindRecord{4a98f74 ProcessRecord{c6ffff3 3231:ci.dallasbouff.pro/u0a192}}
+        Per-process Connections:
+          ConnectionRecord{2f974ca u0 CR WPRI ci.dallasbouff.pro/org.chromium.content.app.SandboxedProcessService0:0:@9122835 flags=0x80000021}
+          ConnectionRecord{dae2815 u0 CR IMP ci.dallasbouff.pro/org.chromium.content.app.SandboxedProcessService0:0:@e25bdcc flags=0x80000041}
+    All Connections:
+      ConnectionRecord{2f974ca u0 CR WPRI ci.dallasbouff.pro/org.chromium.content.app.SandboxedProcessService0:0:@9122835 flags=0x80000021}
+      ConnectionRecord{dae2815 u0 CR IMP ci.dallasbouff.pro/org.chromium.content.app.SandboxedProcessService0:0:@e25bdcc flags=0x80000041}
+
+  * ServiceRecord{5c83114 u0 ci.dallasbouff.pro/.AlarmService}
+    intent={cmp=ci.dallasbouff.pro/.AlarmService}
+    packageName=ci.dallasbouff.pro
+    processName=ci.dallasbouff.pro
+    baseDir=/data/app/~~fmLefSpD43Ll3JcLmn7_-w==/ci.dallasbouff.pro-UAbisBDypEyDuGThi9FDtg==/base.apk
+    dataDir=/data/user/0/ci.dallasbouff.pro
+    app=ProcessRecord{c6ffff3 3231:ci.dallasbouff.pro/u0a192}
+    mAllowWhileInUsePermissionInFgsReason=PROC_STATE_TOP
+    allowUiJobScheduling=true
+    recentCallingPackage=ci.dallasbouff.pro
+    recentCallingUid=10192
+    allowStartForeground=PROC_STATE_TOP
+    startForegroundCount=1
+    infoAllowStartForeground=[callingPackage: ci.dallasbouff.pro; callingUid: 10192; uidState: TOP ; uidBFSL: [BFSL]; intent: Intent { cmp=ci.dallasbouff.pro/.AlarmService (has extras) }; code:PROC_STATE_TOP; tempAllowListReason:<null>; targetSdkVersion:34; callerTargetSdkVersion:34; startForegroundCount:0; bindFromPackage:null: isBindService:false]
+    isForeground=true foregroundId=1 types=40000008 foregroundNoti=Notification(channel=dbf_service shortcut=null contentView=null vibrate=null sound=null defaults=0x0 flags=0x62 color=0xfff5c04a vis=PRIVATE)
+    createTime=-8m41s360ms startingBgTimeout=--
+    lastActivity=-3s67ms restartTime=-8m41s360ms createdFromFg=true
+    startRequested=true delayedStop=false stopIfKilled=false callStart=true lastStartId=11
+ startCommandResult=1
+
+  Connection bindings to services:
+  * ConnectionRecord{2f974ca u0 CR WPRI ci.dallasbouff.pro/org.chromium.content.app.SandboxedProcessService0:0:@9122835 flags=0x80000021}
+    binding=AppBindRecord{4a98f74 ci.dallasbouff.pro/org.chromium.content.app.SandboxedProcessService0:0:ci.dallasbouff.pro}
+    conn=android.os.BinderProxy@9122835 flags=0x80000021
+  * ConnectionRecord{dae2815 u0 CR IMP ci.dallasbouff.pro/org.chromium.content.app.SandboxedProcessService0:0:@e25bdcc flags=0x80000041}
+    binding=AppBindRecord{4a98f74 ci.dallasbouff.pro/org.chromium.content.app.SandboxedProcessService0:0:ci.dallasbouff.pro}
+    conn=android.os.BinderProxy@e25bdcc flags=0x80000041

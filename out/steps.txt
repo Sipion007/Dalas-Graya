@@ -1,0 +1,12 @@
+[13:32:05] Préparation
+[13:32:10] 1. Premier lancement : écran de choix
+[13:32:20] 2. Espace restaurant et service d'alarme
+[13:33:00] 3. Appli fermée : nouvelle commande
+[13:33:26] 4. J'ai vu depuis la notification, puis retour de l'alarme
+[13:35:03] 5. Commande acceptée : l'alarme s'arrête
+[13:35:19] 6. Message : sonne une fois, J'ai vu définitif
+[13:37:31] 7. Appli ouverte : c'est l'appli qui gère, pas de double alarme
+[13:40:03] 8. Écran éteint et mode veille profonde (Doze)
+[13:40:46] 9. Livreur : position GPS envoyée en arrière-plan
+[13:41:12] 10. Redémarrage du téléphone
+[13:42:08] Fin
