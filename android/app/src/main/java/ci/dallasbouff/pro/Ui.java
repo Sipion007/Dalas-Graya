@@ -12,12 +12,12 @@ import android.widget.TextView;
 final class Ui {
     private Ui() {}
 
-    static final int BG = 0xFF0A0A0A;
+    static final int BG = 0xFF080808;
     static final int SURFACE = 0xFF141414;
     static final int LINE = 0xFF2A2A2A;
     static final int FG = 0xFFF4F2EC;
     static final int DIM = 0xFF9A978F;
-    static final int GOLD = 0xFFD4A537;
+    static final int GOLD = 0xFFF5C04A;
     static final int GOLD_INK = 0xFF0A0A0A;
     static final int ALERT = 0xFFE0705A;
 

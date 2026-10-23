@@ -65,8 +65,7 @@ log "2. Espace restaurant et service d'alarme"
 adb shell am start -n $PKG/.MainActivity --es dbf_test_token $TOK --es dbf_space restaurant >/dev/null; sleep 15; shot 01_espace_restaurant
 running && fgs && pass "service d'alarme démarré au premier plan" || fail "service d'alarme" "$(adb shell dumpsys activity services $PKG | head -20)"
 [ "$(cnt 'POLL ok')" -gt 0 ] && pass "le service interroge le serveur" || fail "interrogation serveur" "$(adb logcat -d -s DBF:* | tail -20)"
-adb shell uiautomator dump /sdcard/ui.xml >/dev/null 2>&1; adb pull /sdcard/ui.xml /tmp/ui_dash.xml >/dev/null 2>&1; cp /tmp/ui_dash.xml $OUT/ui_dashboard.xml
-grep -qi "connexion\|mot de passe\|email" /tmp/ui_dash.xml && pass "la page restaurant s'affiche dans l'appli" || fail "page restaurant" "texte de connexion introuvable"
+[ "$(cnt 'PAGE finished https://dalas-graya.vercel.app/dashboard.html')" -gt 0 ] && pass "la page restaurant s'affiche dans l'appli" || fail "page restaurant" "$(adb logcat -d -s DBF:* | grep PAGE)"
 c0=$(cnt 'RING start'); sleep 25
 [ "$(cnt 'RING start')" -eq "$c0" ] && pass "aucune alarme sans commande" || fail "alarme sans commande"
 
@@ -130,7 +129,24 @@ if tap_text "j'ai vu"; then waitfor 'RING ack' $c0 10 && pass "bouton J'ai vu de
 adb shell dumpsys deviceidle unforce >/dev/null; adb shell dumpsys battery reset
 item o3 false order true x x; sleep 25
 
-log "9. Redémarrage du téléphone"
+log "9. Livreur : position GPS envoyée en arrière-plan"
+adb shell pm grant $PKG android.permission.ACCESS_FINE_LOCATION
+adb shell pm grant $PKG android.permission.ACCESS_COARSE_LOCATION
+adb emu geo fix -6.4502 6.8770 >/dev/null 2>&1
+c0=$(cnt 'LOCATION on')
+adb shell am start -n $PKG/.MainActivity --es dbf_test_token $TOK --es dbf_test_role driver --es dbf_space driver >/dev/null; sleep 12
+[ "$(cnt 'PAGE finished https://dalas-graya.vercel.app/driver.html')" -gt 0 ] && pass "la page livreur s'affiche dans l'appli" || fail "page livreur"
+shot 05_espace_livreur
+adb shell input keyevent KEYCODE_HOME; sleep 3
+waitfor 'LOCATION on' $c0 15 && pass "suivi GPS du livreur actif appli fermée" || fail "suivi GPS livreur" "$(adb logcat -d -s DBF:* | grep -i 'location\|FGS' | tail -5)"
+adb shell dumpsys activity services $PKG > "$OUT/services_driver.txt" 2>&1
+grep -q "isForeground=true" "$OUT/services_driver.txt" && pass "service livreur au premier plan (type position)" || fail "service livreur"
+grep -qi "FGS location refused" "$OUT/logcat_tmp.txt" 2>/dev/null; adb logcat -d -s DBF:* | grep -q "FGS location refused" && fail "type position refusé" || pass "type position accepté par Android 14"
+adb emu geo fix -6.4510 6.8790 >/dev/null 2>&1; sleep 3
+adb shell am start -n $PKG/.MainActivity --es dbf_test_token $TOK --es dbf_test_role test --es dbf_space restaurant >/dev/null; sleep 6
+adb shell input keyevent KEYCODE_HOME; sleep 2
+
+log "10. Redémarrage du téléphone"
 adb reboot
 adb wait-for-device
 for i in $(seq 1 120); do [ "$(adb shell getprop sys.boot_completed 2>/dev/null | tr -d '\r')" = "1" ] && break; sleep 2; done

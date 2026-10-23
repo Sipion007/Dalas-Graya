@@ -68,6 +68,11 @@
   .w-title { font-size:12px; font-weight:700; color:var(--creamDim); margin-bottom:8px; }
   .w-item { border:1px solid var(--line); border-left-width:4px; background:var(--surface); border-radius:10px; padding:11px 12px; margin-bottom:8px; display:flex; flex-direction:column; gap:8px; }
   .w-item.bad { border-left-color:var(--chili); } .w-item.warn { border-left-color:var(--mango); } .w-item.old { border-left-color:#555; }
+  .w-item.ok { border-left-color:var(--palm, #5C8A63); }
+  .w-cov summary { cursor:pointer; list-style:none; }
+  .w-cov summary::-webkit-details-marker { display:none; }
+  .w-cov summary::after { content:' (afficher)'; color:var(--creamDim, #9A978F); font-weight:400; }
+  .w-cov[open] summary::after { content:' (masquer)'; }
   .w-main b { display:block; font-size:13.5px; } .w-main span { display:block; font-size:12px; color:var(--creamDim); margin-top:2px; line-height:1.4; }
   .w-main a { color:var(--cream); }
   .w-acts { display:flex; flex-wrap:wrap; gap:6px; align-items:center; }
@@ -289,7 +294,7 @@ const Alerts = (() => {
 
   // ----- Appli Android « Dallas Bouff' Pro » : alarme qui sonne même téléphone en poche -----
   const NATIVE = window.DBFAndroid || null;
-  const APK_URL = 'dallas-bouff-pro.apk';
+  const APK_URL = 'pro.html';
   let nativeState = null;
   let nativeErr = '';
   let nativeBusy = false;
@@ -615,7 +620,7 @@ const Alerts = (() => {
     const showPushBtn = pushState !== 'on' && pushState !== 'unsupported';
     const apkNote = isAndroid() && identityFn && ['restaurant', 'driver'].includes((identityFn() || {}).role)
       ? `<div class="ap-note">Sur Android, installez l'appli <b>Dallas Bouff' Pro</b> : l'alarme sonne alors même téléphone verrouillé, dans la poche.</div>
-         <div class="ap-btns"><a class="ap-apk" href="${APK_URL}" download>Télécharger l'appli Android</a></div>` : '';
+         <div class="ap-btns"><a class="ap-apk" href="${APK_URL}">Installer l'appli Android</a></div>` : '';
     const html = `<div class="ap">
       <div class="ap-row"><span>Son d'alerte</span><b class="${unlocked ? 'ok' : 'warn'}">${unlocked ? 'Activé' : 'Touchez Tester l\'alarme'}</b></div>
       <div class="ap-row"><span>Notifications (appli fermée)</span><b class="${pushCls}">${esc(pushTxt)}</b></div>
@@ -828,6 +833,7 @@ async function loadWatch() {
   const since = new Date(Date.now() - 10 * 24 * 3600 * 1000).toISOString();
   const { data: orders, error } = await client.from('orders').select('*').gte('created_at', since).order('created_at', { ascending: false });
   const { data: rests } = await client.from('restaurants').select('*').order('name');
+  const { data: coverage } = await client.rpc('admin_alert_coverage');
   if (error) return;
   const problems = watchProblems(orders || []);
   const paused = (rests || []).filter(r => r.accepting_orders === false);
@@ -840,7 +846,9 @@ async function loadWatch() {
       onAck: () => alertAckedAdd(ACK_KEY_ADMIN, urgent.map(p => p.key))
     });
   }
-  const sig = JSON.stringify([problems.map(p => [p.key, p.text]), paused.map(r => [r.id, r.paused_reason]), adminCancelOpen]);
+  const cov = (coverage || []).map(c => ({ ...c, level: c.android_active > 0 ? 'ok' : (c.push_devices > 0 ? 'warn' : 'bad') }))
+    .sort((a, b) => ({ bad: 0, warn: 1, ok: 2 }[a.level] - { bad: 0, warn: 1, ok: 2 }[b.level]) || String(a.name).localeCompare(String(b.name)));
+  const sig = JSON.stringify([problems.map(p => [p.key, p.text]), paused.map(r => [r.id, r.paused_reason]), adminCancelOpen, cov.map(c => [c.id, c.level])]);
   if (sig === watchSig) return;
   watchSig = sig;
   const el = document.getElementById('watch-box');
@@ -850,6 +858,8 @@ async function loadWatch() {
     ${paused.length ? `<div class="w-group"><div class="w-title">Restaurants en pause</div>${paused.map(r => `
       <div class="w-item ${r.paused_reason === 'auto' ? 'bad' : 'warn'}"><div class="w-main"><b>${escHtml(r.name)}</b><span>${r.paused_reason === 'auto' ? 'Bloqué automatiquement : une commande est restée 15 min sans réponse' : 'Mis en pause par le restaurant'}${r.paused_at ? ' · ' + timeAgo(r.paused_at) : ''}</span></div>
       <div class="w-acts">${r.whatsapp ? `<a class="w-btn" href="tel:+${escHtml(r.whatsapp)}">Appeler</a>` : ''}<button class="w-btn go" onclick="adminReopen('${r.id}')">Rouvrir</button></div></div>`).join('')}</div>` : ''}
+    ${cov.length ? `<details class="w-group w-cov"${cov.some(c => c.level === 'bad') ? ' open' : ''}><summary class="w-title">Alertes des partenaires · ${cov.filter(c => c.level !== 'bad').length} sur ${cov.length} reçoivent les alertes appli fermée</summary>${cov.map(c => `
+      <div class="w-item ${c.level === 'ok' ? 'ok' : c.level}"><div class="w-main"><b>${escHtml(c.name || '')}</b><span>${c.kind === 'driver' ? 'Livreur' : 'Restaurant'} · ${c.level === 'ok' ? 'Appli Android active : sonne même téléphone en poche' : (c.level === 'warn' ? 'Notifications activées, sans l\'appli Android' + (c.android_last ? ' (appli vue ' + timeAgo(c.android_last) + ')' : '') : 'Ne reçoit rien quand l\'appli est fermée' + (c.android_last ? ' (appli vue ' + timeAgo(c.android_last) + ')' : ''))}</span></div></div>`).join('')}</details>` : ''}
     <div class="w-group"><div class="w-title">Commandes à surveiller</div>
     ${problems.length ? problems.map(p => { const r = restOf(p.o.restaurant_id); return `
       <div class="w-item ${p.level}"><div class="w-main"><b>${escHtml(r.name || '')} · #${p.o.id.slice(0, 8).toUpperCase()}</b><span>${escHtml(p.text)} · ${escHtml(p.o.customer_name || '')} · <a href="tel:${escHtml(p.o.phone)}">${escHtml(p.o.phone)}</a> · ${money(p.o.total)}</span>${p.o.cancel_request_reason ? `<span>Motif du client : ${escHtml(p.o.cancel_request_reason)}</span>` : ''}</div>

@@ -74,7 +74,8 @@ public class MainActivity extends Activity {
         if (!BuildConfig.DEBUG || i == null) return;
         String tok = i.getStringExtra("dbf_test_token");
         if (tok != null) {
-            Prefs.setDevice(this, tok, "test", "Test");
+            String role = i.getStringExtra("dbf_test_role");
+            Prefs.setDevice(this, tok, role == null ? "test" : role, "Test");
             AlarmService.start(this, true);
         }
         String space = i.getStringExtra("dbf_space");
@@ -217,6 +218,7 @@ public class MainActivity extends Activity {
         }
 
         @Override public void onPageFinished(WebView v, String url) {
+            Log.i(AlarmService.TAG, "PAGE finished " + url);
             if (progress != null) progress.setVisibility(View.GONE);
         }
 

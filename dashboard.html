@@ -311,7 +311,7 @@ const Alerts = (() => {
 
   // ----- Appli Android « Dallas Bouff' Pro » : alarme qui sonne même téléphone en poche -----
   const NATIVE = window.DBFAndroid || null;
-  const APK_URL = 'dallas-bouff-pro.apk';
+  const APK_URL = 'pro.html';
   let nativeState = null;
   let nativeErr = '';
   let nativeBusy = false;
@@ -637,7 +637,7 @@ const Alerts = (() => {
     const showPushBtn = pushState !== 'on' && pushState !== 'unsupported';
     const apkNote = isAndroid() && identityFn && ['restaurant', 'driver'].includes((identityFn() || {}).role)
       ? `<div class="ap-note">Sur Android, installez l'appli <b>Dallas Bouff' Pro</b> : l'alarme sonne alors même téléphone verrouillé, dans la poche.</div>
-         <div class="ap-btns"><a class="ap-apk" href="${APK_URL}" download>Télécharger l'appli Android</a></div>` : '';
+         <div class="ap-btns"><a class="ap-apk" href="${APK_URL}">Installer l'appli Android</a></div>` : '';
     const html = `<div class="ap">
       <div class="ap-row"><span>Son d'alerte</span><b class="${unlocked ? 'ok' : 'warn'}">${unlocked ? 'Activé' : 'Touchez Tester l\'alarme'}</b></div>
       <div class="ap-row"><span>Notifications (appli fermée)</span><b class="${pushCls}">${esc(pushTxt)}</b></div>

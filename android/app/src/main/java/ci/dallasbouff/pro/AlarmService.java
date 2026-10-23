@@ -196,7 +196,7 @@ public class AlarmService extends Service {
                 .setStyle(new Notification.BigTextStyle().bigText(text))
                 .setOngoing(true)
                 .setShowWhen(false)
-                .setColor(0xFFD4A537)
+                .setColor(0xFFF5C04A)
                 .setContentIntent(openAppIntent(this))
                 .build();
     }
@@ -474,7 +474,7 @@ public class AlarmService extends Service {
                 .setOngoing(true)
                 .setAutoCancel(false)
                 .setOnlyAlertOnce(true)
-                .setColor(0xFFD4A537)
+                .setColor(0xFFF5C04A)
                 .setContentIntent(openAppIntent(this))
                 .setFullScreenIntent(fullPi, true)
                 .addAction(new Notification.Action.Builder(null, rep ? "J'ai vu (1 min 30)" : "J'ai vu", ackIntent(this)).build())
@@ -494,7 +494,7 @@ public class AlarmService extends Service {
                 .setContentText(text)
                 .setStyle(new Notification.BigTextStyle().bigText(text))
                 .setAutoCancel(true)
-                .setColor(0xFFD4A537)
+                .setColor(0xFFF5C04A)
                 .setContentIntent(openAppIntent(this))
                 .build());
     }
