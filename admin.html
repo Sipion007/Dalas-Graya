@@ -12,6 +12,8 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Work+Sans:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 <style>
   :root {
     --bg: #080808; --surface: #111111; --raised: #171717;
@@ -119,11 +121,14 @@
     .side-logout:hover { color:var(--cream); border-color:#3A3A3A; }
 
     .dash { display:grid; gap:20px; grid-template-columns: repeat(3, minmax(0,1fr));
-      grid-template-rows: auto auto min-content 1fr auto auto auto auto auto auto auto;
+      grid-template-rows: auto auto auto min-content 1fr auto auto auto auto auto auto auto auto auto auto;
     .pn-wa { grid-area:wa; }
     .wa-grid { display:grid; grid-template-columns: minmax(0,1.3fr) minmax(0,1fr); gap:20px; align-items:start; }
     .wa-list { max-height:520px; }
-      grid-template-areas: "kpi kpi kpi" "live live live" "watch watch alerts" "watch watch acc" "manage manage manage" "clients clients clients" "wa wa wa" "rev dish photo" "avis avis avis" "drv drv drv" "hist hist hist"; align-items:start; }
+      grid-template-areas: "kpi kpi kpi" "live live live" "map map map" "watch watch alerts" "watch watch acc" "pay pay cash" "report lb lb" "manage manage manage" "clients clients clients" "wa wa wa" "promo promo fraud" "rev dish photo" "avis avis avis" "drv drv drv" "hist hist hist"; align-items:start; }
+    .pn-map { grid-area:map; } .pn-pay { grid-area:pay; } .pn-cash { grid-area:cash; } .pn-report { grid-area:report; } .pn-lb { grid-area:lb; } .pn-promo { grid-area:promo; } .pn-fraud { grid-area:fraud; }
+    #live-map { height:460px; }
+    .pr-grid { display:grid; grid-template-columns: minmax(0,1fr) minmax(0,1fr); gap:20px; align-items:start; }
     #manage-box { display:grid; grid-template-columns: repeat(auto-fill, minmax(420px, 1fr)); gap:8px; }
     #manage-box .mg-row { margin:0; }
     #clients-box { display:grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap:8px; align-content:start; }
@@ -171,7 +176,7 @@
     .pn-kpi .stats-grid { grid-template-columns: repeat(6, minmax(0,1fr)); }
     .stat-value { font-size:30px; }
     .dash { grid-template-columns: repeat(4, minmax(0,1fr));
-      grid-template-areas: "kpi kpi kpi kpi" "live live live live" "watch watch watch alerts" "watch watch watch acc" "manage manage manage manage" "clients clients clients clients" "wa wa wa wa" "rev dish photo photo" "avis avis avis avis" "drv drv drv drv" "hist hist hist hist"; }
+      grid-template-areas: "kpi kpi kpi kpi" "live live live live" "map map map map" "watch watch watch alerts" "watch watch watch acc" "pay pay cash cash" "report report lb lb" "manage manage manage manage" "clients clients clients clients" "wa wa wa wa" "promo promo fraud fraud" "rev dish photo photo" "avis avis avis avis" "drv drv drv drv" "hist hist hist hist"; }
   }
   .pn-head2 { display:flex; align-items:center; justify-content:space-between; gap:10px; }
   .pn-head2 .section-title { margin-bottom:10px; }
@@ -250,6 +255,32 @@
   .av-r { font-size:12px; margin-top:5px; color:#BDBDBD; border-left:3px solid var(--mango); padding-left:8px; }
   .av-rank { margin-bottom:10px; }
   .opt-box p { font-size:12.5px; color:var(--creamDim); margin:0 0 10px; line-height:1.45; }
+  #live-map { height:340px; border-radius:12px; border:1px solid var(--line); background:#111; z-index:0; }
+  .map-legend { display:flex; gap:14px; flex-wrap:wrap; font-size:12px; color:var(--creamDim); margin-top:8px; }
+  .map-legend i { display:inline-block; width:10px; height:10px; border-radius:50%; margin-right:5px; vertical-align:-1px; }
+  .leaflet-popup-content { font-family:inherit; font-size:12.5px; }
+  .dbf-pin { border-radius:50%; border:2px solid #080808; box-shadow:0 0 0 2px rgba(255,255,255,.25); }
+  .pay-v { background:var(--surface); border:1px solid var(--mango); border-radius:12px; padding:11px 13px; margin-bottom:8px; font-size:13px; line-height:1.5; }
+  .pay-v .mono { font-family:'JetBrains Mono', monospace; }
+  .set-row { display:grid; grid-template-columns: 130px 1fr; gap:8px; align-items:center; margin-bottom:6px; font-size:13px; }
+  .set-row input, .set-row select { margin:0; padding:8px 10px; font-size:13px; }
+  .sub-h { font-size:12px; color:var(--mango); text-transform:uppercase; letter-spacing:.5px; margin:16px 0 8px; font-weight:700; }
+  .cash-row { display:flex; align-items:center; gap:10px; flex-wrap:wrap; background:var(--surface); border:1px solid var(--line); border-radius:10px; padding:10px 12px; margin-bottom:8px; }
+  .cash-row b { flex:1; min-width:120px; font-size:13.5px; } .cash-row small { display:block; color:var(--creamDim); font-weight:500; font-size:11.5px; }
+  .cash-row .mono { font-family:'JetBrains Mono', monospace; font-weight:700; color:var(--mango); }
+  .rep-grid { display:grid; grid-template-columns: repeat(2, minmax(0,1fr)); gap:8px; }
+  .rep-k { background:var(--surface); border:1px solid var(--line); border-radius:10px; padding:10px; }
+  .rep-k div { font-size:10.5px; color:var(--creamDim); text-transform:uppercase; letter-spacing:.4px; }
+  .rep-k b { display:block; font-size:19px; margin-top:3px; font-family:'JetBrains Mono', monospace; }
+  .lbx-row { display:grid; grid-template-columns: 34px 1fr auto; gap:8px; align-items:center; padding:9px 4px; border-bottom:1px solid #1c1c1c; font-size:13px; }
+  .lbx-row .n { font-family:'Bebas Neue', sans-serif; font-size:22px; color:var(--mango); }
+  .lbx-row small { color:var(--creamDim); font-size:11.5px; display:block; }
+  .pc-row { display:flex; align-items:center; gap:8px; flex-wrap:wrap; background:var(--surface); border:1px solid var(--line); border-radius:10px; padding:9px 12px; margin-bottom:7px; font-size:13px; }
+  .pc-row.off { opacity:.55; }
+  .pc-row .code { font-family:'JetBrains Mono', monospace; font-weight:700; color:var(--mango); letter-spacing:.5px; }
+  .pc-row span { color:var(--creamDim); font-size:12px; flex:1; min-width:140px; }
+  .tag-bad { display:inline-block; font-size:11px; font-weight:700; color:#F0A99A; border:1px solid var(--chili); border-radius:20px; padding:2px 8px; margin-left:6px; vertical-align:2px; }
+  .muted { font-size:12px; color:var(--creamDim); line-height:1.5; }
 </style>
 </head>
 <body>
@@ -288,6 +319,11 @@
     <section class="pn pn-live">
     <div class="pn-head2"><div class="section-title" id="section-live">Commandes en cours</div><span class="live-dot">En direct</span></div>
     <div id="live-box"><div class="empty">Chargement…</div></div>
+    </section>
+    <section class="pn pn-map">
+    <div class="pn-head2"><div class="section-title" id="section-map">Carte en direct</div><span class="cl-count" id="map-count"></span></div>
+    <div id="live-map"></div>
+    <div class="map-legend"><span><i style="background:#3FB27F"></i>Livreurs disponibles</span><span><i style="background:#E5484D"></i>Livreurs en course</span><span><i style="background:#F2A93B"></i>Clients à livrer</span><span><i style="background:#8AA4FF"></i>Restaurants</span></div>
     </section>
     <section class="pn pn-watch">
     <div class="section-title" id="section-watch" style="margin-top:0;">À surveiller</div>
@@ -341,6 +377,22 @@
     </div>
 
     </section>
+    <section class="pn pn-pay">
+    <div class="section-title" id="section-pay">Paiements Mobile Money</div>
+    <div id="pay-box"><div class="empty">Chargement…</div></div>
+    </section>
+    <section class="pn pn-cash">
+    <div class="section-title" id="section-cash">Caisse des livreurs</div>
+    <div id="cash-box"><div class="empty">Chargement…</div></div>
+    </section>
+    <section class="pn pn-report">
+    <div class="section-title" id="section-report">Rapport du jour</div>
+    <div id="report-box"><div class="empty">Chargement…</div></div>
+    </section>
+    <section class="pn pn-lb">
+    <div class="section-title">Classement des livreurs</div>
+    <div id="lb-box"><div class="empty">Chargement…</div></div>
+    </section>
     <section class="pn pn-manage">
     <div class="section-title" id="section-manage">Gérer les restaurants</div>
     <div id="manage-box"><div class="empty">Chargement…</div></div>
@@ -353,6 +405,14 @@
     <section class="pn pn-wa">
     <div class="pn-head2"><div class="section-title" id="section-wa">Communication WhatsApp</div><span class="cl-count" id="wa-count"></span></div>
     <div id="wa-box"></div>
+    </section>
+    <section class="pn pn-promo">
+    <div class="section-title" id="section-promo">Codes promo et parrainage</div>
+    <div id="promo-box"><div class="empty">Chargement…</div></div>
+    </section>
+    <section class="pn pn-fraud">
+    <div class="section-title">Clients bloqués</div>
+    <div id="fraud-box"><div class="empty">Chargement…</div></div>
     </section>
     <section class="pn pn-rev">
     <div class="section-title">Chiffre d'affaires par restaurant</div>
@@ -405,6 +465,18 @@
   <button class="nav-item desk-only" data-target="section-watch" onclick="document.getElementById('section-watch').scrollIntoView({behavior:'smooth'})">
     <svg viewBox="0 0 24 24"><path d="M12 3l9 16H3z"/><line x1="12" y1="10" x2="12" y2="14"/><line x1="12" y1="17" x2="12" y2="17.5"/></svg>
     <span>À surveiller</span>
+  </button>
+  <button class="nav-item desk-only" data-target="section-map" onclick="document.getElementById('section-map').scrollIntoView({behavior:'smooth'})">
+    <svg viewBox="0 0 24 24"><path d="M9 4L3 6v14l6-2 6 2 6-2V4l-6 2z"/><line x1="9" y1="4" x2="9" y2="18"/><line x1="15" y1="6" x2="15" y2="20"/></svg>
+    <span>Carte</span>
+  </button>
+  <button class="nav-item desk-only" data-target="section-pay" onclick="document.getElementById('section-pay').scrollIntoView({behavior:'smooth'})">
+    <svg viewBox="0 0 24 24"><rect x="3" y="6" width="18" height="13" rx="2"/><line x1="3" y1="10" x2="21" y2="10"/><line x1="7" y1="15" x2="11" y2="15"/></svg>
+    <span>Paiements et caisse</span>
+  </button>
+  <button class="nav-item desk-only" data-target="section-promo" onclick="document.getElementById('section-promo').scrollIntoView({behavior:'smooth'})">
+    <svg viewBox="0 0 24 24"><path d="M3 12V4h8l10 10-8 8z"/><circle cx="7.5" cy="8.5" r="1.5"/></svg>
+    <span>Promos</span>
   </button>
   <button class="nav-item desk-only" data-target="section-manage" onclick="document.getElementById('section-manage').scrollIntoView({behavior:'smooth'})">
     <svg viewBox="0 0 24 24"><path d="M4 10h16v10H4z"/><path d="M3 10l2-6h14l2 6"/><path d="M9 20v-5h6v5"/></svg>
@@ -1257,7 +1329,7 @@ async function loadLive() {
 function renderLive(force) {
   const el = document.getElementById('live-box');
   if (!el) return;
-  const sig = JSON.stringify([liveOrders.map(o => [o.id, o.status, o.driver_id, o.collected_at, o.cancel_requested_at]), Object.keys(liveMsgs).map(k => [k, liveMsgs[k].length]), liveOpen, liveDrivers.length]);
+  const sig = JSON.stringify([liveOrders.map(o => [o.id, o.status, o.driver_id, o.collected_at, o.cancel_requested_at, o.payment_status]), Object.keys(liveMsgs).map(k => [k, liveMsgs[k].length]), liveOpen, liveDrivers.length]);
   if (!force && sig === liveSig) return;
   const focused = document.activeElement && el.contains(document.activeElement) && /INPUT|SELECT|TEXTAREA/.test(document.activeElement.tagName);
   if (!force && focused) return;
@@ -1274,6 +1346,7 @@ function renderLive(force) {
       <div class="lv-line"><b>${escHtml(r.name || '—')}</b> · ${money(o.total)}</div>
       <div class="lv-line"><span>Client :</span> <button class="link-client" onclick="openCustomer('${o.customer_id || ''}', '${escHtml(o.phone || '')}')">${escHtml(o.customer_name || 'Client')}</button> · <a href="${telLink(o.phone)}">${escHtml(o.phone || '')}</a>${o.address ? ` · <span>${escHtml(o.address)}</span>` : ''}</div>
       <div class="lv-line"><span>Livreur :</span> ${d ? `<b>${escHtml(d.name)}</b> · <a href="${telLink(d.phone)}">${escHtml(d.phone || '')}</a>` : '<span>aucun</span>'}</div>
+      ${liveExtraHtml(o)}
       <div class="lv-row">
         <a class="w-btn go" href="dashboard.html?as=${o.restaurant_id}">Gérer</a>
         ${st === 'Reçue' ? `<select id="lv-prep-${o.id}" style="flex:0 0 auto; min-width:110px;"><option value="15">15 min</option><option value="20" selected>20 min</option><option value="30">30 min</option><option value="45">45 min</option><option value="60">1 h</option></select><button class="w-btn go" onclick="adminAccept('${o.id}')">Accepter</button>` : ''}
@@ -1293,6 +1366,25 @@ function renderLive(force) {
         <div class="lv-row"><input id="lv-msg-${o.id}" maxlength="500" placeholder="Écrire au client, au restaurant et au livreur…" onkeydown="if(event.key==='Enter') adminSendMsg('${o.id}')" /><button class="w-btn go" onclick="adminSendMsg('${o.id}')">Envoyer</button></div>` : ''}
     </div>`;
   }).join('');
+}
+const PAY_LABEL = { cash: 'Espèces', wave: 'Wave', orange_money: 'Orange Money', mtn_money: 'MTN MoMo', moov_money: 'Moov Money' };
+const PAY_ST = { a_verifier: 'à vérifier', confirme: 'confirmé', refuse: 'non reçu', a_la_livraison: 'à la livraison' };
+function liveExtraHtml(o) {
+  let h = '';
+  const disc = Number(o.discount_food || 0) + Number(o.discount_delivery || 0);
+  if (disc) h += `<div class="lv-line"><span>Réduction :</span> ${escHtml(o.discount_label || o.promo_code || 'offre')} · −${money(disc)}</div>`;
+  if (o.payment_method && o.payment_method !== 'cash') {
+    h += `<div class="lv-line"><span>Paiement :</span> <b>${PAY_LABEL[o.payment_method] || 'Mobile Money'}</b> · réf. <b class="mono">${escHtml(o.payment_ref || '—')}</b> · ${PAY_ST[o.payment_status] || escHtml(o.payment_status || '')}</div>`;
+    if (o.payment_status === 'a_verifier') h += `<div class="lv-row"><button class="w-btn go" onclick="adminConfirmPay('${o.id}', true)">Paiement reçu</button><button class="w-btn danger" onclick="adminConfirmPay('${o.id}', false)">Pas reçu : le client paiera en espèces</button></div>`;
+  }
+  if (o.needs_call) h += `<div class="lv-line" style="color:var(--mango); font-weight:700;">Première commande d'un montant élevé : appelez le client pour confirmer avant de lancer.</div>`;
+  return h;
+}
+async function adminConfirmPay(id, ok) {
+  if (!ok && !confirm("Confirmer que l'argent n'est pas arrivé ? Le client et le livreur seront prévenus : le livreur encaissera en espèces.")) return;
+  const { error } = await client.rpc('admin_confirm_payment', { p_order: id, p_ok: ok });
+  if (error) { alert('Action impossible pour le moment.'); return; }
+  await loadLive(); renderLive(true); loadGrowth();
 }
 function liveToggle(kind, id) { liveOpen[kind][id] = !liveOpen[kind][id]; if (!liveOpen[kind][id]) delete liveOpen[kind][id]; renderLive(true); const f = document.getElementById((kind === 'msg' ? 'lv-msg-' : 'lv-cancel-') + id); if (f) f.focus(); }
 async function adminAccept(id) {
@@ -1363,6 +1455,9 @@ async function loadClients() {
   (meta || []).forEach(m => { customersMeta[m.customer_id] = m; });
   renderClients();
   renderWA();
+  renderFraud();
+  renderPromo();
+  renderReport();
 }
 function digits(p) { return String(p || '').replace(/\D/g, '').slice(-8); }
 function ordersOfCustomer(c) {
@@ -1392,7 +1487,7 @@ function renderClients() {
   el.innerHTML = rows.slice(0, 300).map(x => {
     const done = x.orders.filter(o => o.status === 'Livrée');
     return `<button class="cl-row" onclick="openCustomer('${x.c.id || ''}', '${escHtml(x.c.phone || '')}')">
-      <b>${escHtml(x.c.name || 'Client')}${x.c.guest ? ' · sans compte' : ''}</b><em>${x.orders.length} commande${x.orders.length > 1 ? 's' : ''}</em>
+      <b>${escHtml(x.c.name || 'Client')}${x.c.guest ? ' · sans compte' : ''}${x.c.blocked ? '<span class="tag-bad">Bloqué</span>' : ''}</b><em>${x.orders.length} commande${x.orders.length > 1 ? 's' : ''}</em>
       <span>${escHtml(x.c.phone || '')}</span><span style="text-align:right">${done.length ? money(done.reduce((a, o) => a + (o.total || 0), 0)) : ''}</span>
     </button>`;
   }).join('');
@@ -1437,7 +1532,9 @@ async function openCustomer(id, phone) {
     <div class="cp-head"><div><div class="cp-name">${escHtml(c.name || 'Client')}</div>
       <div class="cp-sub">${escHtml(c.phone || '')}${meta.email && !/@maquisexpress|@dallas/i.test(meta.email) ? ' · ' + escHtml(meta.email) : ''}<br>${c.guest ? 'Commande sans compte' : 'Inscrit le ' + fmtD(c.created_at)}${meta.last_sign_in_at ? ' · dernière connexion ' + timeAgo(meta.last_sign_in_at) : ''}${c.guest ? '' : (meta.push_devices ? ' · notifications activées' : ' · notifications non activées')}</div></div>
       <button class="cp-close" onclick="closeCustomer()">Fermer</button></div>
-    <div class="lv-row">${c.phone ? `<a class="w-btn go" href="${telLink(c.phone)}">Appeler</a><a class="w-btn" href="${waLink(c.phone, '')}" target="_blank" rel="noopener">WhatsApp</a>` : ''}</div>
+    <div class="lv-row">${c.phone ? `<a class="w-btn go" href="${telLink(c.phone)}">Appeler</a><a class="w-btn" href="${waLink(c.phone, '')}" target="_blank" rel="noopener">WhatsApp</a>` : ''}${c.id ? `<button class="w-btn" onclick="adminGiveCredit('${c.id}')">Offrir une livraison</button><button class="w-btn ${c.blocked ? 'go' : 'danger'}" onclick="adminBlock('${c.id}', ${c.blocked ? 'false' : 'true'})">${c.blocked ? 'Débloquer' : 'Bloquer ce client'}</button>` : ''}</div>
+    ${c.blocked ? `<div class="pay-v" style="border-color:var(--chili);">Compte bloqué${c.blocked_reason ? ' : ' + escHtml(c.blocked_reason) : ''}. Il ne peut plus commander.</div>` : ''}
+    ${c.id ? `<div class="cp-sub">Fidélité : ${Number(c.delivered_count || 0)} livraison${Number(c.delivered_count || 0) > 1 ? 's' : ''} · ${Number(c.free_deliveries || 0)} livraison${Number(c.free_deliveries || 0) > 1 ? 's' : ''} offerte${Number(c.free_deliveries || 0) > 1 ? 's' : ''} en réserve${c.referral_code ? ' · code parrain <b class="mono">' + escHtml(c.referral_code) + '</b>' : ''}${c.referred_by ? ' · parrainé par ' + escHtml((allCustomers.find(x => x.id === c.referred_by) || {}).name || 'un client') : ''}${Number(c.no_show_count || 0) ? ' · <span style="color:#F0A99A">' + c.no_show_count + ' absence' + (c.no_show_count > 1 ? 's' : '') + ' à la livraison</span>' : ''}${allCustomers.filter(x => x.referred_by === c.id).length ? ' · a parrainé ' + allCustomers.filter(x => x.referred_by === c.id).length + ' personne(s)' : ''}</div>` : ''}
     <div class="cp-kpis">
       <div class="cp-kpi"><div>Commandes</div><b>${orders.length}</b></div>
       <div class="cp-kpi"><div>Livrées</div><b>${done.length}</b></div>
@@ -1464,6 +1561,20 @@ async function openCustomer(id, phone) {
     <div class="cp-sec"><h4>Toutes ses commandes</h4>${orders.length ? orders.map(o => `<div class="cp-li"><span>#${o.id.slice(0, 8).toUpperCase()} · ${escHtml(restById(o.restaurant_id).name || '')}<br><span style="color:var(--creamDim); font-size:12px;">${new Date(o.created_at).toLocaleString('fr-FR', { day: '2-digit', month: '2-digit', year: '2-digit', hour: '2-digit', minute: '2-digit' })}${o.status === 'Annulée' && o.cancel_reason ? ' · ' + escHtml(o.cancel_reason) : ''}</span></span><span>${escHtml(o.status)}<br>${money(o.total)}</span></div>`).join('') : '<div class="cp-sub">Aucune commande.</div>'}</div>
   </div>`;
   document.body.appendChild(m);
+}
+async function adminGiveCredit(id) {
+  const n = Number(prompt('Combien de livraisons offrir à ce client ?', '1'));
+  if (!n || n < 1 || n > 20) return;
+  const { error } = await client.rpc('admin_give_credit', { p_customer: id, p_n: n });
+  if (error) { alert('Action impossible pour le moment.'); return; }
+  await loadClients(); openCustomer(id);
+}
+async function adminBlock(id, blocked) {
+  let reason = '';
+  if (blocked) { reason = prompt('Motif du blocage (visible seulement par vous) :', 'Absent plusieurs fois à la livraison'); if (reason === null) return; }
+  const { error } = await client.rpc('admin_set_customer_block', { p_customer: id, p_blocked: blocked, p_reason: reason || null });
+  if (error) { alert('Action impossible pour le moment.'); return; }
+  await loadClients(); renderFraud(); openCustomer(id);
 }
 function closeCustomer() { const m = document.getElementById('cp-modal'); if (m) m.remove(); }
 document.addEventListener('keydown', (e) => { if (e.key === 'Escape') closeCustomer(); });
@@ -1628,11 +1739,13 @@ function driverStats(d) {
   const fees = done.reduce((a, o) => a + (o.delivery_fee || 0), 0);
   const today = new Date(); today.setHours(0, 0, 0, 0);
   const doneToday = done.filter(o => new Date(o.delivered_at || o.created_at) >= today);
-  return { mine, done, cancelled, active, avgMin, cash, fees, doneToday, last: mine[0] };
+  const rated = mine.filter(o => Number(o.driver_rating) > 0);
+  const rating = rated.length ? rated.reduce((a, o) => a + Number(o.driver_rating), 0) / rated.length : null;
+  return { mine, done, cancelled, active, avgMin, cash, fees, doneToday, last: mine[0], rated, rating };
 }
 function driverStatsLine(d) {
   const s = driverStats(d);
-  return `<div class="drv-stats"><b>${s.done.length}</b> course${s.done.length > 1 ? 's' : ''} livrée${s.done.length > 1 ? 's' : ''} · <b>${money(s.cash)}</b> encaissés${s.avgMin ? ' · ' + s.avgMin + ' min en moyenne' : ''}${s.last ? ' · dernière ' + timeAgo(s.last.created_at) : ''}</div>`;
+  return `<div class="drv-stats"><b>${s.done.length}</b> course${s.done.length > 1 ? 's' : ''} livrée${s.done.length > 1 ? 's' : ''} · <b>${money(s.cash)}</b> encaissés${s.avgMin ? ' · ' + s.avgMin + ' min en moyenne' : ''}${s.rating ? ' · note <b>' + s.rating.toFixed(1).replace('.', ',') + '</b> / 5' : ''}${s.last ? ' · dernière ' + timeAgo(s.last.created_at) : ''}</div>`;
 }
 async function openDriver(id) {
   const d = (allDrivers || []).find(x => x.id === id);
@@ -1669,6 +1782,8 @@ async function openDriver(id) {
       <div class="cp-kpi"><div>Frais de livraison</div><b>${money(s.fees)}</b></div>
       <div class="cp-kpi"><div>Temps moyen</div><b>${s.avgMin ? s.avgMin + ' min' : '—'}</b></div>
     </div>
+    ${s.rated.length ? `<div class="cp-sec"><h4>Notes des clients (${s.rated.length})</h4><div class="cp-li"><span>Note moyenne</span><span style="color:var(--mango)">${s.rating.toFixed(1).replace('.', ',')} / 5</span></div>${s.rated.filter(o => o.driver_rating_comment).slice(0, 8).map(o => `<div class="cp-li"><span>${'★'.repeat(o.driver_rating)} ${escHtml(o.driver_rating_comment)}</span><span>${escHtml(o.customer_name || '')}</span></div>`).join('')}</div>` : ''}
+    ${cashDue(d.id).n ? `<div class="pay-v">Argent à récupérer : <b class="mono">${money(cashDue(d.id).amount)}</b> pour ${cashDue(d.id).n} course${cashDue(d.id).n > 1 ? 's' : ''} non réglée${cashDue(d.id).n > 1 ? 's' : ''}. <button class="w-btn go" onclick="settleDriver('${d.id}')">Argent reçu</button></div>` : ''}
     <div class="cp-sec"><h4>Aujourd'hui</h4>
       <div class="cp-li"><span>Courses livrées</span><span>${s.doneToday.length}</span></div>
       <div class="cp-li"><span>Argent à récupérer auprès du livreur</span><span>${money(s.doneToday.reduce((a, o) => a + (o.total || 0), 0))}</span></div>
@@ -1720,6 +1835,7 @@ async function loadDrivers() {
   allDrivers = data || [];
   const order = { pending: 0, rejected: 1, approved: 2 };
   allDrivers.sort((a, b) => (order[a.verification] ?? 3) - (order[b.verification] ?? 3));
+  renderCash();
   const el = document.getElementById('drivers-list');
   if (!allDrivers.length) { el.innerHTML = '<div class="empty">Aucun livreur inscrit.</div>'; return; }
   const labels = { pending: 'En attente', approved: 'Validé', rejected: 'Refusé' };
@@ -1790,6 +1906,7 @@ async function loadData() {
   loadClients();
   loadLive();
   loadDrivers();
+  loadGrowth();
 
   const sel = document.getElementById('restaurant-filter');
   sel.innerHTML = '<option value="">Tous les restaurants</option>' +
@@ -1887,6 +2004,311 @@ function renderOrdersList() {
       </div>
     `;
   }).join('');
+}
+
+// ================= Croissance : paiements, caisse, promos, rapport, carte =================
+let promoCodes = [], momoSettings = {}, driverBonus = {}, leaderboard = [], payQueue = [], blocklist = [], backupFiles = [];
+const promoForm = { kind: 'percent' };
+async function loadGrowth() {
+  if (!adminLoggedIn) return;
+  const [pc, st, lb, pq, bl, bk] = await Promise.all([
+    client.from('promo_codes').select('*').order('created_at', { ascending: false }),
+    client.from('app_settings').select('key, value'),
+    client.rpc('driver_leaderboard'),
+    client.from('orders').select('*').eq('payment_status', 'a_verifier').order('created_at', { ascending: false }).limit(50),
+    client.from('phone_blocklist').select('*').order('created_at', { ascending: false }),
+    client.storage.from('backups').list('', { limit: 30, sortBy: { column: 'name', order: 'desc' } })
+  ]);
+  promoCodes = pc.data || [];
+  const settings = {}; (st.data || []).forEach(r => { settings[r.key] = r.value; });
+  momoSettings = settings.momo_numbers || {};
+  driverBonus = settings.driver_bonus || {};
+  leaderboard = lb.data || [];
+  payQueue = (pq.data || []).filter(o => o.status !== 'Annulée');
+  blocklist = bl.data || [];
+  backupFiles = ((bk && bk.data) || []).filter(f => /\.json$/.test(f.name));
+  renderPay(); renderCash(); renderReport(); renderLb(); renderPromo(); renderFraud();
+  initLiveMap();
+}
+
+// ----- Paiements Mobile Money -----
+function renderPay() {
+  const el = document.getElementById('pay-box');
+  if (!el) return;
+  if (document.activeElement && el.contains(document.activeElement) && document.activeElement.tagName === 'INPUT') return;
+  const recent = (allOrders || []).filter(o => o.payment_method && o.payment_method !== 'cash' && o.payment_status !== 'a_verifier').slice(0, 6);
+  const keys = ['wave', 'orange_money', 'mtn_money', 'moov_money'];
+  el.innerHTML = `<div class="pr-grid"><div>
+    <div class="sub-h" style="margin-top:0;">À vérifier (${payQueue.length})</div>
+    ${payQueue.length ? payQueue.map(o => `<div class="pay-v">
+      <b>${escHtml(o.customer_name || 'Client')}</b> · ${escHtml(restById(o.restaurant_id).name || '')} · ${timeAgo(o.created_at)}<br>
+      <b class="mono">${money(o.total)}</b> par ${PAY_LABEL[o.payment_method] || 'Mobile Money'} · réf. <b class="mono">${escHtml(o.payment_ref || '—')}</b> · ${escHtml(o.phone || '')}
+      <div class="lv-row"><button class="w-btn go" onclick="adminConfirmPay('${o.id}', true)">Paiement reçu</button><button class="w-btn danger" onclick="adminConfirmPay('${o.id}', false)">Pas reçu</button></div>
+    </div>`).join('') : '<div class="muted">Aucun paiement en attente. Comparez la référence avec le SMS reçu sur votre téléphone avant de confirmer.</div>'}
+    ${recent.length ? `<div class="sub-h">Derniers paiements traités</div>${recent.map(o => `<div class="cp-li"><span>${escHtml(o.customer_name || 'Client')} · ${PAY_LABEL[o.payment_method] || ''} · réf. ${escHtml(o.payment_ref || '')}</span><span>${money(o.total)} · ${PAY_ST[o.payment_status] || ''}</span></div>`).join('')}` : ''}
+  </div><div>
+    <div class="sub-h" style="margin-top:0;">Vos numéros marchands</div>
+    <div class="muted" style="margin-bottom:8px;">Les clients voient seulement les moyens de paiement dont le numéro est rempli. Laissez vide pour ne pas proposer un moyen.</div>
+    ${keys.map(k => `<div class="set-row"><label for="momo-${k}">${PAY_LABEL[k]}</label><input id="momo-${k}" inputmode="tel" maxlength="20" placeholder="Ex. 07 00 00 00 00" value="${escHtml(momoSettings[k] || '')}"></div>`).join('')}
+    <button class="w-btn go" style="margin-top:6px;" onclick="saveMomo()">Enregistrer les numéros</button>
+    <div id="momo-ok" class="muted" style="color:var(--palm); margin-top:6px;"></div>
+  </div></div>`;
+}
+async function saveMomo() {
+  const v = {};
+  ['wave', 'orange_money', 'mtn_money', 'moov_money'].forEach(k => { const x = (document.getElementById('momo-' + k).value || '').trim(); if (x) v[k] = x; });
+  const { error } = await client.rpc('admin_set_setting', { p_key: 'momo_numbers', p_value: v });
+  if (error) { alert('Enregistrement impossible. Réessayez.'); return; }
+  momoSettings = v;
+  const ok = document.getElementById('momo-ok'); if (ok) ok.textContent = Object.keys(v).length ? 'Enregistré. Les clients peuvent maintenant payer par ' + Object.keys(v).map(k => PAY_LABEL[k]).join(', ') + '.' : 'Enregistré. Paiement Mobile Money désactivé.';
+}
+
+// ----- Caisse des livreurs -----
+function cashDue(driverId) {
+  const list = (allOrders || []).filter(o => o.driver_id === driverId && o.status === 'Livrée' && !o.cash_settled_at);
+  const due = list.filter(o => !o.payment_method || o.payment_method === 'cash' || o.payment_status !== 'confirme');
+  return { n: list.length, amount: due.reduce((a, o) => a + Number(o.total || 0), 0), fees: due.reduce((a, o) => a + Number(o.delivery_fee || 0), 0), oldest: list.length ? list[list.length - 1].delivered_at || list[list.length - 1].created_at : null };
+}
+function renderCash() {
+  const el = document.getElementById('cash-box');
+  if (!el) return;
+  const rows = (allDrivers || []).map(d => ({ d, c: cashDue(d.id) })).filter(x => x.c.n).sort((a, b) => b.c.amount - a.c.amount);
+  const total = rows.reduce((a, x) => a + x.c.amount, 0);
+  el.innerHTML = rows.length ? `<div class="muted" style="margin-bottom:8px;">Argent encaissé par les livreurs et pas encore remis : <b class="mono" style="color:var(--mango)">${money(total)}</b>. Touchez « Argent reçu » quand le livreur vous a remis la somme.</div>
+    ${rows.map(x => `<div class="cash-row"><b>${escHtml(x.d.name)}<small>${x.c.n} course${x.c.n > 1 ? 's' : ''} depuis ${x.c.oldest ? timeAgo(x.c.oldest) : '—'} · dont ${money(x.c.fees)} de frais de livraison</small></b><span class="mono">${money(x.c.amount)}</span><button class="w-btn go" onclick="settleDriver('${x.d.id}')">Argent reçu</button>${x.d.phone ? `<a class="w-btn" href="${telLink(x.d.phone)}">Appeler</a>` : ''}</div>`).join('')}`
+    : '<div class="muted">Tout est réglé : aucun livreur ne vous doit d\'argent.</div>';
+}
+async function settleDriver(id) {
+  const d = (allDrivers || []).find(x => x.id === id) || {};
+  const c = cashDue(id);
+  if (!confirm(`Confirmer que ${d.name || 'le livreur'} vous a remis ${money(c.amount)} pour ${c.n} course(s) ?`)) return;
+  const { data, error } = await client.rpc('admin_settle_driver', { p_driver: id });
+  if (error) { alert('Action impossible pour le moment.'); return; }
+  const now = new Date().toISOString();
+  (allOrders || []).forEach(o => { if (o.driver_id === id && o.status === 'Livrée' && !o.cash_settled_at) o.cash_settled_at = now; });
+  renderCash();
+  if (document.getElementById('cp-modal')) openDriver(id);
+  alert(`Caisse réglée : ${data && data.orders != null ? data.orders : c.n} course(s), ${money(data && data.amount != null ? data.amount : c.amount)}.`);
+}
+
+// ----- Rapport du jour et sauvegardes -----
+function renderReport() {
+  const el = document.getElementById('report-box');
+  if (!el) return;
+  const start = new Date(); start.setHours(0, 0, 0, 0);
+  const today = (allOrders || []).filter(o => new Date(o.created_at) >= start);
+  const done = today.filter(o => o.status === 'Livrée');
+  const cancelled = today.filter(o => o.status === 'Annulée');
+  const ca = done.reduce((a, o) => a + Number(o.total || 0), 0);
+  const fees = done.reduce((a, o) => a + Number(o.delivery_fee || 0), 0);
+  const disc = done.reduce((a, o) => a + Number(o.discount_food || 0) + Number(o.discount_delivery || 0), 0);
+  const durs = done.filter(o => o.picked_at && o.delivered_at).map(o => (new Date(o.delivered_at) - new Date(o.picked_at)) / 60000).filter(m => m > 0 && m < 600);
+  const newCl = (allCustomers || []).filter(c => c.created_at && new Date(c.created_at) >= start).length;
+  const byR = {}; done.forEach(o => { byR[o.restaurant_id] = (byR[o.restaurant_id] || 0) + Number(o.total || 0); });
+  const topR = Object.entries(byR).sort((a, b) => b[1] - a[1])[0];
+  const dishes = {}; done.forEach(o => (o.items || []).forEach(it => { if (it && it.name) dishes[it.name] = (dishes[it.name] || 0) + (Number(it.qty) || 1); }));
+  const topD = Object.entries(dishes).sort((a, b) => b[1] - a[1])[0];
+  const fmtSize = n => n > 1048576 ? (n / 1048576).toFixed(1).replace('.', ',') + ' Mo' : Math.max(1, Math.round(n / 1024)) + ' Ko';
+  el.innerHTML = `<div class="rep-grid">
+      <div class="rep-k"><div>Commandes</div><b>${today.length}</b></div>
+      <div class="rep-k"><div>Livrées</div><b>${done.length}</b></div>
+      <div class="rep-k"><div>Encaissé</div><b>${money(ca)}</b></div>
+      <div class="rep-k"><div>Frais de livraison</div><b>${money(fees)}</b></div>
+      <div class="rep-k"><div>Annulées</div><b>${cancelled.length}</b></div>
+      <div class="rep-k"><div>Nouveaux clients</div><b>${newCl}</b></div>
+    </div>
+    <div class="cp-li"><span>Restaurant du jour</span><span>${topR ? escHtml(restById(topR[0]).name || '—') + ' · ' + money(topR[1]) : '—'}</span></div>
+    <div class="cp-li"><span>Plat le plus commandé</span><span>${topD ? escHtml(topD[0]) + ' · ' + topD[1] + '×' : '—'}</span></div>
+    <div class="cp-li"><span>Durée moyenne d'une livraison</span><span>${durs.length ? Math.round(durs.reduce((a, b) => a + b, 0) / durs.length) + ' min' : '—'}</span></div>
+    <div class="cp-li"><span>Réductions accordées</span><span>${money(disc)}</span></div>
+    <div class="muted" style="margin-top:8px;">Ce bilan vous est aussi envoyé chaque soir à 23 h en notification.</div>
+    <div class="lv-row"><button class="w-btn" onclick="runJob('DAILY_REPORT')">M'envoyer le bilan maintenant</button></div>
+    <div class="sub-h">Sauvegardes automatiques</div>
+    <div class="muted" style="margin-bottom:6px;">Une copie complète des données est faite chaque nuit. Les 14 dernières sont conservées.</div>
+    ${backupFiles.length ? backupFiles.slice(0, 7).map(f => `<div class="cp-li"><span>${escHtml(f.name.replace('backup-', '').replace('.json', ''))}</span><span>${f.metadata && f.metadata.size ? fmtSize(f.metadata.size) + ' · ' : ''}<button class="link-client" onclick="downloadBackup('${escHtml(f.name)}')">Télécharger</button></span></div>`).join('') : '<div class="muted">Aucune sauvegarde pour le moment : la première sera faite cette nuit.</div>'}
+    <div class="lv-row"><button class="w-btn" onclick="runJob('BACKUP')">Sauvegarder maintenant</button><button class="w-btn" onclick="exportNow()">Télécharger les données sur cet appareil</button></div>`;
+}
+async function runJob(job) {
+  const { error } = await client.rpc('admin_run_job', { p_job: job });
+  if (error) { alert('Action impossible pour le moment.'); return; }
+  if (job === 'BACKUP') { alert('Sauvegarde lancée. Elle apparaîtra dans la liste dans quelques secondes.'); setTimeout(loadGrowth, 6000); }
+  else alert('Bilan envoyé : vous allez le recevoir en notification.');
+}
+async function downloadBackup(name) {
+  const { data, error } = await client.storage.from('backups').createSignedUrl(name, 120, { download: name });
+  if (error || !data) { alert('Téléchargement impossible.'); return; }
+  window.open(data.signedUrl, '_blank');
+}
+async function exportNow() {
+  const tables = ['restaurants', 'menu_items', 'orders', 'customers', 'drivers', 'reviews', 'promo_codes', 'restaurant_promos', 'restaurant_stories'];
+  const out = { exported_at: new Date().toISOString() };
+  for (const t of tables) { const { data } = await client.from(t).select('*'); out[t] = data || []; }
+  const blob = new Blob([JSON.stringify(out, null, 1)], { type: 'application/json' });
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob); a.download = 'dallas-bouff-donnees-' + new Date().toISOString().slice(0, 10) + '.json';
+  document.body.appendChild(a); a.click(); a.remove();
+  setTimeout(() => URL.revokeObjectURL(a.href), 4000);
+}
+
+// ----- Classement et primes des livreurs -----
+function renderLb() {
+  const el = document.getElementById('lb-box');
+  if (!el) return;
+  if (document.activeElement && el.contains(document.activeElement) && document.activeElement.tagName === 'INPUT') return;
+  const b = [driverBonus.first, driverBonus.second, driverBonus.third];
+  const active = leaderboard.filter(x => x.deliveries > 0);
+  el.innerHTML = `<div class="pr-grid"><div>
+    ${active.length ? active.slice(0, 10).map(x => `<div class="lbx-row"><span class="n">${x.rank}</span><span><b>${escHtml(x.name)}</b><small>${x.deliveries} livraison${x.deliveries > 1 ? 's' : ''}${x.avg_minutes ? ' · ' + x.avg_minutes + ' min en moyenne' : ''}${x.rating ? ' · note ' + String(x.rating).replace('.', ',') + ' / 5' : ''}</small></span><span class="mono" style="color:var(--mango)">${x.rank <= 3 && Number(b[x.rank - 1]) ? money(b[x.rank - 1]) : ''}</span></div>`).join('') : '<div class="muted">Aucune livraison cette semaine pour le moment.</div>'}
+    <div class="muted" style="margin-top:8px;">Semaine en cours, du lundi au dimanche. Les livreurs voient leur rang dans leur espace.</div>
+  </div><div>
+    <div class="sub-h" style="margin-top:0;">Primes de la semaine</div>
+    <div class="muted" style="margin-bottom:8px;">Montant annoncé aux livreurs pour les 3 premiers. Laissez à 0 pour ne rien annoncer.</div>
+    ${['1er', '2e', '3e'].map((l, i) => `<div class="set-row"><label for="bonus-${i}">${l}</label><input id="bonus-${i}" type="number" min="0" step="500" value="${Number(b[i]) || 0}"></div>`).join('')}
+    <button class="w-btn go" style="margin-top:6px;" onclick="saveBonus()">Enregistrer les primes</button>
+  </div></div>`;
+}
+async function saveBonus() {
+  const v = {}; ['first', 'second', 'third'].forEach((k, i) => { v[k] = Math.max(0, Math.round(Number(document.getElementById('bonus-' + i).value) || 0)); });
+  const { error } = await client.rpc('admin_set_setting', { p_key: 'driver_bonus', p_value: v });
+  if (error) { alert('Enregistrement impossible. Réessayez.'); return; }
+  driverBonus = v; renderLb();
+}
+
+// ----- Codes promo et parrainage -----
+function renderPromo() {
+  const el = document.getElementById('promo-box');
+  if (!el) return;
+  if (document.activeElement && el.contains(document.activeElement) && /INPUT|SELECT/.test(document.activeElement.tagName)) return;
+  const now = Date.now();
+  const kindTxt = p => p.kind === 'percent' ? '−' + p.value + ' % sur les plats' : p.kind === 'amount' ? '−' + money(p.value) : 'livraison offerte';
+  const referred = (allCustomers || []).filter(c => c.referred_by);
+  const refCount = {}; referred.forEach(c => { refCount[c.referred_by] = (refCount[c.referred_by] || 0) + 1; });
+  const topRef = Object.entries(refCount).sort((a, b) => b[1] - a[1]).slice(0, 5);
+  el.innerHTML = `<div class="pr-grid"><div>
+    <div class="sub-h" style="margin-top:0;">Créer un code</div>
+    <div class="set-row"><label for="pc-code">Code</label><input id="pc-code" maxlength="20" placeholder="Ex. BIENVENUE" style="text-transform:uppercase"></div>
+    <div class="set-row"><label for="pc-label">Description</label><input id="pc-label" maxlength="60" placeholder="Ex. Offre de bienvenue"></div>
+    <div class="set-row"><label for="pc-kind">Réduction</label><select id="pc-kind" onchange="promoForm.kind=this.value; document.getElementById('pc-value-row').style.display = this.value === 'free_delivery' ? 'none' : ''"><option value="percent" ${promoForm.kind === 'percent' ? 'selected' : ''}>Pourcentage sur les plats</option><option value="amount" ${promoForm.kind === 'amount' ? 'selected' : ''}>Montant en francs</option><option value="free_delivery" ${promoForm.kind === 'free_delivery' ? 'selected' : ''}>Livraison offerte</option></select></div>
+    <div class="set-row" id="pc-value-row" style="${promoForm.kind === 'free_delivery' ? 'display:none' : ''}"><label for="pc-value">Valeur</label><input id="pc-value" type="number" min="1" placeholder="Ex. 10 (%) ou 1000 (F)"></div>
+    <div class="set-row"><label for="pc-min">Commande min.</label><input id="pc-min" type="number" min="0" step="500" value="0"></div>
+    <div class="set-row"><label for="pc-max">Utilisations max.</label><input id="pc-max" type="number" min="0" placeholder="Vide = illimité"></div>
+    <div class="set-row"><label for="pc-per">Par client</label><input id="pc-per" type="number" min="1" value="1"></div>
+    <div class="set-row"><label for="pc-rest">Restaurant</label><select id="pc-rest"><option value="">Tous les restaurants</option>${(restaurants || []).map(r => `<option value="${r.id}">${escHtml(r.name)}</option>`).join('')}</select></div>
+    <div class="set-row"><label for="pc-end">Fin le</label><input id="pc-end" type="date"></div>
+    <label class="muted" style="display:flex; gap:8px; align-items:center; margin:6px 0;"><input id="pc-public" type="checkbox" style="width:18px; height:18px; margin:0;" checked> Afficher ce code aux clients dans l'onglet Offres</label>
+    <button class="w-btn go" onclick="createPromo()">Créer le code</button>
+  </div><div>
+    <div class="sub-h" style="margin-top:0;">Codes (${promoCodes.length})</div>
+    ${promoCodes.length ? promoCodes.map(p => { const expired = p.ends_at && new Date(p.ends_at).getTime() < now; const full = p.max_uses && p.used_count >= p.max_uses; return `<div class="pc-row ${!p.active || expired || full ? 'off' : ''}"><span class="code">${escHtml(p.code)}</span><span>${kindTxt(p)}${p.min_order ? ' · dès ' + money(p.min_order) : ''}${p.restaurant_id ? ' · ' + escHtml(restById(p.restaurant_id).name || '') : ''} · utilisé ${p.used_count || 0}${p.max_uses ? ' / ' + p.max_uses : ''} fois${p.ends_at ? ' · ' + (expired ? 'expiré' : 'jusqu\'au ' + new Date(p.ends_at).toLocaleDateString('fr-FR')) : ''}${p.public ? '' : ' · privé'}</span><button class="w-btn ${p.active ? 'danger' : 'go'}" onclick="togglePromo('${escHtml(p.code)}', ${p.active ? 'false' : 'true'})">${p.active ? 'Désactiver' : 'Réactiver'}</button></div>`; }).join('') : '<div class="muted">Aucun code pour le moment.</div>'}
+    <div class="sub-h">Parrainage</div>
+    <div class="muted">Chaque client a son code. Quand un filleul reçoit sa première commande, il a la livraison offerte et son parrain gagne une livraison gratuite.</div>
+    <div class="cp-li"><span>Clients venus par parrainage</span><span>${referred.length}</span></div>
+    <div class="cp-li"><span>Récompenses déjà gagnées</span><span>${(allCustomers || []).filter(c => c.referral_rewarded).length}</span></div>
+    ${topRef.map(([id, n]) => `<div class="cp-li"><span><button class="link-client" onclick="openCustomer('${id}', '')">${escHtml(((allCustomers || []).find(c => c.id === id) || {}).name || 'Client')}</button></span><span>${n} filleul${n > 1 ? 's' : ''}</span></div>`).join('')}
+  </div></div>`;
+}
+async function createPromo() {
+  const code = (document.getElementById('pc-code').value || '').trim().toUpperCase().replace(/\s+/g, '');
+  if (!/^[A-Z0-9_-]{3,20}$/.test(code)) { alert('Le code doit faire 3 à 20 caractères : lettres et chiffres, sans espace.'); return; }
+  const kind = document.getElementById('pc-kind').value;
+  let value = kind === 'free_delivery' ? 0 : Math.round(Number(document.getElementById('pc-value').value) || 0);
+  if (kind === 'percent' && (value < 1 || value > 90)) { alert('Pourcentage entre 1 et 90.'); return; }
+  if (kind === 'amount' && value < 50) { alert('Indiquez le montant de la réduction en francs.'); return; }
+  const end = document.getElementById('pc-end').value;
+  const row = {
+    code, kind, value,
+    label: (document.getElementById('pc-label').value || '').trim() || null,
+    min_order: Math.max(0, Math.round(Number(document.getElementById('pc-min').value) || 0)),
+    max_uses: Number(document.getElementById('pc-max').value) > 0 ? Math.round(Number(document.getElementById('pc-max').value)) : null,
+    per_customer: Math.max(1, Math.round(Number(document.getElementById('pc-per').value) || 1)),
+    restaurant_id: document.getElementById('pc-rest').value || null,
+    ends_at: end ? new Date(end + 'T23:59:59').toISOString() : null,
+    public: document.getElementById('pc-public').checked,
+    active: true
+  };
+  const { error } = await client.from('promo_codes').insert(row);
+  if (error) { alert(/duplicate|unique/i.test(error.message || '') ? 'Ce code existe déjà.' : 'Création impossible : ' + (error.message || 'réessayez')); return; }
+  promoForm.kind = 'percent';
+  await loadGrowth();
+}
+async function togglePromo(code, active) {
+  const { error } = await client.from('promo_codes').update({ active }).eq('code', code);
+  if (error) { alert('Action impossible pour le moment.'); return; }
+  const p = promoCodes.find(x => x.code === code); if (p) p.active = active;
+  renderPromo();
+}
+
+// ----- Anti-fraude : clients bloqués et numéros interdits -----
+function renderFraud() {
+  const el = document.getElementById('fraud-box');
+  if (!el) return;
+  if (document.activeElement && el.contains(document.activeElement) && document.activeElement.tagName === 'INPUT') return;
+  const blocked = (allCustomers || []).filter(c => c.blocked);
+  const watch = (allCustomers || []).filter(c => !c.blocked && Number(c.no_show_count || 0) > 0);
+  el.innerHTML = `<div class="muted" style="margin-bottom:8px;">Un client absent ou injoignable à 2 livraisons est bloqué automatiquement. Une première commande de 15 000 F ou plus demande un appel de confirmation.</div>
+    ${blocked.length ? blocked.map(c => `<div class="cash-row"><b><button class="link-client" onclick="openCustomer('${c.id}', '')">${escHtml(c.name || 'Client')}</button><small>${escHtml(c.phone || '')}${c.blocked_reason ? ' · ' + escHtml(c.blocked_reason) : ''}</small></b><button class="w-btn go" onclick="adminBlock('${c.id}', false)">Débloquer</button></div>`).join('') : '<div class="muted">Aucun client bloqué.</div>'}
+    ${watch.length ? `<div class="sub-h">À surveiller</div>${watch.map(c => `<div class="cp-li"><span><button class="link-client" onclick="openCustomer('${c.id}', '')">${escHtml(c.name || 'Client')}</button> · ${escHtml(c.phone || '')}</span><span>${c.no_show_count} absence${c.no_show_count > 1 ? 's' : ''}</span></div>`).join('')}` : ''}
+    <div class="sub-h">Numéros interdits</div>
+    <div class="lv-row" style="margin-top:0;"><input id="bl-phone" inputmode="tel" maxlength="20" placeholder="Numéro de téléphone"><input id="bl-reason" maxlength="80" placeholder="Motif"><button class="w-btn danger" onclick="addBlock()">Interdire</button></div>
+    ${blocklist.map(b => `<div class="cp-li"><span class="mono">${escHtml(b.phone8)}${b.reason ? ' · ' + escHtml(b.reason) : ''}</span><span><button class="link-client" onclick="removeBlock('${escHtml(b.phone8)}')">Retirer</button></span></div>`).join('')}`;
+}
+async function addBlock() {
+  const ph = digits(document.getElementById('bl-phone').value);
+  if (ph.length < 8) { alert('Numéro incomplet.'); return; }
+  const { error } = await client.from('phone_blocklist').insert({ phone8: ph, reason: (document.getElementById('bl-reason').value || '').trim() || null });
+  if (error && !/duplicate|unique/i.test(error.message || '')) { alert('Action impossible pour le moment.'); return; }
+  document.getElementById('bl-phone').value = ''; document.getElementById('bl-reason').value = '';
+  const { data } = await client.from('phone_blocklist').select('*').order('created_at', { ascending: false });
+  blocklist = data || []; renderFraud();
+}
+async function removeBlock(ph) {
+  const { error } = await client.from('phone_blocklist').delete().eq('phone8', ph);
+  if (error) { alert('Action impossible pour le moment.'); return; }
+  blocklist = blocklist.filter(b => b.phone8 !== ph); renderFraud();
+}
+
+// ----- Carte en direct -----
+let liveMap = null, mapLayer = null, mapTimer = null, mapFitted = false;
+function initLiveMap() {
+  const el = document.getElementById('live-map');
+  if (!el) return;
+  if (!window.L) { el.innerHTML = '<div class="empty">Carte indisponible : vérifiez la connexion internet.</div>'; return; }
+  if (!liveMap) {
+    try {
+    liveMap = L.map(el, { zoomControl: true, attributionControl: true }).setView([6.877, -6.450], 13);
+    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', { maxZoom: 19, attribution: '&copy; OpenStreetMap' }).addTo(liveMap);
+    mapLayer = L.layerGroup().addTo(liveMap);
+    setTimeout(() => { try { liveMap.invalidateSize(); } catch (e) {} }, 300);
+    } catch (e) { liveMap = null; el.innerHTML = '<div class="empty">Carte indisponible pour le moment.</div>'; return; }
+  }
+  refreshMap();
+  if (!mapTimer) mapTimer = setInterval(refreshMap, 20000);
+}
+async function refreshMap() {
+  try { await drawMap(); } catch (e) { console.warn('carte', e); }
+}
+async function drawMap() {
+  if (!adminLoggedIn || !liveMap) return;
+  const { data } = await client.from('drivers').select('id, name, phone, current_lat, current_lng, location_updated_at, verification').eq('verification', 'approved');
+  const fresh = (data || []).filter(d => typeof d.current_lat === 'number' && typeof d.current_lng === 'number' && d.location_updated_at && Date.now() - new Date(d.location_updated_at) < 15 * 60000);
+  mapLayer.clearLayers();
+  const pts = [];
+  const pin = (lat, lng, color, r, html) => { const m = L.circleMarker([lat, lng], { radius: r, color: '#080808', weight: 2, fillColor: color, fillOpacity: 0.95 }).bindPopup(html); m.addTo(mapLayer); pts.push([lat, lng]); };
+  (restaurants || []).filter(r => typeof r.lat === 'number' && typeof r.lng === 'number').forEach(r => pin(r.lat, r.lng, '#8AA4FF', 7, `<b>${escHtml(r.name)}</b><br>${r.accepting_orders === false ? 'En pause' : 'Ouvert'}`));
+  const active = (liveOrders || []);
+  active.filter(o => o.location && o.location.type === 'gps' && typeof o.location.lat === 'number').forEach(o => {
+    const d = (fresh.find(x => x.id === o.driver_id) || (allDrivers || []).find(x => x.id === o.driver_id));
+    pin(o.location.lat, o.location.lng, '#F2A93B', 8, `<b>${escHtml(o.customer_name || 'Client')}</b><br>${escHtml(restById(o.restaurant_id).name || '')} · ${escHtml(ST_LABEL[o.status] || o.status)}<br>${money(o.total)}${d ? '<br>Livreur : ' + escHtml(d.name) : ''}`);
+  });
+  let busy = 0;
+  fresh.forEach(d => {
+    const run = active.find(o => o.driver_id === d.id && o.status === 'En livraison');
+    if (run) busy++;
+    pin(d.current_lat, d.current_lng, run ? '#E5484D' : '#3FB27F', 9, `<b>${escHtml(d.name)}</b><br>${run ? 'En course pour ' + escHtml(run.customer_name || 'un client') : 'Disponible'} · vu ${timeAgo(d.location_updated_at)}${d.phone ? `<br><a href="${telLink(d.phone)}">Appeler</a>` : ''}`);
+  });
+  const cnt = document.getElementById('map-count');
+  if (cnt) cnt.textContent = `${fresh.length} livreur${fresh.length > 1 ? 's' : ''} en ligne · ${busy} en course · ${active.length} commande${active.length > 1 ? 's' : ''} en cours`;
+  if (!mapFitted && pts.length) { mapFitted = true; if (pts.length === 1) liveMap.setView(pts[0], 15); else liveMap.fitBounds(pts, { padding: [30, 30], maxZoom: 16 }); }
 }
 
 // Barre latérale : surligne la rubrique visible à l'écran

@@ -143,6 +143,62 @@
   .order-hist-top { display:flex; justify-content:space-between; align-items:baseline; margin-bottom:4px; }
   .badge { font-size:10.5px; font-weight:700; padding:3px 8px; border-radius:20px; background:var(--bg); color:var(--mango); border:1px solid var(--mango); }
   .badge.done { background:var(--palm); color:var(--cream); border:none; }
+  .rest-head { display:flex; align-items:flex-start; justify-content:space-between; gap:10px; }
+  .rest-acts { display:flex; gap:8px; flex-shrink:0; padding-top:4px; }
+  .icon-btn { width:40px; height:40px; border-radius:50%; border:1px solid var(--line); background:var(--surface); display:inline-flex; align-items:center; justify-content:center; cursor:pointer; padding:0; }
+  .icon-btn svg { width:19px; height:19px; stroke:var(--cream); fill:none; stroke-width:1.8; }
+  .icon-btn.on svg { fill:#E0705A; stroke:#E0705A; }
+  .dish-extras { display:flex; gap:12px; align-items:center; margin-top:8px; flex-wrap:wrap; }
+  .dish-link { background:none; border:none; color:var(--creamDim); font-size:12px; padding:0; cursor:pointer; display:inline-flex; align-items:center; gap:5px; font-family:inherit; }
+  .dish-link svg { width:15px; height:15px; stroke:currentColor; fill:none; stroke-width:1.8; }
+  .dish-link.on { color:#E0705A; } .dish-link.on svg { fill:#E0705A; stroke:#E0705A; }
+  .opt-hint { font-size:11.5px; color:var(--mango); }
+  .is-soldout { opacity:.55; }
+  .soldout-tag { font-size:11px; font-weight:700; color:#F0A99A; border:1px solid rgba(224,112,90,.5); border-radius:20px; padding:5px 10px; white-space:nowrap; }
+  .happy-badge { display:inline-block; margin:6px 0 0 6px; font-size:10.5px; font-weight:800; padding:3px 9px; border-radius:20px; background:#E0705A; color:#fff; }
+  .happy-banner { display:flex; gap:12px; align-items:center; background:linear-gradient(135deg, rgba(224,112,90,.22), rgba(245,192,74,.12)); border:1px solid rgba(224,112,90,.55); border-radius:14px; padding:12px 14px; margin-bottom:12px; }
+  .happy-banner b { font-family:'Bebas Neue', sans-serif; font-size:30px; line-height:1; color:#F7B9A9; font-weight:400; }
+  .happy-banner span { font-size:13px; line-height:1.4; }
+  .rail { display:flex; gap:12px; overflow-x:auto; padding:2px 16px 6px; scroll-snap-type:x mandatory; scrollbar-width:none; }
+  .rail::-webkit-scrollbar { display:none; }
+  .rail-card { flex:0 0 150px; scroll-snap-align:start; background:var(--surface); border:1px solid var(--line); border-radius:16px; overflow:hidden; text-align:left; padding:0; cursor:pointer; color:var(--cream); font-family:inherit; }
+  .rail-card img, .rail-card .rc-ph { width:100%; height:104px; object-fit:cover; display:block; background:var(--raised); }
+  .rail-card div { padding:9px 10px 11px; }
+  .rail-card b { display:block; font-size:13px; line-height:1.25; }
+  .rail-card small { display:block; font-size:11.5px; color:var(--creamDim); margin-top:3px; }
+  .rail-card em { display:block; font-style:normal; font-size:12px; color:var(--mango); margin-top:4px; font-weight:700; }
+  .rc-rank { position:absolute; }
+  .promo-row { display:flex; gap:8px; margin:12px 0 4px; }
+  .promo-row input { margin:0; flex:1; text-transform:uppercase; }
+  #promo-msg { font-size:12.5px; min-height:16px; margin-bottom:8px; }
+  #promo-msg.ok { color:var(--palm); } #promo-msg.bad { color:#F0A99A; }
+  .credit-row { display:flex; gap:10px; align-items:center; background:rgba(92,138,99,.12); border:1px solid rgba(92,138,99,.5); border-radius:12px; padding:11px 12px; font-size:13.5px; margin:6px 0 12px; cursor:pointer; }
+  .credit-row input { width:20px; height:20px; accent-color:var(--palm); margin:0; }
+  .credit-row small { color:var(--creamDim); }
+  .sum-line.disc { color:var(--palm); }
+  .pay-box { margin:14px 0 12px; }
+  .pay-opts { display:grid; grid-template-columns: repeat(auto-fill, minmax(140px, 1fr)); gap:8px; }
+  .pay-opt { border:1px solid var(--line); background:var(--surface); border-radius:12px; padding:11px 12px; color:var(--cream); font-family:inherit; font-size:13.5px; font-weight:600; text-align:left; cursor:pointer; }
+  .pay-opt.on { border-color:var(--mango); box-shadow:0 0 0 1px var(--mango) inset; }
+  .pay-opt small { display:block; font-weight:400; color:var(--creamDim); font-size:11.5px; margin-top:2px; }
+  .pay-steps { background:var(--surface); border:1px solid var(--mango); border-radius:12px; padding:12px; margin-top:10px; font-size:13px; line-height:1.55; }
+  .pay-steps b.mono { color:var(--mango); font-size:15px; }
+  .pay-steps input { margin:8px 0 0; }
+  .acc-card { background:var(--surface); border:1px solid var(--line); border-radius:14px; padding:14px; margin-bottom:12px; }
+  .acc-card h4 { margin:0 0 6px; font-size:14px; }
+  .acc-card p { margin:0; font-size:12.5px; color:var(--creamDim); line-height:1.5; }
+  .loy-bar { display:flex; gap:4px; margin:10px 0 6px; }
+  .loy-bar i { flex:1; height:8px; border-radius:4px; background:#262626; }
+  .loy-bar i.on { background:var(--mango); }
+  .ref-code { font-family:'JetBrains Mono', monospace; font-size:20px; font-weight:700; color:var(--mango); letter-spacing:.05em; margin:8px 0; }
+  .ref-row { display:flex; gap:8px; margin-top:10px; }
+  .ref-row input { margin:0; flex:1; text-transform:uppercase; }
+  .opt-sheet-g { margin-top:14px; }
+  .opt-sheet-g h5 { margin:0 0 8px; font-size:13px; display:flex; justify-content:space-between; }
+  .opt-sheet-g h5 small { color:var(--creamDim); font-weight:500; }
+  .opt-choice { display:flex; justify-content:space-between; align-items:center; gap:10px; border:1px solid var(--line); border-radius:11px; padding:11px 12px; margin-bottom:6px; cursor:pointer; font-size:14px; }
+  .opt-choice input { width:19px; height:19px; accent-color:var(--mango); margin:0 8px 0 0; }
+  .opt-choice span:last-child { color:var(--creamDim); font-size:12.5px; }
   .stars-row { display:inline-flex; gap:2px; vertical-align:middle; }
   .stars-row .st { display:block; }
   .rcard2-rc { color: var(--creamDim); font-size: 11.5px; margin-left: 2px; }
@@ -687,6 +743,8 @@ function renderAccount() {
           <div style="font-weight:700; font-size:16px;">${currentCustomer.name || 'Client'}</div>
           <div class="mono" style="font-size:13px; color:var(--creamDim); margin-top:2px;">${currentCustomer.phone}</div>
         </div>
+        ${loyaltyCardHtml()}
+        ${referralCardHtml()}
         <button class="btn-secondary" style="margin-bottom:10px;" onclick="show('orders'); renderOrders();">Mes commandes</button>
         <button class="btn-secondary" style="margin-bottom:10px;" onclick="show('offers'); renderOffers();">Offres</button>
         <button class="btn-secondary" onclick="logoutCustomer()">Déconnexion</button>
@@ -765,7 +823,12 @@ async function signupCustomer() {
   }
 
   await refreshCustomer();
-  toast("Compte créé, bienvenue !");
+  const pendingRef = getPendingReferral();
+  if (pendingRef) {
+    const { data: rr } = await client.rpc('apply_referral', { p_code: pendingRef });
+    if (rr === 'ok') { await refreshCustomer(); toast("Bienvenue ! Votre première livraison est offerte."); }
+    clearPendingReferral();
+  } else toast("Compte créé, bienvenue !");
   renderAccount();
 }
 
@@ -1014,6 +1077,9 @@ function clientOrderCard(o) {
       <button class="btn-primary" style="margin-top:8px;" onclick="confirmReceived('${o.id}')">J'ai reçu ma commande</button>`;
   }
   if (o.status === 'Livrée') actions += reviewAreaHtml(o, r);
+  if (o.status === 'Livrée' || o.status === 'Annulée') actions += `<button class="btn-secondary" style="margin-top:8px;" onclick="reorder('${o.id}')">Recommander</button>`;
+  if (o.payment_method && o.payment_method !== 'cash' && o.status !== 'Annulée') info += `<div class="oi ${o.payment_status === 'confirme' ? 'ok' : o.payment_status === 'refuse' ? 'bad' : 'wait'}">${o.payment_status === 'confirme' ? 'Paiement ' + PAY_LABEL[o.payment_method] + ' confirmé' : o.payment_status === 'refuse' ? 'Paiement ' + PAY_LABEL[o.payment_method] + ' non trouvé : vous réglerez au livreur' : 'Paiement ' + PAY_LABEL[o.payment_method] + ' en cours de vérification'}</div>`;
+  if (o.discount_label) info += `<div class="oi ok">${escHtml(o.discount_label)} : -${money((o.discount_food || 0) + (o.discount_delivery || 0))}</div>`;
 
   const showThread = !finished || msgs.length;
   const open = openThreads.has(o.id);
@@ -1169,6 +1235,271 @@ async function orderFromStory() {
 
 
 bindThreadEvents((toggleOnly) => { if (toggleOnly) paintMyOrders(true); else loadMyOrders().then(() => paintMyOrders(true)); });
+// ================= Croissance : promos, fidélité, parrainage, favoris, partage =================
+const HEART_SVG = '<svg viewBox="0 0 24 24"><path d="M12 20s-7-4.4-9-9a4.8 4.8 0 0 1 9-3 4.8 4.8 0 0 1 9 3c-2 4.6-9 9-9 9z"/></svg>';
+const SHARE_SVG = '<svg viewBox="0 0 24 24"><circle cx="18" cy="5" r="2.5"/><circle cx="6" cy="12" r="2.5"/><circle cx="18" cy="19" r="2.5"/><path d="M8.2 10.8l7.6-4.4M8.2 13.2l7.6 4.4"/></svg>';
+const PAY_LABEL = { cash: 'espèces', wave: 'Wave', orange_money: 'Orange Money', mtn_money: 'MTN MoMo', moov_money: 'Moov Money' };
+let happyPromos = {}, momoNumbers = {}, trendingDishes = [];
+let checkoutQuote = null, checkoutPromo = '', checkoutUseCredit = null, checkoutPayment = 'cash', driverRating = 0;
+
+async function loadGrowthData() {
+  try {
+    const { data: hp } = await client.from('restaurant_promos').select('*').eq('active', true);
+    happyPromos = {}; (hp || []).forEach(p => { happyPromos[p.restaurant_id] = p; });
+  } catch (e) {}
+  try {
+    const { data: mm } = await client.from('app_settings').select('value').eq('key', 'momo_numbers').maybeSingle();
+    momoNumbers = (mm && mm.value && typeof mm.value === 'object') ? mm.value : {};
+  } catch (e) {}
+  try { const { data: tr } = await client.rpc('trending_dishes'); trendingDishes = tr || []; } catch (e) { trendingDishes = []; }
+}
+
+// Heures creuses : actives maintenant ? (heure d'Abidjan = UTC)
+function happyNow(rid) {
+  const p = happyPromos[rid];
+  if (!p || !p.active) return null;
+  const d = new Date();
+  const dow = d.getUTCDay();
+  const m = d.getUTCHours() * 60 + d.getUTCMinutes();
+  const toM = t => { const [h, mi] = String(t || '0:0').split(':').map(Number); return h * 60 + (mi || 0); };
+  const a = toM(p.start_time), b = toM(p.end_time);
+  const inWin = a <= b ? (m >= a && m <= b) : (m >= a || m <= b);
+  return (Array.isArray(p.days) ? p.days.includes(dow) : true) && inWin ? p : null;
+}
+function happyBadge(rid) { const p = happyNow(rid); return p ? `<span class="happy-badge">-${p.percent} % jusqu'à ${String(p.end_time).slice(0, 5).replace(':', ' h ')}</span>` : ''; }
+function happyBannerHtml(rid) {
+  const p = happyNow(rid);
+  if (p) return `<div class="happy-banner"><b>-${p.percent} %</b><span>${escHtml(p.label || 'Heures creuses')} : sur tous les plats jusqu'à ${String(p.end_time).slice(0, 5).replace(':', ' h ')}. La réduction s'applique toute seule au panier.</span></div>`;
+  const q = happyPromos[rid];
+  if (q && q.active) return `<div class="happy-banner" style="opacity:.8"><b>-${q.percent} %</b><span>${escHtml(q.label || 'Heures creuses')} : tous les jours de ${String(q.start_time).slice(0, 5).replace(':', ' h ')} à ${String(q.end_time).slice(0, 5).replace(':', ' h ')}.</span></div>`;
+  return '';
+}
+
+// Plats épuisés et options
+function todayAbidjan() { return new Date().toISOString().slice(0, 10); }
+function isSoldOut(item) { return !!item.sold_out_date && String(item.sold_out_date) >= todayAbidjan(); }
+function itemOptionGroups(item) { return Array.isArray(item.options) ? item.options.filter(g => g && g.name && Array.isArray(g.choices) && g.choices.length) : []; }
+function dishExtrasHtml(item) {
+  const groups = itemOptionGroups(item);
+  return `<div class="dish-extras">${groups.length ? `<span class="opt-hint">${groups.map(g => escHtml(g.name)).join(' · ')} au choix</span>` : ''}
+    <button type="button" class="dish-link ${isFav('dishes', item.id) ? 'on' : ''}" onclick="event.stopPropagation(); toggleFav('dishes', '${item.id}', this)">${HEART_SVG}<span>Favori</span></button>
+    <button type="button" class="dish-link" onclick="event.stopPropagation(); shareDish('${item.id}')">${SHARE_SVG}<span>Partager</span></button></div>`;
+}
+function openOptionsSheet(item) {
+  closeOptionsSheet();
+  const groups = itemOptionGroups(item);
+  const m = document.createElement('div');
+  m.id = 'opt-modal'; m.className = 'rv-modal';
+  m.addEventListener('click', (e) => { if (e.target === m) closeOptionsSheet(); });
+  m.innerHTML = `<div class="rv-sheet" role="dialog" aria-label="Options du plat">
+    <div class="rv-k">PERSONNALISER</div>
+    <div class="display rv-title">${escHtml(item.name)}</div>
+    <div style="text-align:center; color:var(--creamDim); font-size:13px;" id="opt-price">${money(item.price)}</div>
+    ${groups.map((g, gi) => `<div class="opt-sheet-g"><h5>${escHtml(g.name)}<small>${g.required ? 'Obligatoire' : g.multiple ? 'Plusieurs choix possibles' : 'Facultatif'}</small></h5>
+      ${g.choices.map((c, ci) => `<label class="opt-choice"><span><input type="${g.multiple ? 'checkbox' : 'radio'}" name="og-${gi}" data-g="${gi}" data-c="${ci}" ${g.required && !g.multiple && ci === 0 ? 'checked' : ''} onchange="updateOptPrice()">${escHtml(c.label)}</span><span>${Number(c.price) ? '+' + money(c.price) : 'Inclus'}</span></label>`).join('')}</div>`).join('')}
+    <button class="btn-primary" style="margin-top:14px;" onclick="confirmOptions()">Ajouter au panier</button>
+    <button class="btn-secondary" style="margin-top:8px;" onclick="closeOptionsSheet()">Annuler</button>
+  </div>`;
+  m.dataset.item = item.id;
+  document.body.appendChild(m);
+  updateOptPrice();
+}
+function readOptions() {
+  const m = document.getElementById('opt-modal'); if (!m) return null;
+  const item = menuItems.find(i => i.id === m.dataset.item); const groups = itemOptionGroups(item);
+  const chosen = []; let missing = null;
+  groups.forEach((g, gi) => {
+    const picks = Array.from(m.querySelectorAll(`input[data-g="${gi}"]:checked`)).map(x => g.choices[Number(x.dataset.c)]);
+    if (g.required && !picks.length) missing = g.name;
+    picks.forEach(c => chosen.push({ group: g.name, choice: c.label, price: Number(c.price) || 0 }));
+  });
+  return { item, chosen, missing };
+}
+function updateOptPrice() { const r = readOptions(); if (!r) return; const el = document.getElementById('opt-price'); if (el) el.textContent = money((Number(r.item.price) || 0) + r.chosen.reduce((a, o) => a + o.price, 0)); }
+function confirmOptions() {
+  const r = readOptions(); if (!r) return;
+  if (r.missing) { toast('Choisissez : ' + r.missing); return; }
+  closeOptionsSheet();
+  addCartLine(r.item, r.chosen);
+}
+function closeOptionsSheet() { const m = document.getElementById('opt-modal'); if (m) m.remove(); }
+function cartPayload() { return Object.values(cart).map(i => ({ itemId: i.itemId || i.id, name: i.name, price: lineUnit(i), qty: i.qty, options: (i.options || []).map(o => ({ group: o.group, choice: o.choice })) })); }
+
+// Résumé du panier, avec réductions calculées par le serveur
+function summaryHtml() {
+  const q = checkoutQuote && !checkoutQuote.error ? checkoutQuote : null;
+  const lines = Object.values(cart).map(i => `<div class="sum-line sum-item"><span>${i.qty}× ${escHtml(i.name)}${(i.options || []).length ? `<br><small style="color:var(--creamDim)">${i.options.map(o => escHtml(o.choice)).join(', ')}</small>` : ''}</span><span>${money(i.qty * lineUnit(i))}</span></div>`).join('');
+  const food = q ? q.food : cartTotal();
+  const fee = q ? q.fee : DELIVERY_FEE;
+  const df = q ? q.discount_food : 0, dd = q ? q.discount_delivery : 0;
+  return `${lines}
+    <div class="sum-line" style="border-top:1px solid var(--line); margin-top:8px; padding-top:9px;"><span>Sous-total des plats</span><span>${money(food)}</span></div>
+    ${df ? `<div class="sum-line disc"><span>${escHtml(q.label || 'Réduction')}</span><span>-${money(df)}</span></div>` : ''}
+    <div class="sum-line fee"><span>Livraison</span><span>${dd ? '<s>' + money(fee) + '</s> offerte' : money(fee)}</span></div>
+    <div class="sum-total"><span>Total à payer</span><span>${money(q ? q.total : food + fee)}</span></div>`;
+}
+function orderButtonLabel() { return `Commander pour ${money(orderTotal())}${checkoutPayment === 'cash' ? ', payé à la livraison' : ''}`; }
+async function refreshQuote() {
+  if (!currentRestaurant || !cartCount()) return;
+  const { data } = await client.rpc('quote_order', { p_restaurant: currentRestaurant.id, p_items: cartPayload(), p_promo: checkoutPromo || null, p_use_credit: !!checkoutUseCredit });
+  checkoutQuote = data || null;
+  const box = document.getElementById('sum-box'); if (box) box.innerHTML = summaryHtml();
+  const btn = document.getElementById('btn-order'); if (btn && !btn.disabled) btn.textContent = orderButtonLabel();
+  const pm = document.getElementById('promo-msg');
+  if (pm && checkoutPromo) {
+    if (checkoutQuote && checkoutQuote.promo_ok) { pm.className = 'ok'; pm.textContent = 'Code appliqué : ' + (checkoutQuote.label || checkoutPromo); }
+    else { pm.className = 'bad'; pm.textContent = (checkoutQuote && checkoutQuote.promo_reason) || 'Code non valable'; }
+  }
+  if (checkoutQuote && checkoutQuote.error) { const m = orderErrorText(checkoutQuote.error); if (m) toast(m); }
+  const steps = document.getElementById('pay-steps'); if (steps) steps.outerHTML = payStepsHtml();
+}
+function applyPromo() { checkoutPromo = (document.getElementById('f-promo').value || '').trim().toUpperCase(); refreshQuote(); }
+function orderErrorText(m) {
+  if (m.includes('restaurant_en_pause')) return "Ce restaurant vient de mettre les commandes en pause. Réessayez plus tard.";
+  if (m.includes('plat_epuise')) return "Un plat de votre panier vient d'être épuisé : " + (m.split('plat_epuise:')[1] || '').trim() + ". Retirez-le pour continuer.";
+  if (m.includes('plat_indisponible')) return "Un plat de votre panier n'est plus au menu. Retirez-le pour continuer.";
+  if (m.includes('option_manquante')) return "Choisissez les options obligatoires du plat " + (m.split('option_manquante:')[1] || '').trim() + ".";
+  if (m.includes('compte_bloque')) return "Votre compte est suspendu après plusieurs commandes non récupérées. Contactez Dallas Bouff' pour le réactiver.";
+  if (m.includes('reference_paiement')) return "Indiquez la référence de votre paiement Mobile Money.";
+  return "La commande n'est pas partie. Vérifiez votre connexion et réessayez.";
+}
+
+// Paiement : espèces ou Mobile Money (vérifié par Dallas Bouff')
+function paymentHtml() {
+  const avail = Object.keys(PAY_LABEL).filter(k => k === 'cash' || (momoNumbers[k] && String(momoNumbers[k]).trim()));
+  if (avail.length < 2) return '';
+  return `<div class="pay-box"><label>Paiement</label><div class="pay-opts">${avail.map(k => `<button type="button" class="pay-opt ${checkoutPayment === k ? 'on' : ''}" onclick="setPayment('${k}')">${k === 'cash' ? 'Espèces' : PAY_LABEL[k]}<small>${k === 'cash' ? 'Au livreur, à la livraison' : 'Avant la livraison'}</small></button>`).join('')}</div>${payStepsHtml()}</div>`;
+}
+function payStepsHtml() {
+  if (checkoutPayment === 'cash') return '<div id="pay-steps"></div>';
+  const num = momoNumbers[checkoutPayment];
+  const prev = (document.getElementById('f-payref') || {}).value || '';
+  return `<div class="pay-steps" id="pay-steps">1. Envoyez <b class="mono">${money(orderTotal())}</b> par ${PAY_LABEL[checkoutPayment]} au <b class="mono">${escHtml(num)}</b> (Dallas Bouff').<br>2. Recopiez ci-dessous la référence du SMS de confirmation.<br>3. Validez la commande : nous vérifions le paiement, et le livreur n'encaisse rien.
+    <input id="f-payref" maxlength="60" placeholder="Référence de la transaction" value="${escHtml(prev)}" /></div>`;
+}
+function setPayment(k) { checkoutPayment = k; document.querySelectorAll('.pay-opt').forEach(b => b.classList.toggle('on', b.getAttribute('onclick') === `setPayment('${k}')`)); const st = document.getElementById('pay-steps'); if (st) st.outerHTML = payStepsHtml(); const btn = document.getElementById('btn-order'); if (btn) btn.textContent = orderButtonLabel(); }
+
+// Favoris (enregistrés sur le compte)
+function favs() { const f = currentCustomer && currentCustomer.favorites; return { restaurants: (f && Array.isArray(f.restaurants)) ? f.restaurants : [], dishes: (f && Array.isArray(f.dishes)) ? f.dishes : [] }; }
+function isFav(kind, id) { return favs()[kind].includes(id); }
+async function toggleFav(kind, id, btn) {
+  if (!currentCustomer) { toast('Connectez-vous pour garder vos favoris.'); return; }
+  const f = favs();
+  const list = f[kind].includes(id) ? f[kind].filter(x => x !== id) : f[kind].concat(id).slice(-60);
+  const next = { ...f, [kind]: list };
+  currentCustomer.favorites = next;
+  if (btn) btn.classList.toggle('on', list.includes(id));
+  const { error } = await client.from('customers').update({ favorites: next }).eq('id', currentCustomer.id);
+  if (error) toast("Favori non enregistré. Réessayez.");
+  else toast(list.includes(id) ? 'Ajouté à vos favoris' : 'Retiré de vos favoris');
+  try { if (document.getElementById('view-list').style.display === 'none') renderList(); } catch (e) {}
+}
+function favoritesRailHtml() {
+  if (!currentCustomer) return '';
+  const f = favs();
+  const rs = f.restaurants.map(id => restaurants.find(r => r.id === id)).filter(Boolean);
+  const ds = f.dishes.map(id => allDishPhotos.find(d => d.id === id)).filter(Boolean);
+  if (!rs.length && !ds.length) return '';
+  return `<div class="section-header"><div class="section-title2">Vos favoris</div></div>
+    <div class="rail">${rs.map(r => { const c = restaurantCoverMap[r.id]; return `<button class="rail-card" onclick="openRestaurant('${r.id}')">${c ? `<img src="${c.photo_url}" alt="" loading="lazy">` : '<span class="rc-ph"></span>'}<div><b>${escHtml(r.name)}</b><small>${escHtml(r.category || 'Restaurant')}</small></div></button>`; }).join('')}
+    ${ds.map(d => { const r = restaurants.find(x => x.id === d.restaurant_id) || {}; return `<button class="rail-card" onclick="openRestaurant('${d.restaurant_id}', '${d.id}')"><img src="${d.photo_url}" alt="" loading="lazy"><div><b>${escHtml(d.name)}</b><small>${escHtml(r.name || '')}</small><em>${money(d.price)}</em></div></button>`; }).join('')}</div>`;
+}
+function trendingRailHtml() {
+  const list = (trendingDishes || []).filter(t => restaurants.some(r => r.id === t.restaurant_id)).slice(0, 8);
+  if (list.length < 2) return '';
+  return `<div class="section-header"><div class="section-title2">Tendances à Daloa cette semaine</div></div>
+    <div class="rail">${list.map((t, i) => { const r = restaurants.find(x => x.id === t.restaurant_id) || {}; return `<button class="rail-card" onclick="openRestaurant('${t.restaurant_id}', '${t.item_id}')">${t.photo_url ? `<img src="${t.photo_url}" alt="" loading="lazy">` : '<span class="rc-ph"></span>'}<div><b>${i + 1}. ${escHtml(t.name)}</b><small>${escHtml(r.name || '')} · ${t.orders} commande${t.orders > 1 ? 's' : ''}</small><em>${money(t.price)}</em></div></button>`; }).join('')}</div>`;
+}
+
+// Partage sur WhatsApp
+function siteBase() { return location.origin + location.pathname.replace(/[^/]*$/, ''); }
+async function shareLink(url, text) {
+  try { if (navigator.share) { await navigator.share({ title: "Dallas Bouff'", text, url }); return; } } catch (e) { if (e && e.name === 'AbortError') return; }
+  window.open('https://wa.me/?text=' + encodeURIComponent(text + ' ' + url), '_blank', 'noopener');
+}
+function refParam() { return currentCustomer && currentCustomer.referral_code ? '&parrain=' + encodeURIComponent(currentCustomer.referral_code) : ''; }
+function shareRestaurant(id) { const r = restaurants.find(x => x.id === id) || {}; shareLink(siteBase() + '?r=' + id + refParam(), `Commande chez ${r.name || 'ce restaurant'} sur Dallas Bouff', livré chez toi à Daloa :`); }
+function shareDish(id) { const d = menuItems.find(x => x.id === id) || {}; const r = currentRestaurant || {}; shareLink(siteBase() + '?r=' + (d.restaurant_id || r.id) + '&d=' + id + refParam(), `${d.name || 'Ce plat'} à ${money(d.price || 0)} chez ${r.name || ''}, livré chez toi avec Dallas Bouff' :`); }
+
+// Parrainage
+function getPendingReferral() { try { return localStorage.getItem('dbf-parrain') || ''; } catch (e) { return ''; } }
+function clearPendingReferral() { try { localStorage.removeItem('dbf-parrain'); } catch (e) {} }
+function referralCardHtml() {
+  const c = currentCustomer; if (!c || !c.referral_code) return '';
+  const canEnter = !c.referred_by && !(myOrders || []).some(o => o.status !== 'Annulée');
+  return `<div class="acc-card"><h4>Parrainez vos amis</h4><p>Votre ami reçoit sa première livraison offerte. Vous gagnez une livraison offerte dès que sa première commande est livrée.</p>
+    <div class="ref-code">${escHtml(c.referral_code)}</div>
+    <button class="btn-primary" style="margin:0;" onclick="shareReferral()">Inviter sur WhatsApp</button>
+    ${canEnter ? `<div class="ref-row"><input id="ref-input" placeholder="Code d'un ami" /><button class="btn-secondary" style="width:auto; margin:0; padding:0 14px;" onclick="enterReferral()">Valider</button></div>` : ''}</div>`;
+}
+function shareReferral() { shareLink(siteBase() + '?parrain=' + encodeURIComponent(currentCustomer.referral_code), `Commande tes plats préférés à Daloa sur Dallas Bouff'. Avec mon code ${currentCustomer.referral_code}, ta première livraison est offerte :`); }
+async function enterReferral() {
+  const code = (document.getElementById('ref-input').value || '').trim();
+  if (!code) return;
+  const { data, error } = await client.rpc('apply_referral', { p_code: code });
+  const msg = { ok: 'Code accepté : votre prochaine livraison est offerte.', code_inconnu: 'Ce code n\'existe pas.', votre_code: 'C\'est votre propre code.', deja_parraine: 'Vous avez déjà été parrainé.', deja_client: 'Le parrainage est réservé aux nouveaux clients.' }[data] || (error ? 'Réessayez plus tard.' : 'Code non accepté.');
+  toast(msg);
+  if (data === 'ok') { await refreshCustomer(); renderAccount(); }
+}
+function loyaltyCardHtml() {
+  const c = currentCustomer; if (!c) return '';
+  const n = (c.delivered_count || 0) % 10;
+  return `<div class="acc-card"><h4>Fidélité</h4><p>${n === 0 && c.delivered_count ? 'Bravo ! Vous venez de gagner une livraison offerte.' : `Encore ${10 - n} commande${10 - n > 1 ? 's' : ''} livrée${10 - n > 1 ? 's' : ''} et votre prochaine livraison est offerte.`}</p>
+    <div class="loy-bar">${Array.from({ length: 10 }, (_, i) => `<i class="${i < n ? 'on' : ''}"></i>`).join('')}</div>
+    <p>${(c.free_deliveries || 0) > 0 ? `<b style="color:var(--palm)">${c.free_deliveries} livraison${c.free_deliveries > 1 ? 's' : ''} offerte${c.free_deliveries > 1 ? 's' : ''}</b> à utiliser au moment de commander.` : 'Aucune livraison offerte pour le moment.'}</p></div>`;
+}
+function offersExtraHtml(codes) {
+  const hp = Object.values(happyPromos).filter(p => p.active);
+  let h = '';
+  if (currentCustomer && currentCustomer.referral_code) h += `<div class="promo-card"><div class="promo-rest">Parrainage</div><div style="font-weight:700; font-size:15px;">Livraison offerte pour vous et vos amis</div><div style="font-size:13px; color:var(--creamDim); margin-top:4px;">Votre code : <b class="mono" style="color:var(--mango)">${escHtml(currentCustomer.referral_code)}</b></div></div>`;
+  h += codes.filter(c => !c.ends_at || new Date(c.ends_at) > new Date()).map(c => { const r = restaurants.find(x => x.id === c.restaurant_id); return `<div class="promo-card"><div class="promo-rest">${r ? escHtml(r.name) : 'Tous les restaurants'}</div><div style="font-weight:700; font-size:15px;">${escHtml(c.label || 'Offre spéciale')}</div><div style="font-size:13px; color:var(--creamDim); margin-top:4px;">Code <b class="mono" style="color:var(--mango)">${escHtml(c.code)}</b>${c.min_order ? ' · dès ' + money(c.min_order) : ''}${c.ends_at ? " · jusqu'au " + new Date(c.ends_at).toLocaleDateString('fr-FR') : ''}</div></div>`; }).join('');
+  h += hp.map(p => { const r = restaurants.find(x => x.id === p.restaurant_id); return r ? `<div class="promo-card"><div class="promo-rest">${escHtml(r.name)}</div><div style="font-weight:700; font-size:15px;">-${p.percent} % ${escHtml(p.label || 'aux heures creuses')}</div><div style="font-size:13px; color:var(--creamDim); margin-top:4px;">De ${String(p.start_time).slice(0, 5)} à ${String(p.end_time).slice(0, 5)}${happyNow(p.restaurant_id) ? ' · <b style="color:#F7B9A9">en ce moment</b>' : ''}</div></div>` : ''; }).join('');
+  return h;
+}
+
+// Recommander une commande passée
+async function reorder(orderId) {
+  const o = (myOrders || []).find(x => x.id === orderId);
+  if (!o) return;
+  const r = restaurants.find(x => x.id === o.restaurant_id);
+  if (!r) { toast("Ce restaurant n'est plus disponible."); return; }
+  cart = {}; checkoutQuote = null;
+  await openRestaurant(r.id);
+  let missing = 0;
+  (Array.isArray(o.items) ? o.items : []).forEach(it => {
+    const item = menuItems.find(m => m.id === it.itemId) || menuItems.find(m => m.name === it.name);
+    if (!item || isSoldOut(item)) { missing++; return; }
+    const opts = (it.options || []).filter(op => itemOptionGroups(item).some(g => g.name === op.group && g.choices.some(c => c.label === op.choice)))
+      .map(op => { const g = itemOptionGroups(item).find(x => x.name === op.group); const c = g.choices.find(x => x.label === op.choice); return { group: op.group, choice: op.choice, price: Number(c.price) || 0 }; });
+    const needs = itemOptionGroups(item).some(g => g.required && !opts.some(x => x.group === g.name));
+    if (needs) { missing++; return; }
+    for (let q = 0; q < (Number(it.qty) || 1); q++) addCartLine(item, opts);
+  });
+  if (!cartCount()) { toast("Les plats de cette commande ne sont plus disponibles."); return; }
+  if (missing) toast(missing + " plat(s) indisponible(s) n'ont pas été ajoutés.");
+  show('checkout'); renderCheckout();
+}
+
+// Noter le livreur dans la fenêtre d'avis
+function driverRateHtml(order) {
+  driverRating = 0;
+  const o = (myOrders || []).find(x => x.id === order.id);
+  if (!o || !o.driver_id) return '';
+  const d = o.drivers;
+  return `<div class="rv-label" style="margin:14px 0 6px;">Et votre livreur${d && d.name ? ', ' + escHtml(d.name.split(' ')[0]) : ''} ?</div>
+    <div class="rv-picker" id="drv-picker" style="margin-top:0;">${[1,2,3,4,5].map(n => `<button type="button" class="rv-star" data-n="${n}" aria-label="${n} étoile${n > 1 ? 's' : ''}" onclick="setDriverRating(${n})"><svg viewBox="0 0 24 24" width="30" height="30"><path d="${STAR_PATH}"/></svg></button>`).join('')}</div>`;
+}
+function setDriverRating(n) { driverRating = n; document.querySelectorAll('#drv-picker .rv-star').forEach(s => s.classList.toggle('filled', Number(s.dataset.n) <= n)); }
+
+// Liens partagés : ?r=restaurant&d=plat&parrain=CODE
+function handleDeepLinks() {
+  const q = new URLSearchParams(location.search);
+  const ref = q.get('parrain');
+  if (ref) { try { localStorage.setItem('dbf-parrain', ref.toUpperCase()); } catch (e) {} if (!currentCustomer) setTimeout(() => toast('Créez votre compte : votre première livraison sera offerte.'), 900); }
+  const rid = q.get('r');
+  if (rid && restaurants.some(r => r.id === rid)) openRestaurant(rid, q.get('d'));
+}
+
 // ---------- Avis et notes des restaurants ----------
 let reviewTarget = null;
 let selectedRating = 0;
@@ -1216,6 +1547,7 @@ function openReview(order, preset) {
       <div class="rv-picker" id="star-picker">${[1,2,3,4,5].map(n => `<button type="button" class="rv-star" data-n="${n}" aria-label="${n} étoile${n > 1 ? 's' : ''}" onclick="setRating(${n})"><svg viewBox="0 0 24 24" width="40" height="40"><path d="${STAR_PATH}"/></svg></button>`).join('')}</div>
       <div class="rv-label" id="rv-label">Touchez une étoile</div>
       <div class="rv-tags" id="rv-tags"></div>
+      ${driverRateHtml(order)}
       <textarea id="review-comment" maxlength="400" rows="3" placeholder="Racontez en quelques mots (facultatif)">${mine && mine.comment ? escHtml(mine.comment) : ''}</textarea>
       <div class="rv-note">Votre avis sera visible par tous les clients, avec votre prénom.</div>
       <button class="btn-primary" id="rv-send" onclick="submitReview()">Publier mon avis</button>
@@ -1256,6 +1588,7 @@ async function submitReview() {
   const btn = document.getElementById('rv-send');
   if (btn) { btn.disabled = true; btn.textContent = 'Envoi…'; }
   const { error } = await client.rpc('submit_review', { p_order: reviewTarget.id, p_rating: selectedRating, p_comment: comment || null });
+  if (!error && driverRating) { try { await client.rpc('rate_driver', { p_order: reviewTarget.id, p_rating: driverRating, p_comment: null }); } catch (e) {} }
   if (error) {
     if (btn) { btn.disabled = false; btn.textContent = 'Publier mon avis'; }
     const m = String(error.message || '');
@@ -1353,12 +1686,14 @@ async function renderOffers() {
     </div>
   `;
   const { data: promos } = await client.from('promotions').select('*').eq('active', true).order('created_at', { ascending: false });
+  const { data: codes } = await client.from('promo_codes').select('code, label, kind, value, min_order, ends_at, restaurant_id').eq('public', true).eq('active', true);
   const listEl = document.getElementById('offers-list');
-  if (!promos || promos.length === 0) {
+  const extra = offersExtraHtml(codes || []);
+  if ((!promos || promos.length === 0) && !extra) {
     listEl.innerHTML = '<div class="empty">Aucune offre active pour le moment.</div>';
     return;
   }
-  listEl.innerHTML = promos.map(p => {
+  listEl.innerHTML = extra + (promos || []).map(p => {
     const r = restaurants.find(x => x.id === p.restaurant_id);
     return `
       <div class="promo-card">
@@ -1745,6 +2080,7 @@ async function loadRestaurants() {
   try { await loadStories(); } catch (e) { liveStories = []; storyGroups = []; }
 
   await loadRatings();
+  await loadGrowthData();
 
   renderList();
 }
@@ -1772,6 +2108,8 @@ function renderList() {
 
     </div>
 
+    ${favoritesRailHtml()}
+    ${trendingRailHtml()}
     <div class="section-header">
       <div class="section-title2">Catégories</div>
     </div>
@@ -1824,7 +2162,7 @@ function restaurantCardsHtml(list) {
                 <svg viewBox="0 0 24 24" width="14" height="14" stroke="var(--creamDim)" stroke-width="1.6" fill="none"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 3"/></svg>
                 <span>${r.delivery_time || ''}</span>
               </div>
-              ${openStatusBadge(r)}
+              ${openStatusBadge(r)}${happyBadge(r.id)}
             </div>
             <div class="rcard2-arrow">
               <svg viewBox="0 0 24 24" width="18" height="18" stroke="var(--mango)" stroke-width="1.8" fill="none"><path d="M9 6l6 6-6 6"/></svg>
@@ -1849,14 +2187,15 @@ function filterRestaurants() {
   document.getElementById('restaurant-list').innerHTML = restaurantCardsHtml(filtered);
 }
 
-async function openRestaurant(id) {
+async function openRestaurant(id, dishId) {
+  if (!currentRestaurant || currentRestaurant.id !== id) { cart = {}; checkoutQuote = null; }
   currentRestaurant = restaurants.find(r => r.id === id);
-  cart = {};
   updateHeaderCartBadge();
   const { data } = await client.from('menu_items').select('*').eq('restaurant_id', id);
   menuItems = data || [];
   renderMenu();
   show('menu');
+  if (dishId) setTimeout(() => { const el = document.getElementById('dish-' + dishId); if (el) { el.scrollIntoView({ behavior: 'smooth', block: 'center' }); el.style.boxShadow = '0 0 0 2px var(--mango)'; setTimeout(() => { el.style.boxShadow = ''; }, 2400); } }, 250);
 }
 
 function renderMenu() {
@@ -1866,9 +2205,11 @@ function renderMenu() {
   el.innerHTML = `
     <div class="section">
       <button class="btn-back" onclick="setActiveNav('home'); show('list')">← Tous les restaurants</button>
-      <div class="display" style="font-size:28px; color:${r.accent}">${r.name}</div>
+      <div class="rest-head"><div class="display" style="font-size:28px; color:${r.accent}">${r.name}</div>
+        <div class="rest-acts"><button type="button" class="icon-btn ${isFav('restaurants', r.id) ? 'on' : ''}" aria-label="Ajouter aux favoris" onclick="toggleFav('restaurants', '${r.id}', this)">${HEART_SVG}</button><button type="button" class="icon-btn" aria-label="Partager" onclick="shareRestaurant('${r.id}')">${SHARE_SVG}</button></div></div>
       <div style="font-size:13px; color:var(--creamDim); margin-bottom:8px;">${r.tagline || ''}</div>
       <div id="rest-rating" class="rest-rating"></div>
+      ${happyBannerHtml(r.id)}
       <div class="fee-line"><strong>${money(DELIVERY_FEE)}</strong><span>de frais de livraison, ajoutés au prix de vos plats et payés à la réception.</span></div>
       ${!open ? (r.accepting_orders === false ? `<div class="closed-banner">Ce restaurant a mis les commandes en pause pour le moment. Vous pouvez consulter le menu et revenir un peu plus tard.</div>` : `<div class="closed-banner">Ce restaurant est actuellement fermé. Horaires : ${formatHM(r.opens_at)} – ${formatHM(r.closes_at)}. Vous pouvez consulter le menu, mais la commande n'est pas possible pour le moment.</div>`) : ''}
       <div id="menu-items"></div>
@@ -1896,8 +2237,9 @@ function renderMenuItems() {
   const r = currentRestaurant;
   const open = isRestaurantOpen(r);
   document.getElementById('menu-items').innerHTML = menuItems.map(item => {
-    const inCart = cart[item.id];
-    const control = !open ? `<button class="qty-btn" style="background:var(--line); color:var(--creamDim); cursor:not-allowed;" disabled>+</button>` : !inCart ? `
+    const inCart = cartQtyOf(item.id) ? { qty: cartQtyOf(item.id) } : null;
+    const soldOut = isSoldOut(item);
+    const control = soldOut ? `<span class="soldout-tag">Épuisé aujourd'hui</span>` : !open ? `<button class="qty-btn" style="background:var(--line); color:var(--creamDim); cursor:not-allowed;" disabled>+</button>` : !inCart ? `
           <button class="qty-btn" style="background:${r.accent}; color:#080808;" onclick="addItem('${item.id}')">+</button>
         ` : `
           <div style="display:flex; align-items:center; gap:8px;">
@@ -1908,7 +2250,7 @@ function renderMenuItems() {
         `;
     if (item.photo_url) {
       return `
-      <div style="background:var(--surface); border:1px solid var(--line); border-radius:22px; overflow:hidden; margin-bottom:18px; box-shadow:0 10px 28px rgba(0,0,0,0.45);">
+      <div id="dish-${item.id}" class="${soldOut ? 'is-soldout' : ''}" style="background:var(--surface); border:1px solid var(--line); border-radius:22px; overflow:hidden; margin-bottom:18px; box-shadow:0 10px 28px rgba(0,0,0,0.45);">
         <div style="position:relative; cursor:zoom-in;" onclick="openPhotoViewer('${item.photo_url}', ${JSON.stringify(item.name).replace(/"/g,'&quot;')})">
           <img src="${item.photo_url}" alt="${item.name}" loading="lazy" style="display:block; width:100%; aspect-ratio:4/3; object-fit:cover;" />
           <div style="position:absolute; left:0; right:0; bottom:0; height:90px; background:linear-gradient(180deg, rgba(8,8,8,0), rgba(8,8,8,0.78));"></div>
@@ -1918,18 +2260,20 @@ function renderMenuItems() {
           <div style="flex:1; min-width:0;">
             <div style="font-weight:700; font-size:18px; letter-spacing:-0.3px;">${item.name}</div>
             ${item.description ? `<div style="font-size:13px; color:var(--creamDim); margin-top:4px; line-height:1.45;">${item.description}</div>` : ''}
+            ${dishExtrasHtml(item)}
           </div>
           ${control}
         </div>
       </div>`;
     }
     return `
-      <div class="item">
+      <div class="item ${soldOut ? 'is-soldout' : ''}" id="dish-${item.id}">
         <div class="item-emoji avatar" style="background:${r.accent}26; color:${r.accent}; font-size:19px;">${initial(item.name)}</div>
         <div style="flex:1;">
           <div style="font-weight:600; font-size:15px;">${item.name}</div>
           <div style="font-size:12.5px; color:var(--creamDim); margin-top:2px;">${item.description || ''}</div>
           <div class="mono" style="font-size:13px; color:${r.accent}; margin-top:6px;">${money(item.price)}</div>
+          ${dishExtrasHtml(item)}
         </div>
         ${control}
       </div>
@@ -1942,23 +2286,36 @@ function addItem(id) {
   if (!isRestaurantOpen(currentRestaurant)) { toast(currentRestaurant && currentRestaurant.accepting_orders === false ? "Ce restaurant est en pause pour le moment." : "Ce restaurant est fermé pour le moment."); renderMenu(); return; }
   const item = menuItems.find(i => i.id === id);
   if (!item) return;
+  if (isSoldOut(item)) { toast("Ce plat est épuisé pour aujourd'hui."); return; }
+  if (itemOptionGroups(item).length) { openOptionsSheet(item); return; }
+  addCartLine(item, []);
+}
+function addCartLine(item, options) {
   const wasEmpty = cartCount() === 0;
-  if (cart[id]) cart[id].qty++; else cart[id] = { ...item, qty: 1 };
+  const key = options.length ? item.id + '|' + options.map(o => o.group + ':' + o.choice).join(',') : item.id;
+  const extra = options.reduce((a, o) => a + (Number(o.price) || 0), 0);
+  if (cart[key]) cart[key].qty++; else cart[key] = { ...item, key, itemId: item.id, options, unit: (Number(item.price) || 0) + extra, qty: 1 };
+  checkoutQuote = null;
   if (wasEmpty) showFeeNotice();
   renderMenuItems();
   updateHeaderCartBadge();
 }
 function removeItem(id) {
-  if (!cart[id]) return;
-  cart[id].qty--;
-  if (cart[id].qty <= 0) delete cart[id];
+  const keys = Object.keys(cart).filter(k => (cart[k].itemId || cart[k].id) === id);
+  const k = keys[keys.length - 1];
+  if (!k) return;
+  cart[k].qty--;
+  if (cart[k].qty <= 0) delete cart[k];
+  checkoutQuote = null;
   renderMenuItems();
   updateHeaderCartBadge();
 }
+function cartQtyOf(id) { return Object.values(cart).filter(l => (l.itemId || l.id) === id).reduce((a, l) => a + l.qty, 0); }
+function lineUnit(i) { return Number(i.unit != null ? i.unit : i.price) || 0; }
 
-function cartTotal() { return Object.values(cart).reduce((s,i) => s + i.qty * i.price, 0); }
+function cartTotal() { return Object.values(cart).reduce((s,i) => s + i.qty * lineUnit(i), 0); }
 function cartCount() { return Object.values(cart).reduce((s,i) => s + i.qty, 0); }
-function orderTotal() { return cartTotal() + DELIVERY_FEE; }
+function orderTotal() { return checkoutQuote && !checkoutQuote.error ? checkoutQuote.total : cartTotal() + DELIVERY_FEE; }
 
 let feeNoticeTimer = null;
 function showFeeNotice() {
@@ -2004,6 +2361,8 @@ function renderCartBar() {
 
 function renderCheckout() {
   const el = document.getElementById('view-checkout');
+  if (currentCustomer && checkoutUseCredit === null) checkoutUseCredit = (currentCustomer.free_deliveries || 0) > 0;
+  setTimeout(refreshQuote, 0);
 
   if (!currentCustomer) {
     el.innerHTML = `
@@ -2021,15 +2380,14 @@ function renderCheckout() {
     <div class="section">
       <button class="btn-back" onclick="show('menu')">← Retour au menu</button>
       <div class="display" style="font-size:26px; margin-bottom:14px;">Votre commande</div>
-      <div class="fee-line"><strong>${money(DELIVERY_FEE)}</strong><span>de frais de livraison s'ajoutent à vos plats. Vous réglez le total en espèces au livreur.</span></div>
-      <div class="sum-box">
-        ${Object.values(cart).map(i => `
-          <div class="sum-line sum-item"><span>${i.qty}× ${escHtml(i.name)}</span><span>${money(i.qty*i.price)}</span></div>
-        `).join('')}
-        <div class="sum-line" style="border-top:1px solid var(--line); margin-top:8px; padding-top:9px;"><span>Sous-total des plats</span><span>${money(cartTotal())}</span></div>
-        <div class="sum-line fee"><span>Livraison</span><span>${money(DELIVERY_FEE)}</span></div>
-        <div class="sum-total"><span>Total à payer</span><span>${money(orderTotal())}</span></div>
+      <div class="fee-line"><strong>${money(DELIVERY_FEE)}</strong><span>de frais de livraison s'ajoutent à vos plats. Payez en espèces au livreur ou par Mobile Money.</span></div>
+      <div class="sum-box" id="sum-box">${summaryHtml()}</div>
+      <div class="promo-row">
+        <input id="f-promo" placeholder="Code promo" value="${escHtml(checkoutPromo)}" autocapitalize="characters" />
+        <button type="button" class="btn-secondary" style="width:auto; margin:0; padding:0 16px;" onclick="applyPromo()">Appliquer</button>
       </div>
+      <div id="promo-msg"></div>
+      ${(currentCustomer.free_deliveries || 0) > 0 ? `<label class="credit-row"><input type="checkbox" id="f-credit" ${checkoutUseCredit ? 'checked' : ''} onchange="checkoutUseCredit=this.checked; refreshQuote()"> <span>Utiliser une livraison offerte <small>(il vous en reste ${currentCustomer.free_deliveries})</small></span></label>` : ''}
 
       <label>Nom</label>
       <input id="f-name" placeholder="Votre nom" value="${currentCustomer.name || ''}" />
@@ -2046,7 +2404,9 @@ function renderCheckout() {
 
       ${prefsHtml()}
 
-      <button class="btn-primary" id="btn-order" onclick="placeOrder()">Commander pour ${money(orderTotal())}, payé à la livraison</button>
+      ${paymentHtml()}
+
+      <button class="btn-primary" id="btn-order" onclick="placeOrder()">${orderButtonLabel()}</button>
     </div>
   `;
 }
@@ -2141,8 +2501,11 @@ async function placeOrder() {
   if (!name || !phone || !(location_ || address)) { toast("Complétez au moins le nom, le téléphone et une position"); return; }
   if (!location_ && address.length < 8) { toast("Sans GPS, décrivez précisément votre repère (quartier, rue, couleur du portail…)."); return; }
 
-  const items = Object.values(cart).map(i => ({ itemId: i.id, name: i.name, price: i.price, qty: i.qty }));
+  const items = cartPayload();
   const total = orderTotal();
+  const pm = checkoutPayment;
+  const pref = (document.getElementById('f-payref') || {}).value || '';
+  if (pm !== 'cash' && pref.trim().length < 4) { toast("Indiquez la référence de votre paiement Mobile Money (reçue par SMS)."); return; }
   const notesEl = document.getElementById('f-notes');
   const notes = (notesEl ? notesEl.value : prefNotes).trim().slice(0, 200);
   const preferences = PREF_TASTE.concat(PREF_DIET).filter(l => selectedPrefs.has(l));
@@ -2158,7 +2521,11 @@ async function placeOrder() {
     delivery_fee: DELIVERY_FEE,
     preferences,
     notes: notes || null,
-    status: 'Reçue'
+    status: 'Reçue',
+    promo_code: (checkoutQuote && checkoutQuote.promo_ok) ? checkoutPromo : null,
+    use_credit: !!checkoutUseCredit && (currentCustomer.free_deliveries || 0) > 0,
+    payment_method: pm,
+    payment_ref: pm !== 'cash' ? pref.trim() : null
   };
   if (currentCustomer) payload.customer_id = currentCustomer.id;
 
@@ -2168,13 +2535,15 @@ async function placeOrder() {
 
   if (error) {
     if (btn) { btn.disabled = false; btn.style.opacity = ''; }
-    toast(String(error.message || '').includes('restaurant_en_pause') ? "Ce restaurant vient de mettre les commandes en pause. Réessayez plus tard." : "La commande n'est pas partie. Vérifiez votre connexion et réessayez.");
+    toast(orderErrorText(String(error.message || '')));
     console.error(error);
     return;
   }
 
-  renderConfirmation({ ...payload, created_at: new Date().toISOString() });
+  if (payload.use_credit) currentCustomer.free_deliveries = Math.max(0, (currentCustomer.free_deliveries || 0) - 1);
+  renderConfirmation({ ...payload, total: (checkoutQuote && !checkoutQuote.error) ? checkoutQuote.total : payload.total, created_at: new Date().toISOString() });
   cart = {};
+  checkoutQuote = null; checkoutPromo = ''; checkoutUseCredit = null; checkoutPayment = 'cash';
   location_ = null;
   updateHeaderCartBadge();
   hideFeeNotice();
@@ -2274,6 +2643,7 @@ function dismissInstallBanner() {
   if (!currentCustomer && hasSessionBackup()) restoreSession(async () => { await refreshCustomer(); syncClientPush(); });
   syncClientPush();
   if (location.hash === '#commandes') navTo('commandes');
+  handleDeepLinks();
   if (isIOS() && !isStandalone()) showInstallBanner('ios');
 })();
 </script>

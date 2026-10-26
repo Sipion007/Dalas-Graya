@@ -98,6 +98,12 @@
   .leg.done span { background:var(--palm); color:#080808; border-color:var(--palm); }
   .btn-backup { border-color:#2E2E2E !important; color:var(--creamDim) !important; font-weight:500 !important; font-size:12.5px !important; }
   .dist-chip { display:inline-block; margin-top:6px; font-size:12px; font-weight:700; color:var(--mango); border:1px solid rgba(245,192,74,.45); border-radius:20px; padding:3px 10px; }
+  .paid-chip { margin-top:8px; font-size:13px; font-weight:700; color:#8FC197; border:1px solid rgba(92,138,99,.6); background:rgba(92,138,99,.12); border-radius:9px; padding:9px 11px; }
+  .lb-card { background:var(--surface); border:1px solid var(--line); border-radius:14px; padding:14px; margin-bottom:16px; }
+  .lb-card h4 { margin:0 0 4px; font-size:14px; color:var(--mango); }
+  .lb-me { font-size:13px; color:var(--cream); margin-bottom:8px; line-height:1.5; }
+  .lb-row { display:flex; justify-content:space-between; font-size:12.5px; padding:5px 0; border-top:1px solid #1d1d1d; color:var(--creamDim); }
+  .lb-row.me { color:var(--cream); font-weight:700; }
   .nogps { margin-top:10px; font-size:12.5px; color:#F5D58A; border:1px solid rgba(245,192,74,.4); background:rgba(245,192,74,.08); border-radius:9px; padding:9px 11px; line-height:1.4; }
   .chips { display:flex; flex-wrap:wrap; gap:6px; margin-bottom:10px; }
   .chip-s { border:1px solid #333; background:#141414; color:#E6E6E6; border-radius:999px; padding:9px 12px; font-size:12.5px; cursor:pointer; font-family:inherit; }
@@ -209,6 +215,9 @@
 
     <div class="section-title" id="section-dispo">Commandes disponibles</div>
     <div id="available-orders"></div>
+
+    <div class="section-title">Classement de la semaine</div>
+    <div id="leaderboard"><div class="lb-card"><div class="lb-me">Chargement…</div></div></div>
   </div>
 
 </div>
@@ -1071,12 +1080,31 @@ async function afterLogin() {
   refreshOrders();
   if (refreshTimer) clearInterval(refreshTimer);
   refreshTimer = setInterval(refreshOrders, 5000);
+  loadLeaderboard();
+  if (window.__lbTimer) clearInterval(window.__lbTimer);
+  window.__lbTimer = setInterval(loadLeaderboard, 120000);
 
   Alerts.init({
     panelId: 'alert-panel',
     identity: () => ({ role: 'driver', driver_id: myDriver.id }),
     onPush: () => refreshOrders()
   });
+}
+
+async function loadLeaderboard() {
+  const el = document.getElementById('leaderboard');
+  if (!el || !myDriver) return;
+  const { data, error } = await client.rpc('driver_leaderboard');
+  if (error || !data) { el.innerHTML = ''; return; }
+  const me = data.find(x => x.driver_id === myDriver.id);
+  const top = data.filter(x => x.deliveries > 0).slice(0, 5);
+  let bonus = {};
+  try { const { data: st } = await client.from('app_settings').select('value').eq('key', 'driver_bonus').maybeSingle(); bonus = (st && st.value) || {}; } catch (e) {}
+  const prizes = [bonus.first, bonus.second, bonus.third].map(n => Number(n) || 0);
+  const prizeTxt = prizes.some(Boolean) ? `<div class="lb-me">Primes de la semaine : ${prizes.map((n, i) => n ? (i === 0 ? '1er' : (i + 1) + 'e') + ' ' + Number(n).toLocaleString('fr-FR') + ' F' : '').filter(Boolean).join(' · ')}.</div>` : '';
+  el.innerHTML = `<div class="lb-card"><h4>Meilleur livreur de la semaine</h4>
+    <div class="lb-me">${me ? `Vous êtes <b>${me.rank}${me.rank === 1 ? 'er' : 'e'}</b> sur ${data.length} avec <b>${me.deliveries}</b> livraison${me.deliveries > 1 ? 's' : ''}${me.avg_minutes ? ' · ' + me.avg_minutes + ' min en moyenne' : ''}${me.rating ? ' · note ' + String(me.rating).replace('.', ',') + ' / 5' : ''}.` : ''} Le classement repart à zéro chaque lundi.</div>${prizeTxt}
+    ${top.map(x => `<div class="lb-row ${me && x.driver_id === me.driver_id ? 'me' : ''}"><span>${x.rank}. ${escHtml(x.name)}</span><span>${x.deliveries} livraison${x.deliveries > 1 ? 's' : ''}${x.rating ? ' · ' + String(x.rating).replace('.', ',') + ' ★' : ''}</span></div>`).join('')}</div>`;
 }
 
 function toastDriver(msg) {
@@ -1302,7 +1330,7 @@ async function refreshOrders() {
       <div style="font-size:13px; margin-top:4px;">${escHtml(o.customer_name)} · ${escHtml(o.phone)}</div>
       ${o.address ? `<div style="font-size:12.5px; color:var(--creamDim); margin-top:2px;">${escHtml(o.address)}</div>` : ''}
       ${o.location && o.location.type === 'gps' ? '<div style="font-size:12px; color:var(--palm); margin-top:4px;">Position GPS du client disponible</div>' : '<div style="font-size:12px; color:var(--mango); margin-top:4px;">Pas de GPS : il faudra appeler le client</div>'}
-      <div style="margin-top:8px; font-size:13px; color:var(--creamDim);">À encaisser auprès du client : <span class="mono" style="font-weight:700; color:var(--mango); font-size:14px;">${money(o.total)}</span>${o.delivery_fee ? ` <span style="font-size:11.5px;">(livraison ${money(o.delivery_fee)} comprise)</span>` : ''}</div>
+      ${moneyLine(o)}
       <button class="btn-take" onclick="takeOrder('${o.id}')">Je prends cette livraison</button>
     </div>
   `; }).join('');
@@ -1325,8 +1353,11 @@ function mapsLinkRest(o) {
 function legStepsHtml(leg) {
   return `<div class="leg-steps"><div class="leg ${leg === 'restaurant' ? 'on' : 'done'}"><span>1</span>Récupérer au restaurant</div><div class="leg ${leg === 'client' ? 'on' : ''}"><span>2</span>Livrer le client</div></div>`;
 }
+function isPrepaid(o) { return o.payment_method && o.payment_method !== 'cash' && o.payment_status === 'confirme'; }
 function moneyLine(o) {
-  return `<div style="margin-top:8px; font-size:13px; color:var(--creamDim);">À encaisser auprès du client : <span class="mono" style="font-weight:700; color:var(--mango); font-size:14px;">${money(o.total)}</span>${o.delivery_fee ? ` <span style="font-size:11.5px;">(livraison ${money(o.delivery_fee)} comprise)</span>` : ''}</div>`;
+  if (isPrepaid(o)) return `<div class="paid-chip">Déjà payé par Mobile Money : rien à encaisser auprès du client.</div>`;
+  const pending = o.payment_method && o.payment_method !== 'cash' && o.payment_status === 'a_verifier';
+  return `<div style="margin-top:8px; font-size:13px; color:var(--creamDim);">À encaisser auprès du client : <span class="mono" style="font-weight:700; color:var(--mango); font-size:14px;">${money(o.total)}</span>${o.delivery_fee && !o.discount_delivery ? ` <span style="font-size:11.5px;">(livraison ${money(o.delivery_fee)} comprise)</span>` : ''}</div>${pending ? '<div class="nogps" style="margin-top:6px;">Paiement Mobile Money en cours de vérification : si on ne vous confirme pas avant la livraison, encaissez en espèces.</div>' : ''}`;
 }
 function restaurantLegHtml(o) {
   const r = o.restaurants || {};

@@ -39,7 +39,19 @@
     display:flex; align-items:center; justify-content:center; font-size:28px; }
   .avatar { font-family:'Bebas Neue',sans-serif; }
   .dish-info { flex:1; min-width:0; }
-  .dish-actions { display:flex; gap:8px; margin-top:8px; }
+  .dish-actions { display:flex; gap:8px; margin-top:8px; flex-wrap:wrap; }
+  .sold-tag { display:inline-block; margin-top:6px; font-size:11px; font-weight:700; color:#F0A99A; border:1px solid rgba(196,67,43,.6); border-radius:20px; padding:3px 9px; }
+  .opt-editor { border-top:1px solid var(--line); margin:12px 0; padding-top:12px; }
+  .opt-ed-title { font-weight:700; font-size:13.5px; } .opt-ed-title small { color:var(--creamDim); font-weight:400; }
+  .opt-ed-hint { font-size:12px; color:var(--creamDim); margin:4px 0 10px; line-height:1.45; }
+  .opt-g { border:1px solid var(--line); border-radius:10px; padding:10px; margin-bottom:10px; }
+  .opt-g-row, .opt-c-row { display:flex; gap:6px; align-items:center; }
+  .opt-g-row input { flex:1; margin:0; } .opt-c-row input { margin:0; } .opt-c-row input:first-child { flex:2; } .opt-c-row input[type=number] { flex:1; min-width:70px; }
+  .opt-c-row { margin-top:6px; }
+  .opt-c-row input, .opt-g-row input { width:auto; min-width:0; }
+  .opt-g-flags { display:flex; gap:14px; flex-wrap:wrap; font-size:12.5px; color:var(--creamDim); margin:8px 0 2px; }
+  .opt-g-flags input { width:auto; margin:0 4px 0 0; }
+  .opt-g > .btn-outline { margin-top:8px; }
   .header-row { display:flex; justify-content:space-between; align-items:center; margin-bottom:14px; }
   a.back { color: var(--creamDim); font-size:12px; text-decoration:none; }
   .form-box { background: var(--surface); border:1px solid var(--line); border-radius:12px; padding:16px; margin-bottom:20px; }
@@ -103,6 +115,12 @@
       <input id="dish-price" type="number" placeholder="Prix (en F CFA)" />
       <div class="photo-row">
         <input id="dish-photo" type="file" accept="image/*" />
+      </div>
+      <div class="opt-editor">
+        <div class="opt-ed-title">Options et suppléments <small>(facultatif)</small></div>
+        <div class="opt-ed-hint">Exemples : « Accompagnement » obligatoire avec Attiéké ou Alloco (+200 F), « Suppléments » avec Œuf (+200 F). Le client choisit en commandant.</div>
+        <div id="opt-groups"></div>
+        <button type="button" class="btn-outline" onclick="addOptGroup()">Ajouter un groupe d'options</button>
       </div>
       <div style="display:flex; gap:8px;">
         <button class="btn-primary" onclick="saveDish()" id="save-btn">Ajouter le plat</button>
@@ -204,6 +222,35 @@ window.addEventListener('focus', onAppResume);
 
 let myRestaurant = null;
 let editingDishId = null;
+let optGroups = [];
+function renderOptGroups() {
+  const el = document.getElementById('opt-groups');
+  if (!el) return;
+  el.innerHTML = optGroups.map((g, gi) => `<div class="opt-g">
+    <div class="opt-g-row"><input placeholder="Nom du groupe (ex : Accompagnement)" value="${escAttr(g.name)}" oninput="optGroups[${gi}].name=this.value" />
+      <button type="button" class="btn-danger" onclick="optGroups.splice(${gi},1); renderOptGroups()">Retirer</button></div>
+    <div class="opt-g-flags"><label><input type="checkbox" ${g.required ? 'checked' : ''} onchange="optGroups[${gi}].required=this.checked"> Choix obligatoire</label>
+      <label><input type="checkbox" ${g.multiple ? 'checked' : ''} onchange="optGroups[${gi}].multiple=this.checked"> Plusieurs choix possibles</label></div>
+    ${g.choices.map((c, ci) => `<div class="opt-c-row"><input placeholder="Choix (ex : Alloco)" value="${escAttr(c.label)}" oninput="optGroups[${gi}].choices[${ci}].label=this.value" />
+      <input type="number" min="0" placeholder="+ prix" value="${c.price || ''}" oninput="optGroups[${gi}].choices[${ci}].price=parseInt(this.value,10)||0" />
+      <button type="button" class="btn-outline" onclick="optGroups[${gi}].choices.splice(${ci},1); renderOptGroups()">×</button></div>`).join('')}
+    <button type="button" class="btn-outline" onclick="optGroups[${gi}].choices.push({label:'',price:0}); renderOptGroups()">Ajouter un choix</button>
+  </div>`).join('');
+}
+function addOptGroup() { optGroups.push({ name: '', required: false, multiple: false, choices: [{ label: '', price: 0 }, { label: '', price: 0 }] }); renderOptGroups(); }
+function escAttr(v) { return String(v == null ? '' : v).replace(/&/g, '&amp;').replace(/"/g, '&quot;').replace(/</g, '&lt;'); }
+function cleanOptGroups() {
+  return optGroups.map(g => ({ name: String(g.name || '').trim().slice(0, 40), required: !!g.required, multiple: !!g.multiple,
+    choices: g.choices.map(c => ({ label: String(c.label || '').trim().slice(0, 40), price: Math.max(0, parseInt(c.price, 10) || 0) })).filter(c => c.label) }))
+    .filter(g => g.name && g.choices.length);
+}
+function todayStr() { return new Date().toISOString().slice(0, 10); }
+async function toggleSoldOut(id, on) {
+  const { error } = await client.from('menu_items').update({ sold_out_date: on ? todayStr() : null }).eq('id', id);
+  if (error) { showStatus("Modification impossible. Réessayez.", false); return; }
+  showStatus(on ? "Plat marqué épuisé pour aujourd'hui. Il revient tout seul demain." : 'Plat remis en vente.', true);
+  loadDishes();
+}
 
 function money(n) { return Number(n).toLocaleString('fr-FR') + ' F'; }
 
@@ -316,7 +363,10 @@ async function loadDishes() {
         <div style="font-weight:700; font-size:14.5px;">${d.name}</div>
         ${d.description ? `<div style="font-size:12.5px; color:var(--creamDim); margin-top:2px;">${d.description}</div>` : ''}
         <div class="mono" style="font-size:13px; color:var(--mango); margin-top:4px;">${money(d.price)}</div>
+        ${Array.isArray(d.options) && d.options.length ? `<div style="font-size:12px; color:var(--creamDim); margin-top:4px;">Options : ${d.options.map(g => g.name).join(', ')}</div>` : ''}
+        ${d.sold_out_date && d.sold_out_date >= todayStr() ? `<div class="sold-tag">Épuisé aujourd'hui</div>` : ''}
         <div class="dish-actions">
+          ${d.sold_out_date && d.sold_out_date >= todayStr() ? `<button class="btn-outline" style="border-color:var(--palm); color:var(--palm);" onclick="toggleSoldOut('${d.id}', false)">Remettre en vente</button>` : `<button class="btn-outline" onclick="toggleSoldOut('${d.id}', true)">Épuisé aujourd'hui</button>`}
           <button class="btn-outline" onclick='editDish(${JSON.stringify(d).replace(/'/g, "&apos;")})'>Modifier</button>
           <button class="btn-danger" onclick="deleteDish('${d.id}')">Supprimer</button>
         </div>
@@ -331,6 +381,8 @@ function editDish(d) {
   document.getElementById('dish-name').value = d.name || '';
   document.getElementById('dish-desc').value = d.description || '';
   document.getElementById('dish-price').value = d.price || '';
+  optGroups = (Array.isArray(d.options) ? d.options : []).map(g => ({ name: g.name, required: !!g.required, multiple: !!g.multiple, choices: (g.choices || []).map(c => ({ label: c.label, price: c.price || 0 })) }));
+  renderOptGroups();
   document.getElementById('save-btn').textContent = 'Enregistrer les modifications';
   document.getElementById('cancel-edit-btn').style.display = 'inline-block';
   window.scrollTo({ top: 0, behavior: 'smooth' });
@@ -343,6 +395,7 @@ function cancelEdit() {
   document.getElementById('dish-desc').value = '';
   document.getElementById('dish-price').value = '';
   document.getElementById('dish-photo').value = '';
+  optGroups = []; renderOptGroups();
   document.getElementById('save-btn').textContent = 'Ajouter le plat';
   document.getElementById('cancel-edit-btn').style.display = 'none';
 }
@@ -396,7 +449,7 @@ async function saveDish() {
   document.getElementById('save-btn').textContent = 'Enregistrement...';
   const photoUrl = await uploadPhotoIfAny();
 
-  const payload = { name, description, price };
+  const payload = { name, description, price, options: cleanOptGroups() };
   if (photoUrl) payload.photo_url = photoUrl;
 
   let error;
