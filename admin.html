@@ -2300,7 +2300,7 @@ function initLiveMap() {
     } catch (e) { liveMap = null; el.innerHTML = '<div class="empty">Carte indisponible pour le moment.</div>'; return; }
   }
   refreshMap();
-  if (!mapTimer) mapTimer = setInterval(refreshMap, 20000);
+  if (!mapTimer) mapTimer = setInterval(refreshMap, 5000);
 }
 async function refreshMap() {
   try { await drawMap(); } catch (e) { console.warn('carte', e); }
