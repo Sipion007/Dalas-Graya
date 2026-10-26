@@ -781,6 +781,36 @@ async function login() {
   await afterLogin();
 }
 
+// ---------- Mode administrateur : l'admin gère un restaurant comme s'il en était le propriétaire ----------
+const ADMIN_AS = new URLSearchParams(location.search).get('as');
+let ADMIN_MODE = false;
+async function restaurantForUser(user) {
+  if (ADMIN_AS) {
+    const { data: isAdm } = await client.rpc('is_admin');
+    if (isAdm === true) {
+      const res = await client.from('restaurants').select('*').eq('id', ADMIN_AS).maybeSingle();
+      if (!res.error && res.data) { ADMIN_MODE = true; applyAdminMode(res.data); }
+      return res;
+    }
+  }
+  return client.from('restaurants').select('*').eq('owner_email', user.email).maybeSingle();
+}
+function applyAdminMode(rest) {
+  document.querySelectorAll('a[href]').forEach(a => {
+    const h = a.getAttribute('href');
+    if (/^(dashboard|menu|stats)\.html$/.test(h)) a.setAttribute('href', h + '?as=' + encodeURIComponent(ADMIN_AS));
+  });
+  document.querySelectorAll('[onclick="logout()"]').forEach(b => { b.textContent = "Retour à l'admin"; b.setAttribute('onclick', "location.href='admin.html'"); });
+  if (!document.getElementById('admin-mode-bar')) {
+    const bar = document.createElement('div');
+    bar.id = 'admin-mode-bar';
+    bar.style.cssText = 'position:sticky; top:0; z-index:90; background:#F5C04A; color:#080808; font:600 12.5px/1.4 -apple-system, Segoe UI, Roboto, sans-serif; padding:9px 14px; display:flex; justify-content:space-between; align-items:center; gap:10px;';
+    bar.innerHTML = '<span>Mode administrateur · vous gérez <b></b></span><a href="admin.html" style="color:#080808; font-weight:800; white-space:nowrap;">Retour à l\'admin</a>';
+    bar.querySelector('b').textContent = rest.name;
+    document.body.insertBefore(bar, document.body.firstChild);
+  }
+}
+
 function isAppLoggedIn() { return !!myRestaurant; }
 
 async function afterLogin() {
@@ -788,7 +818,7 @@ async function afterLogin() {
   if (!session) return;
   const user = session.user;
 
-  const { data: rest, error } = await client.from('restaurants').select('*').eq('owner_email', user.email).maybeSingle();
+  const { data: rest, error } = await restaurantForUser(user);
 
   if (error) {
     // Erreur réseau passagère : on garde la session et on réessaie
@@ -824,7 +854,7 @@ async function afterLogin() {
 
   Alerts.init({
     panelId: 'alert-panel',
-    identity: () => ({ role: 'restaurant', restaurant_id: myRestaurant.id }),
+    identity: () => (ADMIN_MODE ? { role: 'admin' } : { role: 'restaurant', restaurant_id: myRestaurant.id }),
     onPush: () => loadOrders()
   });
   renderOpenToggle();

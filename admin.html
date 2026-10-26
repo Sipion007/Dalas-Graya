@@ -119,8 +119,17 @@
     .side-logout:hover { color:var(--cream); border-color:#3A3A3A; }
 
     .dash { display:grid; gap:20px; grid-template-columns: repeat(3, minmax(0,1fr));
-      grid-template-rows: auto min-content 1fr auto auto auto auto;
-      grid-template-areas: "kpi kpi kpi" "watch watch alerts" "watch watch acc" "rev dish photo" "avis avis avis" "drv drv drv" "hist hist hist"; align-items:start; }
+      grid-template-rows: auto auto min-content 1fr auto auto auto auto auto auto;
+      grid-template-areas: "kpi kpi kpi" "live live live" "watch watch alerts" "watch watch acc" "manage manage manage" "clients clients clients" "rev dish photo" "avis avis avis" "drv drv drv" "hist hist hist"; align-items:start; }
+    #manage-box { display:grid; grid-template-columns: repeat(auto-fill, minmax(420px, 1fr)); gap:8px; }
+    #manage-box .mg-row { margin:0; }
+    #clients-box { display:grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap:8px; align-content:start; }
+    #clients-box .cl-row { margin:0; }
+    #clients-box > .empty { grid-column: 1 / -1; }
+    .pn-live { grid-area:live; } .pn-manage { grid-area:manage; } .pn-clients { grid-area:clients; }
+    #live-box { display:grid; grid-template-columns: repeat(auto-fill, minmax(360px, 1fr)); gap:12px; }
+    #live-box > .empty { grid-column: 1 / -1; }
+    #clients-box { max-height: 520px; overflow:auto; padding-right:4px; }
     .pn-avis { grid-area:avis; }
     #admin-reviews { display:grid; grid-template-columns: minmax(0,1fr) minmax(0,2fr); gap:18px; align-items:start; }
     #admin-reviews > .empty { grid-column: 1 / -1; }
@@ -159,8 +168,54 @@
     .pn-kpi .stats-grid { grid-template-columns: repeat(6, minmax(0,1fr)); }
     .stat-value { font-size:30px; }
     .dash { grid-template-columns: repeat(4, minmax(0,1fr));
-      grid-template-areas: "kpi kpi kpi kpi" "watch watch watch alerts" "watch watch watch acc" "rev dish photo photo" "avis avis avis avis" "drv drv drv drv" "hist hist hist hist"; }
+      grid-template-areas: "kpi kpi kpi kpi" "live live live live" "watch watch watch alerts" "watch watch watch acc" "manage manage manage manage" "clients clients clients clients" "rev dish photo photo" "avis avis avis avis" "drv drv drv drv" "hist hist hist hist"; }
   }
+  .pn-head2 { display:flex; align-items:center; justify-content:space-between; gap:10px; }
+  .pn-head2 .section-title { margin-bottom:10px; }
+  .live-dot { font-size:11px; font-weight:700; color:var(--palm); display:inline-flex; align-items:center; gap:6px; margin-bottom:10px; }
+  .live-dot::before { content:''; width:7px; height:7px; border-radius:50%; background:var(--palm); box-shadow:0 0 0 3px rgba(92,138,99,.25); }
+  .lv { background:var(--surface); border:1px solid var(--line); border-left:4px solid #555; border-radius:12px; padding:12px 13px; margin-bottom:10px; }
+  .lv.s-new { border-left-color:var(--chili); } .lv.s-prep { border-left-color:var(--mango); } .lv.s-ready { border-left-color:#E08A3C; } .lv.s-road { border-left-color:var(--palm); }
+  .lv-top { display:flex; align-items:center; gap:8px; flex-wrap:wrap; }
+  .lv-id { font-family:'JetBrains Mono', monospace; font-size:12px; font-weight:700; }
+  .lv-st { font-size:10.5px; font-weight:700; border-radius:20px; padding:3px 9px; background:#1d1d1d; border:1px solid #333; }
+  .lv-ago { margin-left:auto; font-size:11.5px; color:var(--creamDim); }
+  .lv-line { font-size:13px; margin-top:6px; line-height:1.45; }
+  .lv-line span { color:var(--creamDim); }
+  .lv-line a { color:var(--cream); }
+  .link-client { background:none; border:none; padding:0; color:var(--mango); font:inherit; font-weight:700; cursor:pointer; text-decoration:underline; }
+  .lv-row { display:flex; flex-wrap:wrap; gap:6px; align-items:center; margin-top:9px; }
+  .lv-row select { margin:0; width:auto; flex:1; min-width:150px; padding:8px 10px; font-size:12.5px; }
+  .lv-row input { margin:0; flex:1; min-width:150px; padding:8px 10px; font-size:12.5px; }
+  .lv-msgs { margin-top:8px; border-top:1px solid var(--line); padding-top:8px; display:flex; flex-direction:column; gap:5px; max-height:220px; overflow:auto; }
+  .lv-msg { font-size:12.5px; line-height:1.4; } .lv-msg b { color:var(--mango); font-weight:700; } .lv-msg i { color:var(--creamDim); font-style:normal; font-size:11px; }
+  .mg-row { display:flex; align-items:center; gap:10px; flex-wrap:wrap; background:var(--surface); border:1px solid var(--line); border-radius:10px; padding:10px 12px; margin-bottom:8px; }
+  .mg-row b { flex:1; min-width:120px; font-size:13.5px; }
+  .mg-row small { color:var(--creamDim); font-size:11.5px; display:block; font-weight:500; }
+  .cl-count { font-size:12px; color:var(--creamDim); margin-bottom:10px; }
+  #cl-search { margin-bottom:10px; }
+  .cl-row { width:100%; text-align:left; display:grid; grid-template-columns: 1fr auto; gap:2px 10px; background:var(--surface); border:1px solid var(--line); border-radius:10px; padding:10px 12px; margin-bottom:7px; color:var(--cream); font-family:inherit; cursor:pointer; }
+  .cl-row:hover { border-color:#3A3A3A; }
+  .cl-row b { font-size:13.5px; } .cl-row span { font-size:12px; color:var(--creamDim); } .cl-row em { font-style:normal; font-size:12px; color:var(--mango); text-align:right; }
+  .cp-modal { position:fixed; inset:0; z-index:300; background:rgba(0,0,0,.72); display:flex; justify-content:flex-end; }
+  .cp-sheet { width:100%; max-width:560px; height:100%; overflow:auto; background:#0D0D0D; border-left:1px solid var(--line); padding:20px 20px 40px; }
+  .cp-head { display:flex; justify-content:space-between; align-items:flex-start; gap:10px; }
+  .cp-name { font-size:24px; font-weight:800; letter-spacing:-.4px; }
+  .cp-sub { font-size:12.5px; color:var(--creamDim); margin-top:3px; line-height:1.5; }
+  .cp-close { background:none; border:1px solid var(--line); color:var(--cream); border-radius:9px; padding:8px 12px; cursor:pointer; font-family:inherit; }
+  .cp-kpis { display:grid; grid-template-columns: repeat(3, minmax(0,1fr)); gap:8px; margin:14px 0; }
+  .cp-kpi { background:var(--surface); border:1px solid var(--line); border-radius:10px; padding:10px; }
+  .cp-kpi div { font-size:10.5px; color:var(--creamDim); text-transform:uppercase; letter-spacing:.4px; }
+  .cp-kpi b { display:block; font-family:'Bebas Neue', sans-serif; font-size:24px; color:var(--mango); font-weight:400; margin-top:2px; }
+  .cp-sec { margin-top:16px; }
+  .cp-sec h4 { margin:0 0 8px; font-size:12px; color:var(--mango); text-transform:uppercase; letter-spacing:.5px; }
+  .cp-li { display:flex; justify-content:space-between; gap:10px; font-size:13px; padding:7px 0; border-bottom:1px solid #1c1c1c; }
+  .cp-li span:last-child { color:var(--creamDim); text-align:right; }
+  .cp-li a { color:var(--cream); }
+  .cp-bars { display:flex; gap:4px; align-items:flex-end; height:60px; }
+  .cp-bars div { flex:1; height:100%; background:#242424; border-radius:3px 3px 0 0; position:relative; }
+  .cp-bars div i { position:absolute; left:0; right:0; bottom:0; background:var(--mango); border-radius:3px 3px 0 0; }
+  .cp-bars-l { display:flex; gap:4px; font-size:10px; color:var(--creamDim); margin-top:3px; } .cp-bars-l span { flex:1; text-align:center; }
   .av-item { background:var(--surface); border:1px solid var(--line); border-radius:10px; padding:11px 12px; margin-bottom:8px; }
   .av-item.is-hidden { opacity:.55; }
   .av-top { display:flex; align-items:center; gap:8px; flex-wrap:wrap; font-size:13px; }
@@ -204,6 +259,10 @@
   <div class="dash">
     <section class="pn pn-alerts">
     <div id="alert-panel"></div>
+    </section>
+    <section class="pn pn-live">
+    <div class="pn-head2"><div class="section-title" id="section-live">Commandes en cours</div><span class="live-dot">En direct</span></div>
+    <div id="live-box"><div class="empty">Chargement…</div></div>
     </section>
     <section class="pn pn-watch">
     <div class="section-title" id="section-watch" style="margin-top:0;">À surveiller</div>
@@ -257,6 +316,15 @@
     </div>
 
     </section>
+    <section class="pn pn-manage">
+    <div class="section-title" id="section-manage">Gérer les restaurants</div>
+    <div id="manage-box"><div class="empty">Chargement…</div></div>
+    </section>
+    <section class="pn pn-clients">
+    <div class="pn-head2"><div class="section-title" id="section-clients">Clients</div><span class="cl-count" id="cl-count"></span></div>
+    <input id="cl-search" type="search" placeholder="Rechercher un nom ou un numéro" oninput="renderClients()" />
+    <div id="clients-box"><div class="empty">Chargement…</div></div>
+    </section>
     <section class="pn pn-rev">
     <div class="section-title">Chiffre d'affaires par restaurant</div>
     <div id="revenue-by-restaurant"></div>
@@ -301,9 +369,21 @@
     <svg viewBox="0 0 24 24"><path d="M3 3v18h18"/><path d="M7 15l4-6 3 3 5-7"/></svg>
     <span>Vue d'ensemble</span>
   </button>
+  <button class="nav-item desk-only" data-target="section-live" onclick="document.getElementById('section-live').scrollIntoView({behavior:'smooth'})">
+    <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 3"/></svg>
+    <span>En cours</span>
+  </button>
   <button class="nav-item desk-only" data-target="section-watch" onclick="document.getElementById('section-watch').scrollIntoView({behavior:'smooth'})">
     <svg viewBox="0 0 24 24"><path d="M12 3l9 16H3z"/><line x1="12" y1="10" x2="12" y2="14"/><line x1="12" y1="17" x2="12" y2="17.5"/></svg>
     <span>À surveiller</span>
+  </button>
+  <button class="nav-item desk-only" data-target="section-manage" onclick="document.getElementById('section-manage').scrollIntoView({behavior:'smooth'})">
+    <svg viewBox="0 0 24 24"><path d="M4 10h16v10H4z"/><path d="M3 10l2-6h14l2 6"/><path d="M9 20v-5h6v5"/></svg>
+    <span>Restaurants</span>
+  </button>
+  <button class="nav-item desk-only" data-target="section-clients" onclick="document.getElementById('section-clients').scrollIntoView({behavior:'smooth'})">
+    <svg viewBox="0 0 24 24"><circle cx="9" cy="8" r="3.5"/><path d="M2.5 20c0-3.5 3-6 6.5-6s6.5 2.5 6.5 6"/><circle cx="17" cy="9" r="2.5"/><path d="M16 14.2c3 .2 5.5 2.4 5.5 5.8"/></svg>
+    <span>Clients</span>
   </button>
   <button class="nav-item" data-target="section-livreurs" onclick="document.getElementById('section-livreurs').scrollIntoView({behavior:'smooth'})">
     <svg viewBox="0 0 24 24"><circle cx="12" cy="8" r="4"/><path d="M4 21c0-4 4-7 8-7s8 3 8 7"/></svg>
@@ -1090,6 +1170,8 @@ async function afterLogin() {
   loadWatch();
   if (watchTimer) clearInterval(watchTimer);
   watchTimer = setInterval(loadWatch, 20000);
+  if (liveTimer) clearInterval(liveTimer);
+  liveTimer = setInterval(loadLive, 10000);
 
   document.getElementById('login-screen').style.display = 'none';
   document.getElementById('admin-screen').style.display = 'block';
@@ -1112,12 +1194,253 @@ async function logout() {
 
 let allDrivers = [];
 
+// ================= Contrôle total de l'administrateur =================
+let liveTimer = null;
+let liveOrders = [], liveDrivers = [], liveMsgs = {};
+const liveOpen = { msg: {}, cancel: {} };
+let liveSig = '';
+const ST_CLASS = { 'Reçue': 's-new', 'En préparation': 's-prep', 'Prête': 's-ready', 'En livraison': 's-road' };
+const ST_LABEL = { 'Reçue': 'À accepter', 'En préparation': 'En préparation', 'Prête': 'Prête', 'En livraison': 'En livraison' };
+function telLink(p) { const d = String(p || '').replace(/[^\d+]/g, ''); return d ? 'tel:' + d : ''; }
+function restById(id) { return (restaurants || []).find(r => r.id === id) || {}; }
+
+async function loadLive() {
+  if (!adminLoggedIn) return;
+  const since = new Date(Date.now() - 3 * 24 * 3600 * 1000).toISOString();
+  const { data, error } = await client.from('orders').select('*').gte('created_at', since).order('created_at', { ascending: false }).limit(200);
+  if (error) return;
+  liveOrders = (data || []).filter(o => !['Livrée', 'Annulée'].includes(o.status));
+  const { data: drv } = await client.from('drivers').select('id, name, phone, restaurant_id, verification').eq('verification', 'approved').order('name');
+  liveDrivers = drv || [];
+  liveMsgs = {};
+  const ids = liveOrders.map(o => o.id);
+  if (ids.length) {
+    const { data: msgs } = await client.from('order_messages').select('*').in('order_id', ids).order('created_at');
+    (msgs || []).forEach(m => { (liveMsgs[m.order_id] = liveMsgs[m.order_id] || []).push(m); });
+  }
+  renderLive();
+}
+
+function renderLive(force) {
+  const el = document.getElementById('live-box');
+  if (!el) return;
+  const sig = JSON.stringify([liveOrders.map(o => [o.id, o.status, o.driver_id, o.collected_at, o.cancel_requested_at]), Object.keys(liveMsgs).map(k => [k, liveMsgs[k].length]), liveOpen, liveDrivers.length]);
+  if (!force && sig === liveSig) return;
+  const focused = document.activeElement && el.contains(document.activeElement) && /INPUT|SELECT|TEXTAREA/.test(document.activeElement.tagName);
+  if (!force && focused) return;
+  liveSig = sig;
+  if (!liveOrders.length) { el.innerHTML = '<div class="empty">Aucune commande en cours pour le moment.</div>'; return; }
+  el.innerHTML = liveOrders.map(o => {
+    const r = restById(o.restaurant_id);
+    const d = liveDrivers.find(x => x.id === o.driver_id);
+    const msgs = liveMsgs[o.id] || [];
+    const st = o.status;
+    const driverOpts = liveDrivers.filter(x => !x.restaurant_id || x.restaurant_id === o.restaurant_id).map(x => `<option value="${x.id}" ${x.id === o.driver_id ? 'selected' : ''}>${escHtml(x.name)}</option>`).join('');
+    return `<div class="lv ${ST_CLASS[st] || ''}">
+      <div class="lv-top"><span class="lv-id">#${o.id.slice(0, 8).toUpperCase()}</span><span class="lv-st">${ST_LABEL[st] || escHtml(st)}${st === 'En livraison' ? (o.collected_at ? ' · récupérée' : ' · vers le restaurant') : ''}</span>${o.cancel_requested_at ? '<span class="lv-st" style="border-color:var(--chili); color:#F0A99A;">Demande d\'annulation</span>' : ''}<span class="lv-ago">${timeAgo(o.created_at)}</span></div>
+      <div class="lv-line"><b>${escHtml(r.name || '—')}</b> · ${money(o.total)}</div>
+      <div class="lv-line"><span>Client :</span> <button class="link-client" onclick="openCustomer('${o.customer_id || ''}', '${escHtml(o.phone || '')}')">${escHtml(o.customer_name || 'Client')}</button> · <a href="${telLink(o.phone)}">${escHtml(o.phone || '')}</a>${o.address ? ` · <span>${escHtml(o.address)}</span>` : ''}</div>
+      <div class="lv-line"><span>Livreur :</span> ${d ? `<b>${escHtml(d.name)}</b> · <a href="${telLink(d.phone)}">${escHtml(d.phone || '')}</a>` : '<span>aucun</span>'}</div>
+      <div class="lv-row">
+        <a class="w-btn go" href="dashboard.html?as=${o.restaurant_id}">Gérer</a>
+        ${st === 'Reçue' ? `<select id="lv-prep-${o.id}" style="flex:0 0 auto; min-width:110px;"><option value="15">15 min</option><option value="20" selected>20 min</option><option value="30">30 min</option><option value="45">45 min</option><option value="60">1 h</option></select><button class="w-btn go" onclick="adminAccept('${o.id}')">Accepter</button>` : ''}
+        ${st === 'En préparation' ? `<button class="w-btn go" onclick="adminSetStatus('${o.id}', 'Prête')">Marquer prête</button>` : ''}
+        ${st === 'En livraison' ? `<button class="w-btn" onclick="adminDelivered('${o.id}')">Marquer livrée</button>` : ''}
+        ${r.whatsapp ? `<a class="w-btn" href="tel:+${escHtml(r.whatsapp)}">Appeler le restaurant</a>` : ''}
+        <button class="w-btn" onclick="liveToggle('msg', '${o.id}')">Messages${msgs.length ? ' (' + msgs.length + ')' : ''}</button>
+        <button class="w-btn danger" onclick="liveToggle('cancel', '${o.id}')">Annuler</button>
+      </div>
+      ${['Prête', 'En livraison', 'En préparation', 'Reçue'].includes(st) ? `<div class="lv-row">
+        <select id="lv-drv-${o.id}"><option value="">${o.driver_id ? 'Changer de livreur…' : 'Choisir le livreur…'}</option>${driverOpts}</select>
+        <button class="w-btn go" onclick="adminAssign('${o.id}')">${o.driver_id ? 'Confier à ce livreur' : 'Assigner'}</button>
+        ${o.driver_id ? `<button class="w-btn danger" onclick="adminUnassign('${o.id}')">Retirer le livreur</button>` : ''}
+      </div>` : ''}
+      ${liveOpen.cancel[o.id] ? `<div class="lv-row"><input id="lv-cancel-${o.id}" maxlength="160" placeholder="Motif de l'annulation (vu par le client)" /><button class="w-btn danger" onclick="adminCancelLive('${o.id}')">Confirmer l'annulation</button></div>` : ''}
+      ${liveOpen.msg[o.id] ? `<div class="lv-msgs">${msgs.length ? msgs.map(m => `<div class="lv-msg"><b>${escHtml(m.sender_name || m.sender_role)}</b> <i>${hhmm(m.created_at)}</i><br>${escHtml(m.body)}</div>`).join('') : '<div class="lv-msg"><i>Aucun message pour cette commande.</i></div>'}</div>
+        <div class="lv-row"><input id="lv-msg-${o.id}" maxlength="500" placeholder="Écrire au client, au restaurant et au livreur…" onkeydown="if(event.key==='Enter') adminSendMsg('${o.id}')" /><button class="w-btn go" onclick="adminSendMsg('${o.id}')">Envoyer</button></div>` : ''}
+    </div>`;
+  }).join('');
+}
+function liveToggle(kind, id) { liveOpen[kind][id] = !liveOpen[kind][id]; if (!liveOpen[kind][id]) delete liveOpen[kind][id]; renderLive(true); const f = document.getElementById((kind === 'msg' ? 'lv-msg-' : 'lv-cancel-') + id); if (f) f.focus(); }
+async function adminAccept(id) {
+  const sel = document.getElementById('lv-prep-' + id);
+  const mins = sel ? Number(sel.value) : 20;
+  const { error } = await client.from('orders').update({ status: 'En préparation', prep_minutes: mins }).eq('id', id).eq('status', 'Reçue');
+  if (error) { alert('Action impossible pour le moment.'); return; }
+  loadLive(); loadWatch();
+}
+async function adminSetStatus(id, status) {
+  const { error } = await client.from('orders').update({ status }).eq('id', id);
+  if (error) { alert('Action impossible pour le moment.'); return; }
+  loadLive(); loadWatch();
+}
+async function adminAssign(id) {
+  const sel = document.getElementById('lv-drv-' + id);
+  if (!sel || !sel.value) { alert('Choisissez un livreur dans la liste.'); return; }
+  const { error } = await client.rpc('admin_assign_driver', { p_order: id, p_driver: sel.value });
+  if (error) { alert("Attribution impossible : " + (error.message || 'réessayez')); return; }
+  loadLive(); loadWatch();
+}
+async function adminUnassign(id) {
+  if (!confirm('Retirer le livreur de cette commande ? Elle sera de nouveau proposée aux livreurs.')) return;
+  const { error } = await client.rpc('admin_assign_driver', { p_order: id, p_driver: null });
+  if (error) { alert('Action impossible pour le moment.'); return; }
+  loadLive(); loadWatch();
+}
+async function adminCancelLive(id) {
+  const inp = document.getElementById('lv-cancel-' + id);
+  const why = inp ? inp.value.trim() : '';
+  if (why.length < 3) { alert("Indiquez le motif de l'annulation."); return; }
+  const { error } = await client.rpc('cancel_order', { p_order: id, p_reason: why });
+  if (error) { alert('Annulation impossible. Réessayez.'); return; }
+  delete liveOpen.cancel[id];
+  loadLive(); loadWatch(); loadData();
+}
+async function adminSendMsg(id) {
+  const inp = document.getElementById('lv-msg-' + id);
+  const txt = inp ? inp.value.trim() : '';
+  if (!txt) return;
+  const { error } = await client.rpc('send_order_message', { p_order: id, p_body: txt });
+  if (error) { alert('Message non envoyé. Réessayez.'); return; }
+  inp.value = '';
+  await loadLive(); renderLive(true);
+}
+
+// ----- Gérer chaque restaurant comme son propriétaire -----
+function renderManage() {
+  const el = document.getElementById('manage-box');
+  if (!el) return;
+  if (!restaurants.length) { el.innerHTML = '<div class="empty">Aucun restaurant.</div>'; return; }
+  el.innerHTML = restaurants.map(r => `<div class="mg-row">
+      <b>${escHtml(r.name)}<small>${r.accepting_orders === false ? 'En pause' : 'Ouvert aux commandes'}${typeof r.lat === 'number' ? '' : ' · position non enregistrée'}</small></b>
+      <a class="w-btn go" href="dashboard.html?as=${r.id}">Commandes et stories</a>
+      <a class="w-btn" href="menu.html?as=${r.id}">Menu</a>
+      <a class="w-btn" href="stats.html?as=${r.id}">Statistiques</a>
+      ${r.whatsapp ? `<a class="w-btn" href="tel:+${escHtml(r.whatsapp)}">Appeler</a>` : ''}
+    </div>`).join('');
+}
+
+// ----- Clients : fiche complète -----
+let allCustomers = [], customersMeta = {}, allReviewsAdmin = [];
+async function loadClients() {
+  const { data } = await client.from('customers').select('*').order('created_at', { ascending: false });
+  allCustomers = data || [];
+  const { data: meta } = await client.rpc('admin_customers_meta');
+  customersMeta = {};
+  (meta || []).forEach(m => { customersMeta[m.customer_id] = m; });
+  renderClients();
+}
+function digits(p) { return String(p || '').replace(/\D/g, '').slice(-8); }
+function ordersOfCustomer(c) {
+  const ph = digits(c.phone);
+  return (allOrders || []).filter(o => (c.id && o.customer_id === c.id) || (ph && !o.customer_id && digits(o.phone) === ph));
+}
+function clientRows() {
+  const rows = allCustomers.map(c => ({ c, orders: ordersOfCustomer(c) }));
+  // Commandes passées sans compte, regroupées par numéro
+  const known = new Set(allCustomers.map(c => digits(c.phone)).filter(Boolean));
+  const guests = {};
+  (allOrders || []).filter(o => !o.customer_id && digits(o.phone) && !known.has(digits(o.phone))).forEach(o => {
+    const k = digits(o.phone);
+    (guests[k] = guests[k] || { c: { id: '', name: o.customer_name, phone: o.phone, created_at: o.created_at, guest: true }, orders: [] }).orders.push(o);
+  });
+  return rows.concat(Object.values(guests));
+}
+function renderClients() {
+  const el = document.getElementById('clients-box');
+  if (!el) return;
+  const q = (document.getElementById('cl-search').value || '').trim().toLowerCase();
+  let rows = clientRows();
+  document.getElementById('cl-count').textContent = rows.length + ' clients';
+  if (q) rows = rows.filter(x => (x.c.name || '').toLowerCase().includes(q) || String(x.c.phone || '').replace(/\s/g, '').includes(q.replace(/\s/g, '')));
+  rows.sort((a, b) => (b.orders[0] ? new Date(b.orders[0].created_at) : new Date(b.c.created_at || 0)) - (a.orders[0] ? new Date(a.orders[0].created_at) : new Date(a.c.created_at || 0)));
+  if (!rows.length) { el.innerHTML = '<div class="empty">Aucun client ne correspond.</div>'; return; }
+  el.innerHTML = rows.slice(0, 300).map(x => {
+    const done = x.orders.filter(o => o.status === 'Livrée');
+    return `<button class="cl-row" onclick="openCustomer('${x.c.id || ''}', '${escHtml(x.c.phone || '')}')">
+      <b>${escHtml(x.c.name || 'Client')}${x.c.guest ? ' · sans compte' : ''}</b><em>${x.orders.length} commande${x.orders.length > 1 ? 's' : ''}</em>
+      <span>${escHtml(x.c.phone || '')}</span><span style="text-align:right">${done.length ? money(done.reduce((a, o) => a + (o.total || 0), 0)) : ''}</span>
+    </button>`;
+  }).join('');
+}
+
+async function openCustomer(id, phone) {
+  if (!allCustomers.length) await loadClients();
+  let c = id ? allCustomers.find(x => x.id === id) : null;
+  if (!c && phone) c = allCustomers.find(x => digits(x.phone) && digits(x.phone) === digits(phone));
+  if (!c) { const o = (allOrders || []).find(x => digits(x.phone) === digits(phone)); c = { id: '', name: o ? o.customer_name : 'Client', phone, created_at: o ? o.created_at : null, guest: true }; }
+  const orders = ordersOfCustomer(c).slice().sort((a, b) => new Date(b.created_at) - new Date(a.created_at));
+  const meta = customersMeta[c.id] || {};
+  const done = orders.filter(o => o.status === 'Livrée');
+  const cancelled = orders.filter(o => o.status === 'Annulée');
+  const byClient = cancelled.filter(o => o.cancelled_by === 'client').length;
+  const spent = done.reduce((a, o) => a + (o.total || 0), 0);
+  const count = (arr) => { const m = {}; arr.forEach(k => { if (k) m[k] = (m[k] || 0) + 1; }); return Object.entries(m).sort((a, b) => b[1] - a[1]); };
+  const favRest = count(orders.map(o => o.restaurant_id)).slice(0, 5);
+  const dishes = {}; orders.forEach(o => (Array.isArray(o.items) ? o.items : []).forEach(it => { if (it && it.name) dishes[it.name] = (dishes[it.name] || 0) + (Number(it.qty) || 1); }));
+  const favDish = Object.entries(dishes).sort((a, b) => b[1] - a[1]).slice(0, 6);
+  const prefs = count([].concat(...orders.map(o => Array.isArray(o.preferences) ? o.preferences : []))).slice(0, 8);
+  const days = ['Dim', 'Lun', 'Mar', 'Mer', 'Jeu', 'Ven', 'Sam'];
+  const dayCount = [0, 0, 0, 0, 0, 0, 0]; const slots = { 'Matin (6 h – 11 h)': 0, 'Midi (11 h – 15 h)': 0, 'Après-midi (15 h – 18 h)': 0, 'Soir (18 h – 23 h)': 0, 'Nuit (23 h – 6 h)': 0 };
+  orders.forEach(o => { const t = new Date(o.created_at); dayCount[t.getDay()]++; const h = t.getHours(); const k = h >= 6 && h < 11 ? 'Matin (6 h – 11 h)' : h < 15 && h >= 11 ? 'Midi (11 h – 15 h)' : h < 18 && h >= 15 ? 'Après-midi (15 h – 18 h)' : h < 23 && h >= 18 ? 'Soir (18 h – 23 h)' : 'Nuit (23 h – 6 h)'; slots[k]++; });
+  const maxDay = Math.max(1, ...dayCount);
+  const places = {}; orders.forEach(o => { const gps = o.location && o.location.type === 'gps' && typeof o.location.lat === 'number' ? o.location.lat.toFixed(4) + ',' + o.location.lng.toFixed(4) : ''; const key = (o.address || '').trim().toLowerCase() + '|' + gps; if (!places[key]) places[key] = { address: o.address || '', gps, n: 0, last: o.created_at }; places[key].n++; });
+  const placeList = Object.values(places).sort((a, b) => b.n - a.n).slice(0, 8);
+  const reviews = (allReviewsAdmin || []).filter(v => c.id && v.customer_id === c.id);
+  let msgCount = 0;
+  if (orders.length) {
+    const { data: msgs } = await client.from('order_messages').select('id, sender_role, order_id').in('order_id', orders.slice(0, 100).map(o => o.id));
+    msgCount = (msgs || []).filter(m => m.sender_role === 'client').length;
+  }
+  const lastOrder = orders[0];
+  const fmtD = (ts) => ts ? new Date(ts).toLocaleDateString('fr-FR', { day: '2-digit', month: '2-digit', year: 'numeric' }) : '—';
+  const stars = v => '★★★★★'.slice(0, v) + '<span style="color:#3A3A3A">' + '★★★★★'.slice(v) + '</span>';
+  closeCustomer();
+  const m = document.createElement('div');
+  m.id = 'cp-modal'; m.className = 'cp-modal';
+  m.addEventListener('click', (e) => { if (e.target === m) closeCustomer(); });
+  m.innerHTML = `<div class="cp-sheet" role="dialog" aria-label="Fiche client">
+    <div class="cp-head"><div><div class="cp-name">${escHtml(c.name || 'Client')}</div>
+      <div class="cp-sub">${escHtml(c.phone || '')}${meta.email && !/@maquisexpress|@dallas/i.test(meta.email) ? ' · ' + escHtml(meta.email) : ''}<br>${c.guest ? 'Commande sans compte' : 'Inscrit le ' + fmtD(c.created_at)}${meta.last_sign_in_at ? ' · dernière connexion ' + timeAgo(meta.last_sign_in_at) : ''}${c.guest ? '' : (meta.push_devices ? ' · notifications activées' : ' · notifications non activées')}</div></div>
+      <button class="cp-close" onclick="closeCustomer()">Fermer</button></div>
+    <div class="lv-row">${c.phone ? `<a class="w-btn go" href="${telLink(c.phone)}">Appeler</a><a class="w-btn" href="https://wa.me/${String(c.phone).replace(/\D/g, '').replace(/^0/, '225')}" target="_blank" rel="noopener">WhatsApp</a>` : ''}</div>
+    <div class="cp-kpis">
+      <div class="cp-kpi"><div>Commandes</div><b>${orders.length}</b></div>
+      <div class="cp-kpi"><div>Livrées</div><b>${done.length}</b></div>
+      <div class="cp-kpi"><div>Annulées</div><b>${cancelled.length}</b></div>
+      <div class="cp-kpi"><div>Dépensé</div><b>${money(spent)}</b></div>
+      <div class="cp-kpi"><div>Panier moyen</div><b>${done.length ? money(Math.round(spent / done.length)) : '—'}</b></div>
+      <div class="cp-kpi"><div>Dernière commande</div><b style="font-size:17px;">${lastOrder ? timeAgo(lastOrder.created_at) : '—'}</b></div>
+    </div>
+    ${cancelled.length ? `<div class="cp-sub">Annulations : ${byClient} par le client, ${cancelled.length - byClient} par un restaurant, un livreur ou l'admin.</div>` : ''}
+    <div class="cp-sec"><h4>Restaurants préférés</h4>${favRest.length ? favRest.map(([rid, n]) => `<div class="cp-li"><span>${escHtml(restById(rid).name || '—')}</span><span>${n} commande${n > 1 ? 's' : ''}</span></div>`).join('') : '<div class="cp-sub">—</div>'}</div>
+    <div class="cp-sec"><h4>Plats préférés</h4>${favDish.length ? favDish.map(([d, n]) => `<div class="cp-li"><span>${escHtml(d)}</span><span>${n} fois</span></div>`).join('') : '<div class="cp-sub">—</div>'}</div>
+    <div class="cp-sec"><h4>Habitudes</h4>
+      <div class="cp-bars">${dayCount.map(n => `<div title="${n}"><i style="height:${Math.round(n / maxDay * 100)}%"></i></div>`).join('')}</div>
+      <div class="cp-bars-l">${days.map(d => `<span>${d}</span>`).join('')}</div>
+      ${Object.entries(slots).filter(([, n]) => n).sort((a, b) => b[1] - a[1]).map(([k, n]) => `<div class="cp-li"><span>${k}</span><span>${n} commande${n > 1 ? 's' : ''}</span></div>`).join('')}
+    </div>
+    <div class="cp-sec"><h4>Lieux de livraison</h4>${placeList.length ? placeList.map(p => `<div class="cp-li"><span>${escHtml(p.address || 'Position GPS')}${p.gps ? ` · <a href="https://www.google.com/maps/search/?api=1&query=${p.gps}" target="_blank" rel="noopener">voir sur la carte</a>` : ''}</span><span>${p.n} fois</span></div>`).join('') : '<div class="cp-sub">—</div>'}</div>
+    ${prefs.length ? `<div class="cp-sec"><h4>Préférences et allergies</h4>${prefs.map(([k, n]) => `<div class="cp-li"><span>${escHtml(k)}</span><span>${n} fois</span></div>`).join('')}</div>` : ''}
+    <div class="cp-sec"><h4>Avis et notes (${reviews.length})</h4>${reviews.length ? reviews.map(v => `<div class="cp-li"><span><span style="color:var(--mango)">${stars(v.rating)}</span> ${escHtml(restById(v.restaurant_id).name || '')}${v.comment ? '<br><span style="color:#ddd">' + escHtml(v.comment) + '</span>' : ''}</span><span>${fmtD(v.created_at)}</span></div>`).join('') : '<div class="cp-sub">Aucun avis laissé.</div>'}</div>
+    <div class="cp-sec"><h4>Activité</h4>
+      <div class="cp-li"><span>Messages envoyés aux restaurants et livreurs</span><span>${msgCount}</span></div>
+      <div class="cp-li"><span>Première commande</span><span>${orders.length ? fmtD(orders[orders.length - 1].created_at) : '—'}</span></div>
+    </div>
+    <div class="cp-sec"><h4>Toutes ses commandes</h4>${orders.length ? orders.map(o => `<div class="cp-li"><span>#${o.id.slice(0, 8).toUpperCase()} · ${escHtml(restById(o.restaurant_id).name || '')}<br><span style="color:var(--creamDim); font-size:12px;">${new Date(o.created_at).toLocaleString('fr-FR', { day: '2-digit', month: '2-digit', year: '2-digit', hour: '2-digit', minute: '2-digit' })}${o.status === 'Annulée' && o.cancel_reason ? ' · ' + escHtml(o.cancel_reason) : ''}</span></span><span>${escHtml(o.status)}<br>${money(o.total)}</span></div>`).join('') : '<div class="cp-sub">Aucune commande.</div>'}</div>
+  </div>`;
+  document.body.appendChild(m);
+}
+function closeCustomer() { const m = document.getElementById('cp-modal'); if (m) m.remove(); }
+document.addEventListener('keydown', (e) => { if (e.key === 'Escape') closeCustomer(); });
+
 async function loadAdminReviews() {
   const el = document.getElementById('admin-reviews');
   if (!el) return;
   const { data, error } = await client.from('reviews').select('*').order('created_at', { ascending: false }).limit(200);
   if (error) { el.innerHTML = '<div class="empty">Avis indisponibles pour le moment.</div>'; return; }
   const list = data || [];
+  allReviewsAdmin = list;
   const nameOf = id => (restaurants.find(r => r.id === id) || {}).name || '—';
   const per = {};
   list.filter(v => !v.hidden).forEach(v => { (per[v.restaurant_id] = per[v.restaurant_id] || []).push(v.rating); });
@@ -1205,9 +1528,12 @@ async function loadData() {
   const { data: rests } = await client.from('restaurants').select('*').order('name');
   restaurants = rests || [];
   loadAdminReviews();
+  renderManage();
 
   const { data: orders } = await client.from('orders').select('*').order('created_at', { ascending: false });
   allOrders = orders || [];
+  loadClients();
+  loadLive();
 
   const sel = document.getElementById('restaurant-filter');
   sel.innerHTML = '<option value="">Tous les restaurants</option>' +
