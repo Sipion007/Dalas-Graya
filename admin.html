@@ -119,8 +119,11 @@
     .side-logout:hover { color:var(--cream); border-color:#3A3A3A; }
 
     .dash { display:grid; gap:20px; grid-template-columns: repeat(3, minmax(0,1fr));
-      grid-template-rows: auto auto min-content 1fr auto auto auto auto auto auto;
-      grid-template-areas: "kpi kpi kpi" "live live live" "watch watch alerts" "watch watch acc" "manage manage manage" "clients clients clients" "rev dish photo" "avis avis avis" "drv drv drv" "hist hist hist"; align-items:start; }
+      grid-template-rows: auto auto min-content 1fr auto auto auto auto auto auto auto;
+    .pn-wa { grid-area:wa; }
+    .wa-grid { display:grid; grid-template-columns: minmax(0,1.3fr) minmax(0,1fr); gap:20px; align-items:start; }
+    .wa-list { max-height:520px; }
+      grid-template-areas: "kpi kpi kpi" "live live live" "watch watch alerts" "watch watch acc" "manage manage manage" "clients clients clients" "wa wa wa" "rev dish photo" "avis avis avis" "drv drv drv" "hist hist hist"; align-items:start; }
     #manage-box { display:grid; grid-template-columns: repeat(auto-fill, minmax(420px, 1fr)); gap:8px; }
     #manage-box .mg-row { margin:0; }
     #clients-box { display:grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap:8px; align-content:start; }
@@ -168,7 +171,7 @@
     .pn-kpi .stats-grid { grid-template-columns: repeat(6, minmax(0,1fr)); }
     .stat-value { font-size:30px; }
     .dash { grid-template-columns: repeat(4, minmax(0,1fr));
-      grid-template-areas: "kpi kpi kpi kpi" "live live live live" "watch watch watch alerts" "watch watch watch acc" "manage manage manage manage" "clients clients clients clients" "rev dish photo photo" "avis avis avis avis" "drv drv drv drv" "hist hist hist hist"; }
+      grid-template-areas: "kpi kpi kpi kpi" "live live live live" "watch watch watch alerts" "watch watch watch acc" "manage manage manage manage" "clients clients clients clients" "wa wa wa wa" "rev dish photo photo" "avis avis avis avis" "drv drv drv drv" "hist hist hist hist"; }
   }
   .pn-head2 { display:flex; align-items:center; justify-content:space-between; gap:10px; }
   .pn-head2 .section-title { margin-bottom:10px; }
@@ -216,6 +219,28 @@
   .cp-bars div { flex:1; height:100%; background:#242424; border-radius:3px 3px 0 0; position:relative; }
   .cp-bars div i { position:absolute; left:0; right:0; bottom:0; background:var(--mango); border-radius:3px 3px 0 0; }
   .cp-bars-l { display:flex; gap:4px; font-size:10px; color:var(--creamDim); margin-top:3px; } .cp-bars-l span { flex:1; text-align:center; }
+  .wa-tabs { display:flex; gap:6px; flex-wrap:wrap; margin-bottom:10px; }
+  .wa-tab { border:1px solid #3A3A3A; background:#141414; color:var(--cream); border-radius:20px; padding:7px 13px; font-size:12.5px; font-weight:600; cursor:pointer; font-family:inherit; }
+  .wa-tab.on { background:var(--mango); color:#080808; border-color:var(--mango); }
+  .wa-tools { display:flex; gap:6px; flex-wrap:wrap; align-items:center; margin-bottom:8px; }
+  .wa-tools select, .wa-tools input { margin:0; width:auto; flex:1; min-width:150px; padding:8px 10px; font-size:12.5px; }
+  .wa-list { border:1px solid var(--line); border-radius:10px; max-height:360px; overflow:auto; }
+  .wa-item { display:flex; align-items:center; gap:10px; padding:9px 11px; border-bottom:1px solid #1a1a1a; font-size:13px; cursor:pointer; }
+  .wa-item:last-child { border-bottom:none; }
+  .wa-item input { width:18px; height:18px; margin:0; accent-color: var(--mango); flex-shrink:0; }
+  .wa-item b { flex:1; min-width:0; font-weight:600; }
+  .wa-item span { color:var(--creamDim); font-size:12px; white-space:nowrap; }
+  .wa-item.sent b::after { content:' · envoyé'; color:var(--palm); font-weight:600; font-size:11.5px; }
+  .wa-compose textarea { width:100%; box-sizing:border-box; background:var(--bg); border:1px solid var(--line); border-radius:10px; color:var(--cream); padding:10px 12px; font-family:inherit; font-size:13.5px; min-height:110px; resize:vertical; }
+  .wa-hint { font-size:12px; color:var(--creamDim); line-height:1.5; margin:6px 0 10px; }
+  .wa-img { display:flex; gap:10px; align-items:center; margin:8px 0; }
+  .wa-img img { width:64px; height:64px; object-fit:cover; border-radius:8px; border:1px solid var(--line); }
+  .wa-acts { display:flex; flex-direction:column; gap:8px; margin-top:10px; }
+  .wa-acts .w-btn { text-align:center; padding:11px 12px; font-size:13px; }
+  .wa-step { background:var(--surface); border:1px solid var(--mango); border-radius:12px; padding:14px; margin-top:10px; }
+  .wa-step b { font-size:16px; } .wa-step .pg { height:6px; background:#242424; border-radius:3px; overflow:hidden; margin:10px 0; } .wa-step .pg i { display:block; height:100%; background:var(--mango); }
+  .drv-stats { font-size:12px; color:var(--creamDim); margin-top:8px; line-height:1.5; }
+  .drv-stats b { color:var(--cream); }
   .av-item { background:var(--surface); border:1px solid var(--line); border-radius:10px; padding:11px 12px; margin-bottom:8px; }
   .av-item.is-hidden { opacity:.55; }
   .av-top { display:flex; align-items:center; gap:8px; flex-wrap:wrap; font-size:13px; }
@@ -325,6 +350,10 @@
     <input id="cl-search" type="search" placeholder="Rechercher un nom ou un numéro" oninput="renderClients()" />
     <div id="clients-box"><div class="empty">Chargement…</div></div>
     </section>
+    <section class="pn pn-wa">
+    <div class="pn-head2"><div class="section-title" id="section-wa">Communication WhatsApp</div><span class="cl-count" id="wa-count"></span></div>
+    <div id="wa-box"></div>
+    </section>
     <section class="pn pn-rev">
     <div class="section-title">Chiffre d'affaires par restaurant</div>
     <div id="revenue-by-restaurant"></div>
@@ -384,6 +413,10 @@
   <button class="nav-item desk-only" data-target="section-clients" onclick="document.getElementById('section-clients').scrollIntoView({behavior:'smooth'})">
     <svg viewBox="0 0 24 24"><circle cx="9" cy="8" r="3.5"/><path d="M2.5 20c0-3.5 3-6 6.5-6s6.5 2.5 6.5 6"/><circle cx="17" cy="9" r="2.5"/><path d="M16 14.2c3 .2 5.5 2.4 5.5 5.8"/></svg>
     <span>Clients</span>
+  </button>
+  <button class="nav-item desk-only" data-target="section-wa" onclick="document.getElementById('section-wa').scrollIntoView({behavior:'smooth'})">
+    <svg viewBox="0 0 24 24"><path d="M4 20l1.3-3.9A8 8 0 1 1 8 19z"/><path d="M9 10c.5 2 2 3.5 4 4l1.2-1.2 2 1-.6 1.6c-3.6.2-7-3.2-6.8-6.8l1.6-.6 1 2z"/></svg>
+    <span>WhatsApp</span>
   </button>
   <button class="nav-item" data-target="section-livreurs" onclick="document.getElementById('section-livreurs').scrollIntoView({behavior:'smooth'})">
     <svg viewBox="0 0 24 24"><circle cx="12" cy="8" r="4"/><path d="M4 21c0-4 4-7 8-7s8 3 8 7"/></svg>
@@ -1329,6 +1362,7 @@ async function loadClients() {
   customersMeta = {};
   (meta || []).forEach(m => { customersMeta[m.customer_id] = m; });
   renderClients();
+  renderWA();
 }
 function digits(p) { return String(p || '').replace(/\D/g, '').slice(-8); }
 function ordersOfCustomer(c) {
@@ -1403,7 +1437,7 @@ async function openCustomer(id, phone) {
     <div class="cp-head"><div><div class="cp-name">${escHtml(c.name || 'Client')}</div>
       <div class="cp-sub">${escHtml(c.phone || '')}${meta.email && !/@maquisexpress|@dallas/i.test(meta.email) ? ' · ' + escHtml(meta.email) : ''}<br>${c.guest ? 'Commande sans compte' : 'Inscrit le ' + fmtD(c.created_at)}${meta.last_sign_in_at ? ' · dernière connexion ' + timeAgo(meta.last_sign_in_at) : ''}${c.guest ? '' : (meta.push_devices ? ' · notifications activées' : ' · notifications non activées')}</div></div>
       <button class="cp-close" onclick="closeCustomer()">Fermer</button></div>
-    <div class="lv-row">${c.phone ? `<a class="w-btn go" href="${telLink(c.phone)}">Appeler</a><a class="w-btn" href="https://wa.me/${String(c.phone).replace(/\D/g, '').replace(/^0/, '225')}" target="_blank" rel="noopener">WhatsApp</a>` : ''}</div>
+    <div class="lv-row">${c.phone ? `<a class="w-btn go" href="${telLink(c.phone)}">Appeler</a><a class="w-btn" href="${waLink(c.phone, '')}" target="_blank" rel="noopener">WhatsApp</a>` : ''}</div>
     <div class="cp-kpis">
       <div class="cp-kpi"><div>Commandes</div><b>${orders.length}</b></div>
       <div class="cp-kpi"><div>Livrées</div><b>${done.length}</b></div>
@@ -1433,6 +1467,224 @@ async function openCustomer(id, phone) {
 }
 function closeCustomer() { const m = document.getElementById('cp-modal'); if (m) m.remove(); }
 document.addEventListener('keydown', (e) => { if (e.key === 'Escape') closeCustomer(); });
+
+// ================= WhatsApp : messages individuels et groupés =================
+function waNumber(p) {
+  let d = String(p || '').replace(/\D/g, '');
+  if (d.startsWith('00')) d = d.slice(2);
+  if (d.length === 10) d = '225' + d;          // numéros ivoiriens à 10 chiffres
+  if (d.length === 8) d = '22507' + d.slice(0); // ancien format à 8 chiffres (au mieux)
+  return d;
+}
+function waLink(p, text) { return 'https://wa.me/' + waNumber(p) + (text ? '?text=' + encodeURIComponent(text) : ''); }
+const wa = { tab: 'clients', filter: 'all', rest: '', q: '', sel: new Set(), msg: '', file: null, fileUrl: '', queue: null, idx: 0, sent: new Set() };
+function waContacts() {
+  const now = Date.now();
+  if (wa.tab === 'drivers') return (allDrivers || []).filter(d => d.phone).map(d => ({ key: 'd-' + d.id, name: d.name, phone: d.phone, info: d.verification === 'approved' ? 'Validé' : d.verification === 'pending' ? 'En attente' : 'Refusé', verification: d.verification }));
+  if (wa.tab === 'restaurants') return (restaurants || []).filter(r => r.whatsapp || r.alert_phone).map(r => ({ key: 'r-' + r.id, name: r.name, phone: r.whatsapp || r.alert_phone, info: 'Restaurant' }));
+  return clientRows().filter(x => x.c.phone).map(x => {
+    const last = x.orders[0] ? new Date(x.orders[0].created_at).getTime() : 0;
+    const fav = {}; x.orders.forEach(o => { fav[o.restaurant_id] = (fav[o.restaurant_id] || 0) + 1; });
+    return { key: 'c-' + (x.c.id || waNumber(x.c.phone)), name: x.c.name || 'Client', phone: x.c.phone, info: x.orders.length + ' cmd', orders: x.orders.length, last, recent: last && now - last < 30 * 864e5, inactive: x.orders.length && now - last >= 30 * 864e5, rests: Object.keys(fav) };
+  });
+}
+function waFiltered() {
+  let list = waContacts();
+  if (wa.tab === 'clients') {
+    if (wa.filter === 'recent') list = list.filter(c => c.recent);
+    else if (wa.filter === 'inactive') list = list.filter(c => c.inactive);
+    else if (wa.filter === 'never') list = list.filter(c => !c.orders);
+    else if (wa.filter === 'loyal') list = list.filter(c => c.orders >= 3);
+    if (wa.rest) list = list.filter(c => c.rests.includes(wa.rest));
+  }
+  if (wa.tab === 'drivers' && wa.filter === 'approved') list = list.filter(c => c.verification === 'approved');
+  const q = wa.q.trim().toLowerCase();
+  if (q) list = list.filter(c => (c.name || '').toLowerCase().includes(q) || String(c.phone).replace(/\s/g, '').includes(q.replace(/\s/g, '')));
+  return list;
+}
+function renderWA() {
+  const el = document.getElementById('wa-box');
+  if (!el) return;
+  const list = waFiltered();
+  const all = waContacts();
+  const selCount = all.filter(c => wa.sel.has(c.key)).length;
+  document.getElementById('wa-count').textContent = selCount + ' sélectionné' + (selCount > 1 ? 's' : '');
+  const filters = wa.tab === 'clients' ? `<select onchange="wa.filter=this.value; renderWA()">
+      <option value="all" ${wa.filter === 'all' ? 'selected' : ''}>Tous les clients</option>
+      <option value="recent" ${wa.filter === 'recent' ? 'selected' : ''}>Ont commandé ces 30 jours</option>
+      <option value="inactive" ${wa.filter === 'inactive' ? 'selected' : ''}>Inactifs depuis 30 jours</option>
+      <option value="loyal" ${wa.filter === 'loyal' ? 'selected' : ''}>Fidèles (3 commandes et plus)</option>
+      <option value="never" ${wa.filter === 'never' ? 'selected' : ''}>N'ont jamais commandé</option></select>
+    <select onchange="wa.rest=this.value; renderWA()"><option value="">Tous les restaurants</option>${(restaurants || []).map(r => `<option value="${r.id}" ${wa.rest === r.id ? 'selected' : ''}>A commandé chez ${escHtml(r.name)}</option>`).join('')}</select>`
+    : wa.tab === 'drivers' ? `<select onchange="wa.filter=this.value; renderWA()"><option value="all" ${wa.filter === 'all' ? 'selected' : ''}>Tous les livreurs</option><option value="approved" ${wa.filter === 'approved' ? 'selected' : ''}>Livreurs validés</option></select>` : '';
+  const step = wa.queue ? waStepHtml() : '';
+  el.innerHTML = `<div class="wa-grid">
+    <div>
+      <div class="wa-tabs">${[['clients', 'Clients'], ['drivers', 'Livreurs'], ['restaurants', 'Restaurants']].map(([k, l]) => `<button type="button" class="wa-tab ${wa.tab === k ? 'on' : ''}" onclick="waTab('${k}')">${l}</button>`).join('')}</div>
+      <div class="wa-tools">${filters}<input type="search" placeholder="Rechercher" value="${escHtml(wa.q)}" oninput="wa.q=this.value; renderWAList()" /></div>
+      <div class="wa-tools"><button class="w-btn" onclick="waSelectAll(true)">Tout cocher (${list.length})</button><button class="w-btn" onclick="waSelectAll(false)">Tout décocher</button></div>
+      <div class="wa-list" id="wa-list"></div>
+    </div>
+    <div class="wa-compose">
+      <textarea id="wa-msg" maxlength="1500" placeholder="Votre message. Écrivez {prenom} pour mettre le prénom de chaque personne." oninput="wa.msg=this.value">${escHtml(wa.msg)}</textarea>
+      <div class="wa-hint">Exemple : « Bonjour {prenom}, ce week-end la livraison est offerte chez Le Cubana ! Commandez sur dalas-graya.vercel.app »</div>
+      <div class="wa-img">${wa.fileUrl ? `<img src="${wa.fileUrl}" alt="Affiche"><button class="w-btn" onclick="waClearFile()">Retirer l'affiche</button>` : `<label class="w-btn" style="cursor:pointer;">Ajouter une affiche<input type="file" accept="image/*" style="display:none" onchange="waFile(this)"></label>`}</div>
+      <div class="wa-acts">
+        <button class="w-btn go" onclick="waStart()">Envoyer un par un (${selCount})</button>
+        ${wa.fileUrl ? `<button class="w-btn" onclick="waShareImage()">Partager l'affiche dans WhatsApp</button>` : ''}
+        <button class="w-btn" onclick="waExportVcf()">Exporter les contacts cochés (.vcf)</button>
+        <button class="w-btn" onclick="waCopyNumbers()">Copier les numéros cochés</button>
+      </div>
+      ${step}
+      <div class="wa-hint" style="margin-top:12px;"><b>Pour envoyer à tout le monde d'un coup (gratuit) :</b> exportez les contacts cochés (.vcf) et ouvrez le fichier sur votre téléphone pour les enregistrer. Dans WhatsApp, créez ensuite une « Liste de diffusion » (Nouvelle diffusion) avec ces contacts : votre affiche part à tous en un seul envoi. Seules les personnes qui ont aussi enregistré votre numéro la reçoivent.</div>
+    </div>
+  </div>`;
+  renderWAList();
+}
+function renderWAList() {
+  const box = document.getElementById('wa-list');
+  if (!box) return;
+  const list = waFiltered();
+  box.innerHTML = list.length ? list.map(c => `<label class="wa-item ${wa.sent.has(c.key) ? 'sent' : ''}"><input type="checkbox" ${wa.sel.has(c.key) ? 'checked' : ''} onchange="waToggle('${c.key}', this.checked)"><b>${escHtml(c.name)}</b><span>${escHtml(c.phone)}</span><span>${escHtml(c.info || '')}</span></label>`).join('') : '<div class="empty" style="border:none;">Aucun contact.</div>';
+  const all = waContacts(); const n = all.filter(c => wa.sel.has(c.key)).length;
+  document.getElementById('wa-count').textContent = n + ' sélectionné' + (n > 1 ? 's' : '');
+  const startBtn = document.querySelector('.wa-acts .w-btn.go'); if (startBtn) startBtn.textContent = 'Envoyer un par un (' + n + ')';
+}
+function waTab(t) { wa.tab = t; wa.filter = 'all'; wa.rest = ''; wa.queue = null; renderWA(); }
+function waToggle(k, on) { if (on) wa.sel.add(k); else wa.sel.delete(k); renderWAList(); }
+function waSelectAll(on) { waFiltered().forEach(c => { if (on) wa.sel.add(c.key); else wa.sel.delete(c.key); }); renderWAList(); }
+function waSelected() { return waContacts().filter(c => wa.sel.has(c.key)); }
+function waFile(inp) { const f = inp.files && inp.files[0]; if (!f) return; wa.file = f; wa.fileUrl = URL.createObjectURL(f); renderWA(); }
+function waClearFile() { if (wa.fileUrl) URL.revokeObjectURL(wa.fileUrl); wa.file = null; wa.fileUrl = ''; renderWA(); }
+function waText(c) { const first = String(c.name || '').trim().split(/\s+/)[0] || ''; return (wa.msg || '').replace(/\{prenom\}/gi, first).trim(); }
+function waStart() {
+  const list = waSelected();
+  if (!list.length) { alert('Cochez au moins un contact.'); return; }
+  if (!(wa.msg || '').trim() && !wa.file) { alert('Écrivez un message ou ajoutez une affiche.'); return; }
+  wa.queue = list; wa.idx = 0; renderWA();
+  const st = document.getElementById('wa-step'); if (st) st.scrollIntoView({ behavior: 'smooth', block: 'center' });
+}
+function waStepHtml() {
+  const q = wa.queue; const i = wa.idx;
+  if (i >= q.length) return `<div class="wa-step" id="wa-step"><b>Envoi terminé</b><div class="wa-hint">${q.length} conversation${q.length > 1 ? 's' : ''} ouverte${q.length > 1 ? 's' : ''} dans WhatsApp.</div><button class="w-btn" onclick="wa.queue=null; renderWA()">Fermer</button></div>`;
+  const c = q[i];
+  return `<div class="wa-step" id="wa-step">
+    <div class="wa-hint" style="margin:0;">Contact ${i + 1} sur ${q.length}</div>
+    <div class="pg"><i style="width:${Math.round(i / q.length * 100)}%"></i></div>
+    <b>${escHtml(c.name)}</b><div class="wa-hint" style="margin-top:2px;">${escHtml(c.phone)}</div>
+    <div class="wa-acts" style="margin-top:6px;">
+      <button class="w-btn go" onclick="waOpenCurrent()">Ouvrir WhatsApp pour ${escHtml(String(c.name).split(' ')[0])}</button>
+      <button class="w-btn" onclick="waNext()">Passer au suivant</button>
+      <button class="w-btn danger" onclick="wa.queue=null; renderWA()">Arrêter</button>
+    </div>
+    ${wa.file ? '<div class="wa-hint">Le message s\'ouvre déjà écrit. Joignez ensuite l\'affiche avec le trombone de WhatsApp, puis envoyez.</div>' : '<div class="wa-hint">Le message s\'ouvre déjà écrit : il ne reste qu\'à toucher Envoyer dans WhatsApp, puis revenir ici.</div>'}
+  </div>`;
+}
+function waOpenCurrent() {
+  const c = wa.queue[wa.idx];
+  window.open(waLink(c.phone, waText(c)), '_blank', 'noopener');
+  wa.sent.add(c.key);
+  wa.idx++;
+  renderWA();
+}
+function waNext() { wa.idx++; renderWA(); }
+async function waShareImage() {
+  const first = waSelected()[0];
+  const text = first ? waText(first) : (wa.msg || '');
+  try {
+    if (wa.file && navigator.canShare && navigator.canShare({ files: [wa.file] })) { await navigator.share({ files: [wa.file], text }); return; }
+  } catch (e) { if (e && e.name === 'AbortError') return; }
+  alert("Ce navigateur ne permet pas de partager une image directement. Sur votre téléphone, ouvrez cette page dans Chrome ou Safari pour partager l'affiche vers WhatsApp (contacts, groupes ou liste de diffusion).");
+}
+function waExportVcf() {
+  const list = waSelected();
+  if (!list.length) { alert('Cochez au moins un contact.'); return; }
+  const esc = (t) => String(t || '').replace(/[\\;,]/g, ' ');
+  const vcf = list.map(c => `BEGIN:VCARD\r\nVERSION:3.0\r\nFN:${esc('DB ' + c.name)}\r\nN:${esc(c.name)};;;;\r\nTEL;TYPE=CELL:+${waNumber(c.phone)}\r\nORG:Dallas Bouff'\r\nEND:VCARD`).join('\r\n') + '\r\n';
+  const blob = new Blob([vcf], { type: 'text/vcard' });
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob); a.download = 'contacts-dallas-bouff-' + wa.tab + '.vcf';
+  document.body.appendChild(a); a.click(); a.remove();
+  setTimeout(() => URL.revokeObjectURL(a.href), 4000);
+}
+async function waCopyNumbers() {
+  const list = waSelected();
+  if (!list.length) { alert('Cochez au moins un contact.'); return; }
+  const txt = list.map(c => '+' + waNumber(c.phone)).join('\n');
+  try { await navigator.clipboard.writeText(txt); alert(list.length + ' numéros copiés.'); }
+  catch (e) { prompt('Copiez les numéros :', txt.replace(/\n/g, ', ')); }
+}
+
+// ================= Fiche et statistiques des livreurs =================
+let driverCoverage = {};
+function driverStats(d) {
+  const mine = (allOrders || []).filter(o => o.driver_id === d.id);
+  const done = mine.filter(o => o.status === 'Livrée');
+  const cancelled = mine.filter(o => o.status === 'Annulée');
+  const active = mine.filter(o => o.status === 'En livraison');
+  const durs = done.filter(o => o.picked_at && o.delivered_at).map(o => (new Date(o.delivered_at) - new Date(o.picked_at)) / 60000).filter(m => m > 0 && m < 600);
+  const avgMin = durs.length ? Math.round(durs.reduce((a, b) => a + b, 0) / durs.length) : null;
+  const cash = done.reduce((a, o) => a + (o.total || 0), 0);
+  const fees = done.reduce((a, o) => a + (o.delivery_fee || 0), 0);
+  const today = new Date(); today.setHours(0, 0, 0, 0);
+  const doneToday = done.filter(o => new Date(o.delivered_at || o.created_at) >= today);
+  return { mine, done, cancelled, active, avgMin, cash, fees, doneToday, last: mine[0] };
+}
+function driverStatsLine(d) {
+  const s = driverStats(d);
+  return `<div class="drv-stats"><b>${s.done.length}</b> course${s.done.length > 1 ? 's' : ''} livrée${s.done.length > 1 ? 's' : ''} · <b>${money(s.cash)}</b> encaissés${s.avgMin ? ' · ' + s.avgMin + ' min en moyenne' : ''}${s.last ? ' · dernière ' + timeAgo(s.last.created_at) : ''}</div>`;
+}
+async function openDriver(id) {
+  const d = (allDrivers || []).find(x => x.id === id);
+  if (!d) return;
+  if (!Object.keys(driverCoverage).length) {
+    const { data } = await client.rpc('admin_alert_coverage');
+    (data || []).forEach(c => { driverCoverage[c.id] = c; });
+  }
+  const cov = driverCoverage[d.id] || {};
+  const s = driverStats(d);
+  const count = (arr) => { const m = {}; arr.forEach(k => { if (k) m[k] = (m[k] || 0) + 1; }); return Object.entries(m).sort((a, b) => b[1] - a[1]); };
+  const favRest = count(s.mine.map(o => o.restaurant_id)).slice(0, 5);
+  const days = ['Dim', 'Lun', 'Mar', 'Mer', 'Jeu', 'Ven', 'Sam']; const dayCount = [0, 0, 0, 0, 0, 0, 0];
+  const hours = {}; s.mine.forEach(o => { const t = new Date(o.picked_at || o.created_at); dayCount[t.getDay()]++; const h = t.getHours(); hours[h] = (hours[h] || 0) + 1; });
+  const maxDay = Math.max(1, ...dayCount);
+  const topHours = Object.entries(hours).sort((a, b) => b[1] - a[1]).slice(0, 3).map(([h, n]) => `${h} h – ${(Number(h) + 1) % 24} h (${n})`).join(', ');
+  const fmtD = (ts) => ts ? new Date(ts).toLocaleDateString('fr-FR', { day: '2-digit', month: '2-digit', year: 'numeric' }) : '—';
+  const posFresh = d.location_updated_at && (Date.now() - new Date(d.location_updated_at)) < 15 * 60000;
+  const byWeek = {}; s.done.forEach(o => { const t = new Date(o.delivered_at || o.created_at); const k = t.toLocaleDateString('fr-FR', { day: '2-digit', month: '2-digit' }); byWeek[k] = (byWeek[k] || 0) + 1; });
+  closeCustomer();
+  const m = document.createElement('div');
+  m.id = 'cp-modal'; m.className = 'cp-modal';
+  m.addEventListener('click', (e) => { if (e.target === m) closeCustomer(); });
+  m.innerHTML = `<div class="cp-sheet" role="dialog" aria-label="Fiche livreur">
+    <div class="cp-head"><div style="display:flex; gap:12px; align-items:center;">${d.face_photo_url ? `<img src="${d.face_photo_url}" alt="" style="width:58px; height:58px; border-radius:50%; object-fit:cover; border:1px solid var(--line);">` : ''}<div><div class="cp-name">${escHtml(d.name)}</div>
+      <div class="cp-sub">${escHtml(d.phone || '')} · ${d.restaurants ? 'Livreur de ' + escHtml(d.restaurants.name) : 'Indépendant'} · ${d.verification === 'approved' ? 'Validé' : d.verification === 'pending' ? 'En attente de validation' : 'Refusé ou suspendu'}<br>Inscrit le ${fmtD(d.created_at)} · ${cov.android_active ? 'Appli Android active' : cov.push_devices ? 'Notifications activées' : 'Ne reçoit rien appli fermée'}</div></div></div>
+      <button class="cp-close" onclick="closeCustomer()">Fermer</button></div>
+    <div class="lv-row">${d.phone ? `<a class="w-btn go" href="${telLink(d.phone)}">Appeler</a><a class="w-btn" href="${waLink(d.phone, '')}" target="_blank" rel="noopener">WhatsApp</a>` : ''}${d.id_doc_path ? `<button class="w-btn" onclick="viewIdDoc('${d.id}')">Pièce d'identité</button>` : ''}</div>
+    <div class="cp-kpis">
+      <div class="cp-kpi"><div>Courses livrées</div><b>${s.done.length}</b></div>
+      <div class="cp-kpi"><div>En cours</div><b>${s.active.length}</b></div>
+      <div class="cp-kpi"><div>Annulées</div><b>${s.cancelled.length}</b></div>
+      <div class="cp-kpi"><div>Encaissé</div><b>${money(s.cash)}</b></div>
+      <div class="cp-kpi"><div>Frais de livraison</div><b>${money(s.fees)}</b></div>
+      <div class="cp-kpi"><div>Temps moyen</div><b>${s.avgMin ? s.avgMin + ' min' : '—'}</b></div>
+    </div>
+    <div class="cp-sec"><h4>Aujourd'hui</h4>
+      <div class="cp-li"><span>Courses livrées</span><span>${s.doneToday.length}</span></div>
+      <div class="cp-li"><span>Argent à récupérer auprès du livreur</span><span>${money(s.doneToday.reduce((a, o) => a + (o.total || 0), 0))}</span></div>
+    </div>
+    <div class="cp-sec"><h4>Position</h4>${typeof d.current_lat === 'number' ? `<div class="cp-li"><span><a href="https://www.google.com/maps/search/?api=1&query=${d.current_lat},${d.current_lng}" target="_blank" rel="noopener">Dernière position sur la carte</a></span><span>${d.location_updated_at ? timeAgo(d.location_updated_at) : ''}${posFresh ? ' · en direct' : ''}</span></div>` : '<div class="cp-sub">Aucune position reçue pour le moment.</div>'}</div>
+    <div class="cp-sec"><h4>Restaurants les plus servis</h4>${favRest.length ? favRest.map(([rid, n]) => `<div class="cp-li"><span>${escHtml(restById(rid).name || '—')}</span><span>${n} course${n > 1 ? 's' : ''}</span></div>`).join('') : '<div class="cp-sub">—</div>'}</div>
+    <div class="cp-sec"><h4>Habitudes de travail</h4>
+      <div class="cp-bars">${dayCount.map(n => `<div title="${n}"><i style="height:${Math.round(n / maxDay * 100)}%"></i></div>`).join('')}</div>
+      <div class="cp-bars-l">${days.map(x => `<span>${x}</span>`).join('')}</div>
+      ${topHours ? `<div class="cp-li"><span>Heures les plus actives</span><span>${topHours}</span></div>` : ''}
+    </div>
+    ${Object.keys(byWeek).length ? `<div class="cp-sec"><h4>Courses livrées par jour</h4>${Object.entries(byWeek).slice(0, 14).map(([k, n]) => `<div class="cp-li"><span>${k}</span><span>${n}</span></div>`).join('')}</div>` : ''}
+    <div class="cp-sec"><h4>Toutes ses courses</h4>${s.mine.length ? s.mine.map(o => `<div class="cp-li"><span>#${o.id.slice(0, 8).toUpperCase()} · ${escHtml(restById(o.restaurant_id).name || '')} → ${escHtml(o.customer_name || 'Client')}<br><span style="color:var(--creamDim); font-size:12px;">${new Date(o.created_at).toLocaleString('fr-FR', { day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit' })}${o.picked_at && o.delivered_at ? ' · ' + Math.round((new Date(o.delivered_at) - new Date(o.picked_at)) / 60000) + ' min' : ''}${o.status === 'Annulée' && o.cancel_reason ? ' · ' + escHtml(o.cancel_reason) : ''}</span></span><span>${escHtml(o.status)}<br>${money(o.total)}</span></div>`).join('') : '<div class="cp-sub">Aucune course pour le moment.</div>'}</div>
+  </div>`;
+  document.body.appendChild(m);
+}
 
 async function loadAdminReviews() {
   const el = document.getElementById('admin-reviews');
@@ -1477,12 +1729,15 @@ async function loadDrivers() {
       <div style="display:flex; gap:12px; align-items:center;">
         ${d.face_photo_url ? `<img src="${d.face_photo_url}" alt="" style="width:56px; height:56px; border-radius:50%; object-fit:cover; border:1px solid var(--line);">` : `<div style="width:56px; height:56px; border-radius:50%; background:var(--raised);"></div>`}
         <div style="flex:1; min-width:0;">
-          <div style="font-weight:700; font-size:14px;">${d.name}</div>
+          <div style="font-weight:700; font-size:14px;">${escHtml(d.name)}</div>
           <div style="font-size:12px; color:var(--creamDim);">${d.phone} · ${d.restaurants ? d.restaurants.name : 'Indépendant'}</div>
         </div>
         <div style="font-size:11px; font-weight:700; color:${colors[d.verification] || 'var(--creamDim)'};">${labels[d.verification] || d.verification}</div>
       </div>
+      ${driverStatsLine(d)}
       <div style="display:flex; gap:8px; margin-top:12px; flex-wrap:wrap;">
+        <button class="btn-outline" style="border-color:var(--mango); color:var(--mango);" onclick="openDriver('${d.id}')">Fiche et statistiques</button>
+        ${d.phone ? `<a class="btn-outline" style="text-decoration:none;" href="${waLink(d.phone, '')}" target="_blank" rel="noopener">WhatsApp</a>` : ''}
         ${d.id_doc_path ? `<button class="btn-outline" onclick="viewIdDoc('${d.id}')">Voir la pièce d'identité</button>` : ''}
         ${d.verification !== 'approved' ? `<button class="btn-outline" style="border-color:var(--palm); color:var(--palm);" onclick="setDriverStatus('${d.id}','approved')">Valider</button>` : ''}
         ${d.verification !== 'rejected' ? `<button class="btn-outline" style="border-color:var(--chili); color:var(--chili);" onclick="setDriverStatus('${d.id}','rejected')">${d.verification === 'approved' ? 'Suspendre' : 'Refuser'}</button>` : ''}
@@ -1534,6 +1789,7 @@ async function loadData() {
   allOrders = orders || [];
   loadClients();
   loadLive();
+  loadDrivers();
 
   const sel = document.getElementById('restaurant-filter');
   sel.innerHTML = '<option value="">Tous les restaurants</option>' +
