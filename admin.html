@@ -2286,7 +2286,7 @@ async function removeBlock(ph) {
 }
 
 // ----- Carte en direct -----
-let liveMap = null, mapLayer = null, mapTimer = null, mapFitted = false;
+let liveMap = null, mapLayer = null, mapLines = null, mapTimer = null, mapFitted = false;
 function initLiveMap() {
   const el = document.getElementById('live-map');
   if (!el) return;
@@ -2296,16 +2296,13 @@ function initLiveMap() {
     liveMap = L.map(el, { zoomControl: true, attributionControl: true }).setView([6.877, -6.450], 13);
     L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', { maxZoom: 19, attribution: '&copy; OpenStreetMap' }).addTo(liveMap);
     mapLayer = L.layerGroup().addTo(liveMap);
+    mapLines = L.layerGroup().addTo(liveMap);
     setTimeout(() => { try { liveMap.invalidateSize(); } catch (e) {} }, 300);
     } catch (e) { liveMap = null; el.innerHTML = '<div class="empty">Carte indisponible pour le moment.</div>'; return; }
   }
   refreshMap();
   if (!mapTimer) mapTimer = setInterval(refreshMap, 5000);
 }
-async function refreshMap() {
-  try { await drawMap(); } catch (e) { console.warn('carte', e); }
-}
-// ----- Fiches détaillées de la carte -----
 function mapItemsHtml(o) {
   const items = Array.isArray(o.items) ? o.items : [];
   if (!items.length) return '<div class="mp-muted">Détail des plats non disponible</div>';
@@ -2372,31 +2369,51 @@ function mapDriverHtml(d, run, pick) {
   </div>`;
 }
 
+let mapBusy = false;
+const mapDots = new Map();
+async function refreshMap() {
+  if (mapBusy) return;
+  mapBusy = true;
+  try { await loadLive(); await drawMap(); } catch (e) { console.warn('carte', e); }
+  finally { mapBusy = false; }
+}
 async function drawMap() {
   if (!adminLoggedIn || !liveMap) return;
   const { data } = await client.from('drivers').select('id, name, phone, current_lat, current_lng, location_updated_at, verification').eq('verification', 'approved');
   const fresh = (data || []).filter(d => typeof d.current_lat === 'number' && typeof d.current_lng === 'number' && d.location_updated_at && Date.now() - new Date(d.location_updated_at) < 15 * 60000);
-  mapLayer.clearLayers();
+  mapLines.clearLayers();
+  const seen = new Set();
   const pts = [];
-  const dot = (lat, lng, color, r, html, tip) => {
-    const m = L.circleMarker([lat, lng], { radius: r, color: '#080808', weight: 2, fillColor: color, fillOpacity: 0.95 });
-    m.bindPopup(html, { maxWidth: 330, minWidth: 260, className: 'mp-popup' });
-    if (tip) m.bindTooltip(tip, { permanent: true, direction: 'top', offset: [0, -r - 3], className: 'map-tip' });
-    m.addTo(mapLayer); pts.push([lat, lng]);
+  // Un point existant est mis à jour sur place : une fiche ouverte reste ouverte.
+  const dot = (key, lat, lng, color, r, html, tip) => {
+    let m = mapDots.get(key);
+    if (!m) {
+      m = L.circleMarker([lat, lng], { radius: r, color: '#080808', weight: 2, fillColor: color, fillOpacity: 0.95 });
+      m.bindPopup(html, { maxWidth: 330, minWidth: 260, className: 'mp-popup' });
+      if (tip) m.bindTooltip(tip, { permanent: true, direction: 'top', offset: [0, -r - 3], className: 'map-tip' });
+      m.addTo(mapLayer);
+      mapDots.set(key, m);
+    } else {
+      m.setLatLng([lat, lng]);
+      m.setStyle({ fillColor: color });
+      m.setPopupContent(html);
+      if (tip) m.setTooltipContent(tip);
+    }
+    seen.add(key); pts.push([lat, lng]);
   };
-  const line = (a, b, color, dashed) => { if (!a || !b) return; L.polyline([a, b], { color, weight: 3, opacity: 0.85, dashArray: dashed ? '6 6' : null }).addTo(mapLayer); };
+  const line = (a, b, color, dashed) => { if (!a || !b) return; L.polyline([a, b], { color, weight: 3, opacity: 0.85, dashArray: dashed ? '6 6' : null }).addTo(mapLines); };
   const active = liveOrders || [];
   const gpsOf = o => (o.location && o.location.type === 'gps' && typeof o.location.lat === 'number') ? [o.location.lat, o.location.lng] : null;
   const restoOf = o => { const r = restById(o.restaurant_id); return typeof r.lat === 'number' ? [r.lat, r.lng] : null; };
   const first = n => String(n || '').split(' ')[0] || '';
 
   (restaurants || []).filter(r => typeof r.lat === 'number' && typeof r.lng === 'number').forEach(r => {
-    dot(r.lat, r.lng, '#8AA4FF', 9, mapRestoHtml(r), r.name);
+    dot('r:' + r.id, r.lat, r.lng, '#8AA4FF', 9, mapRestoHtml(r), r.name);
   });
   active.forEach(o => {
     const g = gpsOf(o), rp = restoOf(o);
     const d = (allDrivers || []).find(x => x.id === o.driver_id);
-    if (g) dot(g[0], g[1], '#F2A93B', 8, mapClientHtml(o, d), `${first(o.customer_name)} · ${money(o.total)}`);
+    if (g) dot('c:' + o.id, g[0], g[1], '#F2A93B', 8, mapClientHtml(o, d), `${first(o.customer_name)} · ${money(o.total)}`);
     line(rp, g, '#F2A93B', true);
   });
   let busy = 0;
@@ -2404,10 +2421,14 @@ async function drawMap() {
     const run = active.find(o => o.driver_id === d.id && o.status === 'En livraison');
     const pick = run ? null : active.find(o => o.driver_id === d.id);
     if (run) busy++;
-    dot(d.current_lat, d.current_lng, run ? '#E5484D' : '#3FB27F', 9, mapDriverHtml(d, run, pick), first(d.name));
+    dot('d:' + d.id, d.current_lat, d.current_lng, run ? '#E5484D' : '#3FB27F', 9, mapDriverHtml(d, run, pick), first(d.name));
     const target = run ? (run.collected_at ? gpsOf(run) : restoOf(run)) : (pick ? restoOf(pick) : null);
     line([d.current_lat, d.current_lng], target, run ? '#E5484D' : '#3FB27F', false);
   });
+  // Retire les points qui n'existent plus (commande livrée, livreur hors ligne)
+  for (const [key, m] of mapDots) {
+    if (!seen.has(key)) { mapLayer.removeLayer(m); mapDots.delete(key); }
+  }
   const cnt = document.getElementById('map-count');
   if (cnt) cnt.textContent = `${fresh.length} livreur${fresh.length > 1 ? 's' : ''} en ligne · ${busy} en course · ${active.length} commande${active.length > 1 ? 's' : ''} en cours`;
   if (!mapFitted && pts.length) { mapFitted = true; if (pts.length === 1) liveMap.setView(pts[0], 15); else liveMap.fitBounds(pts, { padding: [30, 30], maxZoom: 16 }); }
