@@ -185,6 +185,11 @@
   .pay-steps b.mono { color:var(--mango); font-size:15px; }
   .pay-steps input { margin:8px 0 0; }
   .pay-notice { background:rgba(240,169,154,0.12); border:1px solid #F0A99A; color:#F0A99A; border-radius:10px; padding:10px 12px; font-size:12.5px; line-height:1.45; margin-bottom:10px; }
+  .group-box { background:var(--surface); border:1px solid var(--line); border-radius:12px; padding:12px 14px; margin:14px 0; }
+  .group-title { font-weight:700; font-size:14px; margin-bottom:6px; }
+  .group-tabs { display:flex; gap:8px; margin-bottom:10px; }
+  .group-tab { flex:1; border:1px solid var(--line); background:var(--raised); color:var(--creamDim); font-family:inherit; font-size:12.5px; font-weight:600; border-radius:10px; padding:9px 10px; cursor:pointer; }
+  .group-tab.on { border-color:var(--mango); color:var(--mango); }
   .acc-card { background:var(--surface); border:1px solid var(--line); border-radius:14px; padding:14px; margin-bottom:12px; }
   .acc-card h4 { margin:0 0 6px; font-size:14px; }
   .acc-card p { margin:0; font-size:12.5px; color:var(--creamDim); line-height:1.5; }
@@ -745,6 +750,7 @@ function renderAccount() {
           <div class="mono" style="font-size:13px; color:var(--creamDim); margin-top:2px;">${currentCustomer.phone}</div>
         </div>
         ${loyaltyCardHtml()}
+        ${reliabilityCardHtml()}
         ${referralCardHtml()}
         <button class="btn-secondary" style="margin-bottom:10px;" onclick="show('orders'); renderOrders();">Mes commandes</button>
         <button class="btn-secondary" style="margin-bottom:10px;" onclick="show('offers'); renderOffers();">Offres</button>
@@ -1242,6 +1248,8 @@ const SHARE_SVG = '<svg viewBox="0 0 24 24"><circle cx="18" cy="5" r="2.5"/><cir
 const PAY_LABEL = { cash: 'espèces', wave: 'Wave', orange_money: 'Orange Money', mtn_money: 'MTN MoMo', moov_money: 'Moov Money' };
 let happyPromos = {}, momoNumbers = {}, trendingDishes = [];
 let checkoutQuote = null, checkoutPromo = '', checkoutUseCredit = null, checkoutPayment = 'cash', driverRating = 0;
+let checkoutGroupId = null, checkoutGroupCode = '', checkoutGroupMembers = null, checkoutGroupMode = 'none', checkoutGroupErr = '';
+let checkoutScheduled = false, checkoutScheduledFor = '';
 
 async function loadGrowthData() {
   try {
@@ -1342,7 +1350,7 @@ function summaryHtml() {
 function orderButtonLabel() { return `Commander pour ${money(orderTotal())}${checkoutPayment === 'cash' ? ', payé à la livraison' : ''}`; }
 async function refreshQuote() {
   if (!currentRestaurant || !cartCount()) return;
-  const { data } = await client.rpc('quote_order', { p_restaurant: currentRestaurant.id, p_items: cartPayload(), p_promo: checkoutPromo || null, p_use_credit: !!checkoutUseCredit });
+  const { data } = await client.rpc('quote_order', { p_restaurant: currentRestaurant.id, p_items: cartPayload(), p_promo: checkoutPromo || null, p_use_credit: !!checkoutUseCredit, p_group_code: checkoutGroupCode || null });
   checkoutQuote = data || null;
   const box = document.getElementById('sum-box'); if (box) box.innerHTML = summaryHtml();
   const btn = document.getElementById('btn-order'); if (btn && !btn.disabled) btn.textContent = orderButtonLabel();
@@ -1363,6 +1371,8 @@ function orderErrorText(m) {
   if (m.includes('compte_bloque')) return "Votre compte est suspendu après plusieurs commandes non récupérées. Contactez Dallas Bouff' pour le réactiver.";
   if (m.includes('reference_paiement')) return "Indiquez la référence de votre paiement Mobile Money.";
   if (m.includes('paiement_avance_requis')) return "Suite à une livraison non récupérée, votre prochaine commande doit être payée par Mobile Money avant préparation. Choisissez un moyen de paiement ci-dessus.";
+  if (m.includes('groupe_invalide')) return "Ce groupe n'est plus disponible. Créez-en un nouveau ou retirez le code.";
+  if (m.includes('creneau_invalide')) return "Choisissez une heure entre 30 minutes et 7 jours à l'avance.";
   return "La commande n'est pas partie. Vérifiez votre connexion et réessayez.";
 }
 
@@ -1385,6 +1395,73 @@ function payStepsHtml() {
     <input id="f-payref" maxlength="60" placeholder="Référence de la transaction" value="${escHtml(prev)}" /></div>`;
 }
 function setPayment(k) { checkoutPayment = k; document.querySelectorAll('.pay-opt').forEach(b => b.classList.toggle('on', b.getAttribute('onclick') === `setPayment('${k}')`)); const st = document.getElementById('pay-steps'); if (st) st.outerHTML = payStepsHtml(); const btn = document.getElementById('btn-order'); if (btn) btn.textContent = orderButtonLabel(); }
+
+// ---------- Commande groupée (frais de livraison partagés) ----------
+function groupHtml() {
+  if (checkoutGroupId) {
+    return `<div class="group-box" id="group-box">
+      <div class="group-title">Commande groupée active</div>
+      <div style="font-size:13.5px;">Code à partager : <b class="mono" style="color:var(--mango); font-size:16px;">${escHtml(checkoutGroupCode)}</b></div>
+      <div class="muted" style="margin:4px 0 8px;">Frais de livraison divisés entre ${checkoutGroupMembers} personne${checkoutGroupMembers > 1 ? 's' : ''}. Chacun commande et paie séparément avec ce code.</div>
+      <button type="button" class="btn-secondary" style="margin:0;" onclick="leaveGroupOrder()">Quitter le groupe</button>
+    </div>`;
+  }
+  return `<div class="group-box" id="group-box">
+    <div class="group-title">Commande groupée (frais de livraison partagés)</div>
+    <div class="muted" style="margin-bottom:8px;">Commandez avec vos voisins ou collègues chez le même restaurant et partagez les frais de livraison.</div>
+    <div class="group-tabs">
+      <button type="button" class="group-tab ${checkoutGroupMode === 'create' ? 'on' : ''}" onclick="setGroupMode('create')">Créer un groupe</button>
+      <button type="button" class="group-tab ${checkoutGroupMode === 'join' ? 'on' : ''}" onclick="setGroupMode('join')">J'ai un code</button>
+    </div>
+    ${checkoutGroupMode === 'create' ? `
+      <div class="set-row"><label for="grp-members">Nombre de personnes</label><input id="grp-members" type="number" min="2" max="10" value="${checkoutGroupMembers || 3}"></div>
+      <button type="button" class="btn-secondary" style="margin:0;" onclick="createGroupOrder()">Créer le code du groupe</button>` : ''}
+    ${checkoutGroupMode === 'join' ? `
+      <div class="set-row"><label for="grp-code">Code du groupe</label><input id="grp-code" maxlength="8" placeholder="Ex. AB12CD" style="text-transform:uppercase"></div>
+      <button type="button" class="btn-secondary" style="margin:0;" onclick="joinGroupOrder()">Valider le code</button>` : ''}
+    ${checkoutGroupErr ? `<div style="color:#F0A99A; font-size:12.5px; margin-top:6px;">${escHtml(checkoutGroupErr)}</div>` : ''}
+  </div>`;
+}
+function setGroupMode(mode) { checkoutGroupMode = checkoutGroupMode === mode ? 'none' : mode; checkoutGroupErr = ''; const box = document.getElementById('group-box'); if (box) box.outerHTML = groupHtml(); }
+async function createGroupOrder() {
+  if (!currentRestaurant) return;
+  const members = Math.min(10, Math.max(2, Math.round(Number(document.getElementById('grp-members').value) || 2)));
+  const { data, error } = await client.rpc('create_order_group', { p_restaurant: currentRestaurant.id, p_members: members, p_address: (document.getElementById('f-address') || {}).value || null, p_location: location_ || null });
+  if (error || !data) { checkoutGroupErr = "Impossible de créer le groupe pour le moment."; const box = document.getElementById('group-box'); if (box) box.outerHTML = groupHtml(); return; }
+  checkoutGroupId = data.id; checkoutGroupCode = data.code; checkoutGroupMembers = data.planned_members; checkoutGroupMode = 'none'; checkoutGroupErr = '';
+  const box = document.getElementById('group-box'); if (box) box.outerHTML = groupHtml();
+  refreshQuote();
+}
+async function joinGroupOrder() {
+  if (!currentRestaurant) return;
+  const code = (document.getElementById('grp-code').value || '').trim().toUpperCase();
+  if (!code) return;
+  const { data, error } = await client.rpc('get_order_group', { p_code: code });
+  const g = Array.isArray(data) ? data[0] : data;
+  if (error || !g) { checkoutGroupErr = "Ce code de groupe n'existe pas ou n'est plus actif."; const box = document.getElementById('group-box'); if (box) box.outerHTML = groupHtml(); return; }
+  if (g.restaurant_id !== currentRestaurant.id) { checkoutGroupErr = "Ce code de groupe correspond à un autre restaurant."; const box = document.getElementById('group-box'); if (box) box.outerHTML = groupHtml(); return; }
+  checkoutGroupId = g.id; checkoutGroupCode = code; checkoutGroupMembers = g.planned_members; checkoutGroupMode = 'none'; checkoutGroupErr = '';
+  const box = document.getElementById('group-box'); if (box) box.outerHTML = groupHtml();
+  refreshQuote();
+}
+function leaveGroupOrder() { checkoutGroupId = null; checkoutGroupCode = ''; checkoutGroupMembers = null; checkoutGroupMode = 'none'; checkoutGroupErr = ''; const box = document.getElementById('group-box'); if (box) box.outerHTML = groupHtml(); refreshQuote(); }
+
+// ---------- Créneau horaire réservable ----------
+function scheduleHtml() {
+  const min = new Date(Date.now() + 31 * 60000);
+  const max = new Date(Date.now() + 7 * 86400000 - 60000);
+  const toLocalInput = d => { const p = n => String(n).padStart(2, '0'); return `${d.getFullYear()}-${p(d.getMonth() + 1)}-${p(d.getDate())}T${p(d.getHours())}:${p(d.getMinutes())}`; };
+  return `<div class="group-box" id="sched-box">
+    <div class="group-title">Quand ?</div>
+    <div class="group-tabs">
+      <button type="button" class="group-tab ${!checkoutScheduled ? 'on' : ''}" onclick="setScheduleMode(false)">Maintenant</button>
+      <button type="button" class="group-tab ${checkoutScheduled ? 'on' : ''}" onclick="setScheduleMode(true)">Choisir une heure</button>
+    </div>
+    ${checkoutScheduled ? `<div class="set-row"><label for="sched-at">Date et heure</label><input id="sched-at" type="datetime-local" min="${toLocalInput(min)}" max="${toLocalInput(max)}" value="${escHtml(checkoutScheduledFor)}" onchange="checkoutScheduledFor=this.value"></div>
+    <div class="muted">La commande sera transmise au restaurant à l'approche de l'heure choisie (entre 30 minutes et 7 jours à l'avance).</div>` : ''}
+  </div>`;
+}
+function setScheduleMode(on) { checkoutScheduled = on; if (!on) checkoutScheduledFor = ''; const box = document.getElementById('sched-box'); if (box) box.outerHTML = scheduleHtml(); }
 
 // Favoris (enregistrés sur le compte)
 function favs() { const f = currentCustomer && currentCustomer.favorites; return { restaurants: (f && Array.isArray(f.restaurants)) ? f.restaurants : [], dishes: (f && Array.isArray(f.dishes)) ? f.dishes : [] }; }
@@ -1454,6 +1531,17 @@ function loyaltyCardHtml() {
   return `<div class="acc-card"><h4>Fidélité</h4><p>${n === 0 && c.delivered_count ? 'Bravo ! Vous venez de gagner une livraison offerte.' : `Encore ${10 - n} commande${10 - n > 1 ? 's' : ''} livrée${10 - n > 1 ? 's' : ''} et votre prochaine livraison est offerte.`}</p>
     <div class="loy-bar">${Array.from({ length: 10 }, (_, i) => `<i class="${i < n ? 'on' : ''}"></i>`).join('')}</div>
     <p>${(c.free_deliveries || 0) > 0 ? `<b style="color:var(--palm)">${c.free_deliveries} livraison${c.free_deliveries > 1 ? 's' : ''} offerte${c.free_deliveries > 1 ? 's' : ''}</b> à utiliser au moment de commander.` : 'Aucune livraison offerte pour le moment.'}</p></div>`;
+}
+function reliabilityCardHtml() {
+  const c = currentCustomer; if (!c) return '';
+  const n = Number(c.no_show_count || 0);
+  const delivered = Number(c.delivered_count || 0);
+  let label, color, note;
+  if (n >= 2) { label = 'Surveillée'; color = 'var(--chili)'; note = "Plusieurs commandes n'ont pas été récupérées. Le paiement par Mobile Money est désormais demandé avant préparation."; }
+  else if (n === 1) { label = 'À améliorer'; color = 'var(--mango)'; note = "Une commande n'a pas été récupérée. Le paiement par Mobile Money peut être demandé avant préparation sur votre prochaine commande."; }
+  else if (delivered >= 5) { label = 'Excellente'; color = 'var(--palm)'; note = 'Vous récupérez toujours vos commandes. Continuez ainsi !'; }
+  else { label = 'Bonne'; color = 'var(--palm)'; note = 'Aucun incident sur votre compte.'; }
+  return `<div class="acc-card"><h4>Note de fiabilité</h4><p style="font-weight:700; font-size:15px; color:${color};">${label}</p><p>${note}</p></div>`;
 }
 function offersExtraHtml(codes) {
   const hp = Object.values(happyPromos).filter(p => p.active);
@@ -2195,7 +2283,7 @@ function filterRestaurants() {
 }
 
 async function openRestaurant(id, dishId) {
-  if (!currentRestaurant || currentRestaurant.id !== id) { cart = {}; checkoutQuote = null; }
+  if (!currentRestaurant || currentRestaurant.id !== id) { cart = {}; checkoutQuote = null; checkoutGroupId = null; checkoutGroupCode = ''; checkoutGroupMembers = null; checkoutGroupMode = 'none'; checkoutScheduled = false; checkoutScheduledFor = ''; }
   currentRestaurant = restaurants.find(r => r.id === id);
   updateHeaderCartBadge();
   const { data } = await client.from('menu_items').select('*').eq('restaurant_id', id);
@@ -2411,6 +2499,10 @@ function renderCheckout() {
 
       ${prefsHtml()}
 
+      ${groupHtml()}
+
+      ${scheduleHtml()}
+
       ${paymentHtml()}
 
       <button class="btn-primary" id="btn-order" onclick="placeOrder()">${orderButtonLabel()}</button>
@@ -2507,6 +2599,13 @@ async function placeOrder() {
   const address = document.getElementById('f-address').value.trim();
   if (!name || !phone || !(location_ || address)) { toast("Complétez au moins le nom, le téléphone et une position"); return; }
   if (!location_ && address.length < 8) { toast("Sans GPS, décrivez précisément votre repère (quartier, rue, couleur du portail…)."); return; }
+  let scheduledFor = null;
+  if (checkoutScheduled) {
+    if (!checkoutScheduledFor) { toast("Choisissez une date et une heure pour votre commande."); return; }
+    const d = new Date(checkoutScheduledFor);
+    if (isNaN(d.getTime()) || d.getTime() < Date.now() + 30 * 60000 || d.getTime() > Date.now() + 7 * 86400000) { toast("Choisissez une heure entre 30 minutes et 7 jours à l'avance."); return; }
+    scheduledFor = d.toISOString();
+  }
 
   const items = cartPayload();
   const total = orderTotal();
@@ -2532,7 +2631,9 @@ async function placeOrder() {
     promo_code: (checkoutQuote && checkoutQuote.promo_ok) ? checkoutPromo : null,
     use_credit: !!checkoutUseCredit && (currentCustomer.free_deliveries || 0) > 0,
     payment_method: pm,
-    payment_ref: pm !== 'cash' ? pref.trim() : null
+    payment_ref: pm !== 'cash' ? pref.trim() : null,
+    group_id: checkoutGroupId || null,
+    scheduled_for: scheduledFor
   };
   if (currentCustomer) payload.customer_id = currentCustomer.id;
 
@@ -2551,6 +2652,8 @@ async function placeOrder() {
   renderConfirmation({ ...payload, total: (checkoutQuote && !checkoutQuote.error) ? checkoutQuote.total : payload.total, created_at: new Date().toISOString() });
   cart = {};
   checkoutQuote = null; checkoutPromo = ''; checkoutUseCredit = null; checkoutPayment = 'cash';
+  checkoutGroupId = null; checkoutGroupCode = ''; checkoutGroupMembers = null; checkoutGroupMode = 'none';
+  checkoutScheduled = false; checkoutScheduledFor = '';
   location_ = null;
   updateHeaderCartBadge();
   hideFeeNotice();

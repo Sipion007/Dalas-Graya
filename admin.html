@@ -125,7 +125,7 @@
     .pn-wa { grid-area:wa; }
     .wa-grid { display:grid; grid-template-columns: minmax(0,1.3fr) minmax(0,1fr); gap:20px; align-items:start; }
     .wa-list { max-height:520px; }
-      grid-template-areas: "kpi kpi kpi" "live live live" "map map map" "watch watch alerts" "watch watch acc" "pay pay cash" "report lb lb" "manage manage manage" "clients clients clients" "wa wa wa" "promo promo fraud" "rev dish photo" "avis avis avis" "drv drv drv" "hist hist hist"; align-items:start; }
+      grid-template-areas: "caticker caticker caticker" "kpi kpi kpi" "live live live" "map map map" "watch watch alerts" "watch watch acc" "pay pay cash" "report lb lb" "manage manage manage" "clients clients clients" "wa wa wa" "promo promo fraud" "rev dish photo" "avis avis avis" "drv drv drv" "hist hist hist"; align-items:start; }
     .pn-map { grid-area:map; } .pn-pay { grid-area:pay; } .pn-cash { grid-area:cash; } .pn-report { grid-area:report; } .pn-lb { grid-area:lb; } .pn-promo { grid-area:promo; } .pn-fraud { grid-area:fraud; }
     #live-map { height:460px; }
     .pr-grid { display:grid; grid-template-columns: minmax(0,1fr) minmax(0,1fr); gap:20px; align-items:start; }
@@ -144,7 +144,7 @@
     .av-list { max-height:560px; overflow:auto; padding-right:4px; }
     .pn { background: var(--surface); border:1px solid var(--line); border-radius:16px; padding:20px 22px; }
     .pn > .section-title:first-child, .pn > .pn-head:first-child .section-title, .pn .section-title { margin-top:0; }
-    .pn-kpi { grid-area:kpi; } .pn-watch { grid-area:watch; } .pn-alerts { grid-area:alerts; } .pn-acc { grid-area:acc; }
+    .pn-caticker { grid-area:caticker; } .pn-kpi { grid-area:kpi; } .pn-watch { grid-area:watch; } .pn-alerts { grid-area:alerts; } .pn-acc { grid-area:acc; }
     .pn-rev { grid-area:rev; } .pn-dish { grid-area:dish; } .pn-photo { grid-area:photo; } .pn-drv { grid-area:drv; } .pn-hist { grid-area:hist; }
     .pn-alerts { padding:6px 8px; } .pn-alerts:empty { display:none; }
 
@@ -176,8 +176,13 @@
     .pn-kpi .stats-grid { grid-template-columns: repeat(6, minmax(0,1fr)); }
     .stat-value { font-size:30px; }
     .dash { grid-template-columns: repeat(4, minmax(0,1fr));
-      grid-template-areas: "kpi kpi kpi kpi" "live live live live" "map map map map" "watch watch watch alerts" "watch watch watch acc" "pay pay cash cash" "report report lb lb" "manage manage manage manage" "clients clients clients clients" "wa wa wa wa" "promo promo fraud fraud" "rev dish photo photo" "avis avis avis avis" "drv drv drv drv" "hist hist hist hist"; }
+      grid-template-areas: "caticker caticker caticker caticker" "kpi kpi kpi kpi" "live live live live" "map map map map" "watch watch watch alerts" "watch watch watch acc" "pay pay cash cash" "report report lb lb" "manage manage manage manage" "clients clients clients clients" "wa wa wa wa" "promo promo fraud fraud" "rev dish photo photo" "avis avis avis avis" "drv drv drv drv" "hist hist hist hist"; }
   }
+  .pn-caticker { background: linear-gradient(135deg, #1C2A1E, var(--surface)); border:1px solid #2E4531; }
+  .ca-ticker-box { display:flex; flex-direction:column; align-items:flex-start; gap:4px; }
+  .ca-ticker-label { font-size:12px; letter-spacing:0.04em; color:var(--creamDim); text-transform:uppercase; }
+  .ca-ticker-value { font-size:36px; font-weight:700; color:var(--palm); line-height:1.1; transition:opacity 0.2s; }
+  .ca-ticker-sub { font-size:12.5px; color:var(--creamDim); }
   .pn-head2 { display:flex; align-items:center; justify-content:space-between; gap:10px; }
   .pn-head2 .section-title { margin-bottom:10px; }
   .live-dot { font-size:11px; font-weight:700; color:var(--palm); display:inline-flex; align-items:center; gap:6px; margin-bottom:10px; }
@@ -357,6 +362,13 @@
     </div>
 
   <div class="dash">
+    <section class="pn pn-caticker">
+    <div class="ca-ticker-box">
+      <div class="ca-ticker-label">Chiffre d'affaires du jour</div>
+      <div class="ca-ticker-value mono" id="ca-ticker-value">—</div>
+      <div class="ca-ticker-sub" id="ca-ticker-sub"></div>
+    </div>
+    </section>
     <section class="pn pn-alerts">
     <div id="alert-panel"></div>
     </section>
@@ -1282,6 +1294,33 @@ async function optimizePhotos() {
 let restaurants = [];
 let allOrders = [];
 let watchTimer = null;
+let caTickerTimer = null, caTickerVal = 0;
+
+async function loadCaTicker() {
+  if (!adminLoggedIn) return;
+  const start = new Date(); start.setHours(0, 0, 0, 0);
+  const { data, error } = await client.from('orders').select('total').eq('status', 'Livrée').gte('created_at', start.toISOString());
+  if (error) return;
+  const rows = data || [];
+  const total = rows.reduce((s, o) => s + Number(o.total || 0), 0);
+  animateCaTicker(total);
+  const sub = document.getElementById('ca-ticker-sub');
+  if (sub) sub.textContent = rows.length + (rows.length === 1 ? " commande livrée aujourd'hui" : " commandes livrées aujourd'hui");
+}
+
+function animateCaTicker(target) {
+  const el = document.getElementById('ca-ticker-value');
+  if (!el) return;
+  const from = caTickerVal;
+  const t0 = performance.now();
+  const dur = 600;
+  function step(t) {
+    const p = Math.min(1, (t - t0) / dur);
+    el.textContent = money(Math.round(from + (target - from) * p));
+    if (p < 1) requestAnimationFrame(step); else caTickerVal = target;
+  }
+  requestAnimationFrame(step);
+}
 
 function money(n) { return Number(n).toLocaleString('fr-FR') + ' F'; }
 
@@ -1331,6 +1370,9 @@ async function afterLogin() {
   loadDriverUnread();
   if (driverUnreadTimer) clearInterval(driverUnreadTimer);
   driverUnreadTimer = setInterval(loadDriverUnread, 15000);
+  loadCaTicker();
+  if (caTickerTimer) clearInterval(caTickerTimer);
+  caTickerTimer = setInterval(loadCaTicker, 20000);
 
   document.getElementById('login-screen').style.display = 'none';
   document.getElementById('admin-screen').style.display = 'block';
@@ -1343,6 +1385,8 @@ async function afterLogin() {
 async function logout() {
   adminLoggedIn = false;
   if (watchTimer) { clearInterval(watchTimer); watchTimer = null; }
+  if (caTickerTimer) { clearInterval(caTickerTimer); caTickerTimer = null; }
+  caTickerVal = 0;
   try { await Alerts.unregisterPush(); Alerts.stop(); } catch (e) {}
   await signOutLocal();
   document.getElementById('admin-screen').style.display = 'none';
@@ -1431,6 +1475,8 @@ function liveExtraHtml(o) {
     h += `<div class="lv-line"><span>Paiement :</span> <b>${PAY_LABEL[o.payment_method] || 'Mobile Money'}</b> · réf. <b class="mono">${escHtml(o.payment_ref || '—')}</b> · ${PAY_ST[o.payment_status] || escHtml(o.payment_status || '')}</div>`;
     if (o.payment_status === 'a_verifier') h += `<div class="lv-row"><button class="w-btn go" onclick="adminConfirmPay('${o.id}', true)">Paiement reçu</button><button class="w-btn danger" onclick="adminConfirmPay('${o.id}', false)">Pas reçu : le client paiera en espèces</button></div>`;
   }
+  if (o.group_id) h += `<div class="lv-line"><span style="color:var(--mango);">Commande groupée</span> · frais de livraison partagés</div>`;
+  if (o.scheduled_for) h += `<div class="lv-line"><span style="color:var(--mango);">Prévue pour ${new Date(o.scheduled_for).toLocaleString('fr-FR', { day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit' })}</span></div>`;
   if (o.needs_call) h += `<div class="lv-line" style="color:var(--mango); font-weight:700;">Première grosse commande ou client déjà signalé absent : appelez le client pour confirmer avant de lancer.</div>`;
   return h;
 }
@@ -2130,6 +2176,7 @@ function renderOrdersList() {
 
 // ================= Croissance : paiements, caisse, promos, rapport, carte =================
 let promoCodes = [], momoSettings = {}, driverBonus = {}, leaderboard = [], payQueue = [], blocklist = [], backupFiles = [];
+let restRefBonus = 2000, restRefThreshold = 10;
 const promoForm = { kind: 'percent' };
 async function loadGrowth() {
   if (!adminLoggedIn) return;
@@ -2145,6 +2192,8 @@ async function loadGrowth() {
   const settings = {}; (st.data || []).forEach(r => { settings[r.key] = r.value; });
   momoSettings = settings.momo_numbers || {};
   driverBonus = settings.driver_bonus || {};
+  restRefBonus = Number(settings.restaurant_referral_bonus) || 2000;
+  restRefThreshold = Number(settings.restaurant_referral_threshold) || 10;
   leaderboard = lb.data || [];
   payQueue = (pq.data || []).filter(o => o.status !== 'Annulée');
   blocklist = bl.data || [];
@@ -2327,7 +2376,57 @@ function renderPromo() {
     <div class="cp-li"><span>Clients venus par parrainage</span><span>${referred.length}</span></div>
     <div class="cp-li"><span>Récompenses déjà gagnées</span><span>${(allCustomers || []).filter(c => c.referral_rewarded).length}</span></div>
     ${topRef.map(([id, n]) => `<div class="cp-li"><span><button class="link-client" onclick="openCustomer('${id}', '')">${escHtml(((allCustomers || []).find(c => c.id === id) || {}).name || 'Client')}</button></span><span>${n} filleul${n > 1 ? 's' : ''}</span></div>`).join('')}
-  </div></div>`;
+  </div></div>
+  ${restaurantReferralHtml()}`;
+}
+function restaurantReferralHtml() {
+  const list = restaurants || [];
+  return `<div class="sub-h">Parrainage entre restaurateurs</div>
+  <div class="muted" style="margin-bottom:8px;">Un restaurateur qui fait rejoindre un autre restaurant sur Dallas Bouff' peut recevoir une prime, une fois que le filleul a livré assez de commandes.</div>
+  <div class="set-row"><label for="rr-bonus">Prime (F)</label><input id="rr-bonus" type="number" min="0" step="500" value="${restRefBonus}"></div>
+  <div class="set-row"><label for="rr-threshold">Seuil (commandes livrées)</label><input id="rr-threshold" type="number" min="1" value="${restRefThreshold}"></div>
+  <div class="lv-row" style="margin-bottom:10px;"><button class="w-btn go" onclick="saveRestRefSettings()">Enregistrer</button></div>
+  ${list.map(r => {
+    const delivered = (allOrders || []).filter(o => o.restaurant_id === r.id && o.status === 'Livrée').length;
+    const referrer = r.referred_by ? list.find(x => x.id === r.referred_by) : null;
+    const eligible = referrer && delivered >= restRefThreshold && !r.referral_bonus_paid_at;
+    return `<div class="cp-li" style="flex-wrap:wrap; gap:8px;">
+      <span><b>${escHtml(r.name)}</b> <span class="mono" style="color:var(--mango)">${escHtml(r.referral_code || '')}</span></span>
+      <span style="display:flex; align-items:center; gap:8px; flex-wrap:wrap;">
+        <select onchange="setRestReferrer('${r.id}', this.value)" style="margin:0;">
+          <option value="">Parrain : aucun</option>
+          ${list.filter(x => x.id !== r.id).map(x => `<option value="${x.id}" ${r.referred_by === x.id ? 'selected' : ''}>Parrain : ${escHtml(x.name)}</option>`).join('')}
+        </select>
+        ${referrer ? `<span class="muted">${delivered}/${restRefThreshold} livrées</span>` : ''}
+        ${r.referral_bonus_paid_at ? `<span style="color:var(--palm); font-size:12.5px;">Prime payée le ${new Date(r.referral_bonus_paid_at).toLocaleDateString('fr-FR')}</span>` : eligible ? `<button class="w-btn go" onclick="markReferralPaid('${r.id}')">Marquer prime payée (${money(restRefBonus)})</button>` : ''}
+      </span>
+    </div>`;
+  }).join('')}`;
+}
+async function saveRestRefSettings() {
+  const bonus = Math.max(0, Math.round(Number(document.getElementById('rr-bonus').value) || 0));
+  const threshold = Math.max(1, Math.round(Number(document.getElementById('rr-threshold').value) || 1));
+  const [a, b] = await Promise.all([
+    client.rpc('admin_set_setting', { p_key: 'restaurant_referral_bonus', p_value: bonus }),
+    client.rpc('admin_set_setting', { p_key: 'restaurant_referral_threshold', p_value: threshold })
+  ]);
+  if (a.error || b.error) { alert('Enregistrement impossible. Réessayez.'); return; }
+  restRefBonus = bonus; restRefThreshold = threshold; renderPromo();
+}
+async function setRestReferrer(restaurantId, referrerId) {
+  const { error } = await client.rpc('admin_set_restaurant_referrer', { p_restaurant: restaurantId, p_referrer: referrerId || null });
+  if (error) { alert("Impossible d'enregistrer ce parrainage."); return; }
+  const r = (restaurants || []).find(x => x.id === restaurantId);
+  if (r) r.referred_by = referrerId || null;
+  renderPromo();
+}
+async function markReferralPaid(restaurantId) {
+  if (!confirm('Confirmer le versement de la prime de parrainage à ce restaurateur ?')) return;
+  const { error } = await client.rpc('admin_mark_referral_paid', { p_restaurant: restaurantId });
+  if (error) { alert('Action impossible. Réessayez.'); return; }
+  const r = (restaurants || []).find(x => x.id === restaurantId);
+  if (r) r.referral_bonus_paid_at = new Date().toISOString();
+  renderPromo();
 }
 async function createPromo() {
   const code = (document.getElementById('pc-code').value || '').trim().toUpperCase().replace(/\s+/g, '');
