@@ -192,6 +192,20 @@
   .lv-line span { color:var(--creamDim); }
   .lv-line a { color:var(--cream); }
   .link-client { background:none; border:none; padding:0; color:var(--mango); font:inherit; font-weight:700; cursor:pointer; text-decoration:underline; }
+  .chips { display:flex; flex-wrap:wrap; gap:6px; margin:4px 0; }
+  .chip-s { border:1px solid var(--line); background:var(--surface); color:var(--cream); border-radius:999px; padding:7px 11px; font-size:12px; cursor:pointer; font-family:inherit; }
+  .chip-s:hover { border-color:var(--mango); color:var(--mango); }
+  .thread { margin-top:10px; border-top:1px solid var(--line); padding-top:10px; }
+  .thread-list { max-height:280px; overflow:auto; display:flex; flex-direction:column; gap:8px; padding:2px 0 8px; }
+  .thread-empty { color:var(--creamDim); font-size:13px; padding:6px 0; }
+  .msg { align-self:flex-start; max-width:85%; background:var(--raised); border:1px solid var(--line); border-radius:14px 14px 14px 4px; padding:8px 11px; }
+  .msg.mine { align-self:flex-end; background:var(--mango); border-color:var(--mango); border-radius:14px 14px 4px 14px; }
+  .msg.mine .msg-meta, .msg.mine .msg-body { color:#080808; }
+  .msg-meta { font-size:10.5px; color:var(--creamDim); margin-bottom:2px; }
+  .msg-body { font-size:13.5px; color:var(--cream); line-height:1.4; white-space:pre-wrap; word-break:break-word; }
+  .thread-send { display:flex; gap:8px; align-items:flex-end; }
+  .thread-send textarea { flex:1; margin:0; min-height:42px; resize:vertical; font-size:14px; font-family:inherit; background:var(--surface); border:1px solid var(--line); color:var(--cream); border-radius:10px; padding:9px 11px; box-sizing:border-box; }
+  .send-btn { border:none; background:var(--mango); color:#080808; font-weight:700; border-radius:10px; padding:11px 14px; cursor:pointer; font-size:13px; font-family:inherit; }
   .lv-row { display:flex; flex-wrap:wrap; gap:6px; align-items:center; margin-top:9px; }
   .lv-row select { margin:0; width:auto; flex:1; min-width:150px; padding:8px 10px; font-size:12.5px; }
   .lv-row input { margin:0; flex:1; min-width:150px; padding:8px 10px; font-size:12.5px; }
@@ -271,6 +285,19 @@
   .mp-total { font-weight:800; color:var(--mango); margin-top:6px; }
   .mp-muted { color:var(--creamDim); font-size:12px; }
   .map-hint { font-size:12px; color:var(--creamDim); margin-top:6px; line-height:1.4; }
+  .map-wrap { display:flex; flex-direction:column; gap:12px; }
+  .map-list { display:flex; flex-direction:column; gap:8px; max-height:420px; overflow:auto; }
+  .map-list .map-sec-h { font-size:11px; font-weight:700; text-transform:uppercase; letter-spacing:0.4px; color:var(--creamDim); margin:4px 0 2px; }
+  .map-row { background:var(--surface); border:1px solid var(--line); border-radius:12px; padding:10px 12px; cursor:pointer; }
+  .map-row:hover { border-color:var(--mango); }
+  .map-row-top { display:flex; justify-content:space-between; gap:8px; align-items:baseline; }
+  .map-row-name { font-weight:700; font-size:13.5px; }
+  .map-row-status { font-size:11.5px; font-weight:700; }
+  .map-row-status.busy { color:#E5484D; } .map-row-status.ok { color:#3FB27F; } .map-row-status.warn { color:var(--mango); }
+  .map-row-sub { font-size:12px; color:var(--creamDim); margin-top:2px; }
+  .map-row-acts { display:flex; gap:6px; margin-top:8px; flex-wrap:wrap; }
+  .map-row-acts a, .map-row-acts button { border:1px solid var(--line); background:var(--raised); color:var(--cream); border-radius:8px; padding:6px 10px; font-size:11.5px; cursor:pointer; text-decoration:none; font-family:inherit; }
+  @media (min-width: 880px) { .map-wrap { flex-direction:row; align-items:flex-start; } #live-map { flex:1.4; } .map-list { flex:1; max-height:460px; } }
   .opt-box p { font-size:12.5px; color:var(--creamDim); margin:0 0 10px; line-height:1.45; }
   #live-map { height:340px; border-radius:12px; border:1px solid var(--line); background:#111; z-index:0; }
   .map-legend { display:flex; gap:14px; flex-wrap:wrap; font-size:12px; color:var(--creamDim); margin-top:8px; }
@@ -339,9 +366,12 @@
     </section>
     <section class="pn pn-map">
     <div class="pn-head2"><div class="section-title" id="section-map">Carte en direct</div><span class="cl-count" id="map-count"></span></div>
-    <div id="live-map"></div>
+    <div class="map-wrap">
+      <div id="live-map"></div>
+      <div class="map-list" id="map-list"><div class="empty">Chargement…</div></div>
+    </div>
     <div class="map-legend"><span><i style="background:#3FB27F"></i>Livreurs disponibles</span><span><i style="background:#E5484D"></i>Livreurs en course</span><span><i style="background:#F2A93B"></i>Clients à livrer</span><span><i style="background:#8AA4FF"></i>Restaurants</span></div>
-    <div class="map-hint">Touchez un point pour voir son détail. Trait plein : trajet du livreur. Pointillé : restaurant vers client.</div>
+    <div class="map-hint">Touchez un point ou une ligne de la liste pour voir son détail. Trait plein : trajet du livreur. Pointillé : restaurant vers client.</div>
     </section>
     <section class="pn pn-watch">
     <div class="section-title" id="section-watch" style="margin-top:0;">À surveiller</div>
@@ -1190,10 +1220,13 @@ async function loadWatch() {
       <div class="w-item ${p.level}"><div class="w-main"><b>${escHtml(r.name || '')} · #${p.o.id.slice(0, 8).toUpperCase()}</b><span>${escHtml(p.text)} · ${escHtml(p.o.customer_name || '')} · <a href="tel:${escHtml(p.o.phone)}">${escHtml(p.o.phone)}</a> · ${money(p.o.total)}</span>${p.o.cancel_request_reason ? `<span>Motif du client : ${escHtml(p.o.cancel_request_reason)}</span>` : ''}</div>
       <div class="w-acts">${r.whatsapp ? `<a class="w-btn" href="tel:+${escHtml(r.whatsapp)}">Appeler le restaurant</a>` : ''}
         ${p.o.status === 'En livraison' || p.level === 'old' ? `<button class="w-btn" onclick="adminDelivered('${p.o.id}')">Marquer livrée</button>` : ''}
-        ${adminCancelOpen[p.o.id] ? `<input id="adm-cancel-${p.o.id}" maxlength="120" placeholder="Motif de l'annulation" /><button class="w-btn danger" onclick="adminCancel('${p.o.id}')">Confirmer</button>` : `<button class="w-btn danger" onclick="adminCancelToggle('${p.o.id}')">Annuler</button>`}</div></div>`; }).join('') : '<div class="w-ok">Tout va bien : aucune commande en retard.</div>'}
+        ${adminCancelOpen[p.o.id] ? `<div>${cancelChipsHtml('adm-cancel-' + p.o.id)}<input id="adm-cancel-${p.o.id}" maxlength="120" placeholder="Motif de l'annulation" /><button class="w-btn danger" onclick="adminCancel('${p.o.id}')">Confirmer</button></div>` : `<button class="w-btn danger" onclick="adminCancelToggle('${p.o.id}')">Annuler</button>`}</div></div>`; }).join('') : '<div class="w-ok">Tout va bien : aucune commande en retard.</div>'}
     </div>`;
 }
 
+const ADMIN_CANCEL_REASONS = ['Client injoignable', "Client n'est pas venu récupérer", 'Restaurant fermé', 'Adresse introuvable'];
+function setCancelInput(inputId, text) { const inp = document.getElementById(inputId); if (inp) { inp.value = text; inp.focus(); } }
+function cancelChipsHtml(inputId) { return `<div class="chips">${ADMIN_CANCEL_REASONS.map(r => `<button type="button" class="chip-s" onclick="setCancelInput('${inputId}', ${JSON.stringify(r).replace(/"/g, '&quot;')})">${escHtml(r)}</button>`).join('')}</div>`; }
 function adminCancelToggle(id) { adminCancelOpen[id] = !adminCancelOpen[id]; if (!adminCancelOpen[id]) delete adminCancelOpen[id]; watchSig = ''; loadWatch(); }
 async function adminCancel(id) {
   const inp = document.getElementById('adm-cancel-' + id);
@@ -1295,6 +1328,9 @@ async function afterLogin() {
   watchTimer = setInterval(loadWatch, 20000);
   if (liveTimer) clearInterval(liveTimer);
   liveTimer = setInterval(loadLive, 10000);
+  loadDriverUnread();
+  if (driverUnreadTimer) clearInterval(driverUnreadTimer);
+  driverUnreadTimer = setInterval(loadDriverUnread, 15000);
 
   document.getElementById('login-screen').style.display = 'none';
   document.getElementById('admin-screen').style.display = 'block';
@@ -1379,7 +1415,7 @@ function renderLive(force) {
         <button class="w-btn go" onclick="adminAssign('${o.id}')">${o.driver_id ? 'Confier à ce livreur' : 'Assigner'}</button>
         ${o.driver_id ? `<button class="w-btn danger" onclick="adminUnassign('${o.id}')">Retirer le livreur</button>` : ''}
       </div>` : ''}
-      ${liveOpen.cancel[o.id] ? `<div class="lv-row"><input id="lv-cancel-${o.id}" maxlength="160" placeholder="Motif de l'annulation (vu par le client)" /><button class="w-btn danger" onclick="adminCancelLive('${o.id}')">Confirmer l'annulation</button></div>` : ''}
+      ${liveOpen.cancel[o.id] ? `<div class="lv-row" style="flex-direction:column; align-items:stretch;">${cancelChipsHtml('lv-cancel-' + o.id)}<div class="lv-row"><input id="lv-cancel-${o.id}" maxlength="160" placeholder="Motif de l'annulation (vu par le client)" /><button class="w-btn danger" onclick="adminCancelLive('${o.id}')">Confirmer l'annulation</button></div></div>` : ''}
       ${liveOpen.msg[o.id] ? `<div class="lv-msgs">${msgs.length ? msgs.map(m => `<div class="lv-msg"><b>${escHtml(m.sender_name || m.sender_role)}</b> <i>${hhmm(m.created_at)}</i><br>${escHtml(m.body)}</div>`).join('') : '<div class="lv-msg"><i>Aucun message pour cette commande.</i></div>'}</div>
         <div class="lv-row"><input id="lv-msg-${o.id}" maxlength="500" placeholder="Écrire au client, au restaurant et au livreur…" onkeydown="if(event.key==='Enter') adminSendMsg('${o.id}')" /><button class="w-btn go" onclick="adminSendMsg('${o.id}')">Envoyer</button></div>` : ''}
     </div>`;
@@ -1395,7 +1431,7 @@ function liveExtraHtml(o) {
     h += `<div class="lv-line"><span>Paiement :</span> <b>${PAY_LABEL[o.payment_method] || 'Mobile Money'}</b> · réf. <b class="mono">${escHtml(o.payment_ref || '—')}</b> · ${PAY_ST[o.payment_status] || escHtml(o.payment_status || '')}</div>`;
     if (o.payment_status === 'a_verifier') h += `<div class="lv-row"><button class="w-btn go" onclick="adminConfirmPay('${o.id}', true)">Paiement reçu</button><button class="w-btn danger" onclick="adminConfirmPay('${o.id}', false)">Pas reçu : le client paiera en espèces</button></div>`;
   }
-  if (o.needs_call) h += `<div class="lv-line" style="color:var(--mango); font-weight:700;">Première commande d'un montant élevé : appelez le client pour confirmer avant de lancer.</div>`;
+  if (o.needs_call) h += `<div class="lv-line" style="color:var(--mango); font-weight:700;">Première grosse commande ou client déjà signalé absent : appelez le client pour confirmer avant de lancer.</div>`;
   return h;
 }
 async function adminConfirmPay(id, ok) {
@@ -1594,7 +1630,73 @@ async function adminBlock(id, blocked) {
   if (error) { alert('Action impossible pour le moment.'); return; }
   await loadClients(); renderFraud(); openCustomer(id);
 }
-function closeCustomer() { const m = document.getElementById('cp-modal'); if (m) m.remove(); }
+function closeCustomer() { if (driverThreadTimer) { clearInterval(driverThreadTimer); driverThreadTimer = null; driverThreadId = null; } const m = document.getElementById('cp-modal'); if (m) m.remove(); }
+
+// ---------- Messagerie admin ↔ livreurs (indépendante des commandes) ----------
+let driverUnread = {}, driverUnreadTimer = null, driverThreadTimer = null, driverThreadId = null;
+async function loadDriverUnread() {
+  const { data } = await client.rpc('admin_driver_unread_counts');
+  driverUnread = {};
+  (data || []).forEach(r => { driverUnread[r.driver_id] = r.unread; });
+  document.querySelectorAll('[data-driver-badge]').forEach(b => {
+    const n = driverUnread[b.getAttribute('data-driver-badge')] || 0;
+    b.style.display = n ? 'inline-flex' : 'none';
+    b.textContent = n > 9 ? '9+' : String(n);
+  });
+}
+function driverThreadHtml(driverId, msgs) {
+  const list = (msgs || []).map(m => {
+    const mine = m.sender_role === 'admin';
+    return `<div class="msg ${mine ? 'mine' : ''}"><div class="msg-meta">${escHtml(mine ? 'Vous' : (m.sender_name || 'Livreur'))} · ${hhmm(m.created_at)}</div><div class="msg-body">${escHtml(m.body)}</div></div>`;
+  }).join('');
+  return `<div class="thread" data-driver-thread="${driverId}">
+    <div class="thread-list" id="dthread-list-${driverId}">${list || '<div class="thread-empty">Aucun message avec ce livreur pour le moment.</div>'}</div>
+    <div class="thread-send">
+      <textarea id="dmsg-input-${driverId}" maxlength="500" rows="2" placeholder="Écrire au livreur…"></textarea>
+      <button type="button" class="send-btn" onclick="sendDriverThreadMessage('${driverId}')">Envoyer</button>
+    </div>
+  </div>`;
+}
+async function sendDriverThreadMessage(driverId) {
+  const ta = document.getElementById('dmsg-input-' + driverId);
+  const body = String((ta && ta.value) || '').trim();
+  if (!body) return;
+  const { error } = await client.rpc('send_driver_message', { p_driver: driverId, p_body: body });
+  if (error) { alert("Le message n'est pas parti. Vérifiez votre connexion et réessayez."); return; }
+  if (ta) ta.value = '';
+  await refreshDriverThread();
+}
+async function refreshDriverThread() {
+  if (!driverThreadId) return;
+  const { data } = await client.from('driver_messages').select('*').eq('driver_id', driverThreadId).order('created_at');
+  const body = document.getElementById('driver-thread-body');
+  if (!body) return;
+  const draft = (document.getElementById('dmsg-input-' + driverThreadId) || {}).value || '';
+  body.innerHTML = driverThreadHtml(driverThreadId, data || []);
+  const ta = document.getElementById('dmsg-input-' + driverThreadId); if (ta) ta.value = draft;
+  const list = document.getElementById('dthread-list-' + driverThreadId);
+  if (list) list.scrollTop = list.scrollHeight;
+  await client.rpc('mark_driver_messages_read', { p_driver: driverThreadId }).catch(() => {});
+  driverUnread[driverThreadId] = 0;
+  document.querySelectorAll('[data-driver-badge="' + driverThreadId + '"]').forEach(b => { b.style.display = 'none'; });
+}
+function openDriverThread(driverId) {
+  const d = (allDrivers || []).find(x => x.id === driverId);
+  if (!d) return;
+  closeCustomer();
+  driverThreadId = driverId;
+  const m = document.createElement('div');
+  m.id = 'cp-modal'; m.className = 'cp-modal';
+  m.addEventListener('click', (e) => { if (e.target === m) closeCustomer(); });
+  m.innerHTML = `<div class="cp-sheet" role="dialog" aria-label="Messages livreur">
+    <div class="cp-head"><div><div class="cp-name">Message au livreur</div><div class="cp-sub">${escHtml(d.name)}${d.phone ? ' · ' + escHtml(d.phone) : ''}</div></div>
+    <button class="cp-close" onclick="closeCustomer()">Fermer</button></div>
+    <div id="driver-thread-body"><div class="thread-empty">Chargement…</div></div>
+  </div>`;
+  document.body.appendChild(m);
+  refreshDriverThread();
+  driverThreadTimer = setInterval(refreshDriverThread, 4000);
+}
 document.addEventListener('keydown', (e) => { if (e.key === 'Escape') closeCustomer(); });
 
 // ================= WhatsApp : messages individuels et groupés =================
@@ -1791,7 +1893,7 @@ async function openDriver(id) {
     <div class="cp-head"><div style="display:flex; gap:12px; align-items:center;">${d.face_photo_url ? `<img src="${d.face_photo_url}" alt="" style="width:58px; height:58px; border-radius:50%; object-fit:cover; border:1px solid var(--line);">` : ''}<div><div class="cp-name">${escHtml(d.name)}</div>
       <div class="cp-sub">${escHtml(d.phone || '')} · ${d.restaurants ? 'Livreur de ' + escHtml(d.restaurants.name) : 'Indépendant'} · ${d.verification === 'approved' ? 'Validé' : d.verification === 'pending' ? 'En attente de validation' : 'Refusé ou suspendu'}<br>Inscrit le ${fmtD(d.created_at)} · ${cov.android_active ? 'Appli Android active' : cov.push_devices ? 'Notifications activées' : 'Ne reçoit rien appli fermée'}</div></div></div>
       <button class="cp-close" onclick="closeCustomer()">Fermer</button></div>
-    <div class="lv-row">${d.phone ? `<a class="w-btn go" href="${telLink(d.phone)}">Appeler</a><a class="w-btn" href="${waLink(d.phone, '')}" target="_blank" rel="noopener">WhatsApp</a>` : ''}${d.id_doc_path ? `<button class="w-btn" onclick="viewIdDoc('${d.id}')">Pièce d'identité</button>` : ''}</div>
+    <div class="lv-row">${d.phone ? `<a class="w-btn go" href="${telLink(d.phone)}">Appeler</a><a class="w-btn" href="${waLink(d.phone, '')}" target="_blank" rel="noopener">WhatsApp</a>` : ''}<button class="w-btn" onclick="openDriverThread('${d.id}')">Lui écrire</button>${d.id_doc_path ? `<button class="w-btn" onclick="viewIdDoc('${d.id}')">Pièce d'identité</button>` : ''}</div>
     <div class="cp-kpis">
       <div class="cp-kpi"><div>Courses livrées</div><b>${s.done.length}</b></div>
       <div class="cp-kpi"><div>En cours</div><b>${s.active.length}</b></div>
@@ -1854,6 +1956,7 @@ async function loadDrivers() {
   const order = { pending: 0, rejected: 1, approved: 2 };
   allDrivers.sort((a, b) => (order[a.verification] ?? 3) - (order[b.verification] ?? 3));
   renderCash();
+  loadDriverUnread();
   const el = document.getElementById('drivers-list');
   if (!allDrivers.length) { el.innerHTML = '<div class="empty">Aucun livreur inscrit.</div>'; return; }
   const labels = { pending: 'En attente', approved: 'Validé', rejected: 'Refusé' };
@@ -1871,6 +1974,7 @@ async function loadDrivers() {
       ${driverStatsLine(d)}
       <div style="display:flex; gap:8px; margin-top:12px; flex-wrap:wrap;">
         <button class="btn-outline" style="border-color:var(--mango); color:var(--mango);" onclick="openDriver('${d.id}')">Fiche et statistiques</button>
+        <button class="btn-outline" style="position:relative;" onclick="openDriverThread('${d.id}')">Message<span data-driver-badge="${d.id}" style="display:${driverUnread[d.id] ? 'inline-flex' : 'none'}; position:absolute; top:-6px; right:-6px; background:var(--chili); color:#fff; font-size:10px; font-weight:700; border-radius:10px; min-width:16px; height:16px; align-items:center; justify-content:center; padding:0 4px;">${driverUnread[d.id] > 9 ? '9+' : (driverUnread[d.id] || '')}</span></button>
         ${d.phone ? `<a class="btn-outline" style="text-decoration:none;" href="${waLink(d.phone, '')}" target="_blank" rel="noopener">WhatsApp</a>` : ''}
         ${d.id_doc_path ? `<button class="btn-outline" onclick="viewIdDoc('${d.id}')">Voir la pièce d'identité</button>` : ''}
         ${d.verification !== 'approved' ? `<button class="btn-outline" style="border-color:var(--palm); color:var(--palm);" onclick="setDriverStatus('${d.id}','approved')">Valider</button>` : ''}
@@ -2354,7 +2458,7 @@ function mapClientHtml(o, d) {
     <div class="mp-li"><span>Livraison</span><span>${money(o.delivery_fee || 0)}</span></div>
     <div class="mp-total">Total ${money(o.total)} · ${pay}</div>
     ${d ? `<div class="mp-row"><span>Livreur</span>${escHtml(d.name)}${d.phone ? ' · <a href="' + telLink(d.phone) + '">' + escHtml(d.phone) + '</a>' : ''}</div>` : '<div class="mp-muted">Aucun livreur assigné</div>'}
-    ${o.needs_call ? '<div class="mp-warn">Première grosse commande : appelez le client avant de préparer</div>' : ''}
+    ${o.needs_call ? '<div class="mp-warn">Appelez le client avant de préparer (grosse commande ou client déjà signalé absent)</div>' : ''}
     ${prefs.length || o.notes ? `<div class="mp-row"><span>Demandes</span>${escHtml([...prefs, o.notes].filter(Boolean).join(' · '))}</div>` : ''}
   </div>`;
 }
@@ -2366,6 +2470,7 @@ function mapDriverHtml(d, run, pick) {
     ${run ? `<div class="mp-sec">Course en cours</div>${mapOrderBrief(run)}` : ''}
     ${!run && pick ? `<div class="mp-sec">Prochaine course assignée</div>${mapOrderBrief(pick)}` : ''}
     ${!run && !pick ? '<div class="mp-muted">Aucune course assignée</div>' : ''}
+    <div class="mp-row" style="margin-top:8px;"><button class="w-btn" style="width:100%;" onclick="openDriverThread('${d.id}')">Écrire à ce livreur</button></div>
   </div>`;
 }
 
@@ -2432,6 +2537,40 @@ async function drawMap() {
   const cnt = document.getElementById('map-count');
   if (cnt) cnt.textContent = `${fresh.length} livreur${fresh.length > 1 ? 's' : ''} en ligne · ${busy} en course · ${active.length} commande${active.length > 1 ? 's' : ''} en cours`;
   if (!mapFitted && pts.length) { mapFitted = true; if (pts.length === 1) liveMap.setView(pts[0], 15); else liveMap.fitBounds(pts, { padding: [30, 30], maxZoom: 16 }); }
+  renderMapList(fresh, active);
+}
+
+function panToMapKey(key) {
+  const m = mapDots.get(key);
+  if (!m || !liveMap) return;
+  liveMap.panTo(m.getLatLng());
+  m.openPopup();
+  document.getElementById('live-map').scrollIntoView({ behavior: 'smooth', block: 'center' });
+}
+function renderMapList(fresh, active) {
+  const el = document.getElementById('map-list');
+  if (!el) return;
+  const first = n => String(n || '').split(' ')[0] || '';
+  const driverRows = (fresh || []).map(d => {
+    const run = (active || []).find(o => o.driver_id === d.id && o.status === 'En livraison');
+    const pick = run ? null : (active || []).find(o => o.driver_id === d.id);
+    const cur = run || pick;
+    return `<div class="map-row" onclick="panToMapKey('d:${d.id}')">
+      <div class="map-row-top"><span class="map-row-name">${escHtml(d.name)}</span><span class="map-row-status ${run ? 'busy' : 'ok'}">${run ? 'En course' : 'Disponible'}</span></div>
+      <div class="map-row-sub">${cur ? escHtml(cur.customer_name || 'Client') + ' · ' + money(cur.total) : 'Aucune course assignée'}</div>
+      <div class="map-row-acts">${d.phone ? `<a href="${telLink(d.phone)}" onclick="event.stopPropagation()">Appeler</a>` : ''}<button onclick="event.stopPropagation(); openDriverThread('${d.id}')">Message</button></div>
+    </div>`;
+  }).join('');
+  const orderRows = (active || []).map(o => {
+    const d = (allDrivers || []).find(x => x.id === o.driver_id);
+    const g = (o.location && o.location.type === 'gps' && typeof o.location.lat === 'number');
+    return `<div class="map-row" ${g ? `onclick="panToMapKey('c:${o.id}')"` : ''} style="${g ? '' : 'cursor:default;'}">
+      <div class="map-row-top"><span class="map-row-name">${escHtml(o.customer_name || 'Client')}</span><span class="map-row-status ${o.needs_call ? 'warn' : 'ok'}">${escHtml(o.status)}</span></div>
+      <div class="map-row-sub">${escHtml(restById(o.restaurant_id).name || '')} → ${d ? escHtml(d.name) : "en attente d'un livreur"} · ${money(o.total)}${o.needs_call ? ' · à confirmer par téléphone' : ''}</div>
+      <div class="map-row-acts">${o.phone ? `<a href="${telLink(o.phone)}" onclick="event.stopPropagation()">Appeler le client</a>` : ''}${!g ? '<span style="padding:6px 0; color:var(--creamDim);">Position non partagée</span>' : ''}</div>
+    </div>`;
+  }).join('');
+  el.innerHTML = `${driverRows ? `<div class="map-sec-h">Livreurs (${fresh.length})</div>${driverRows}` : '<div class="map-sec-h">Livreurs</div><div class="empty">Aucun livreur en ligne.</div>'}${orderRows ? `<div class="map-sec-h">Commandes en cours (${active.length})</div>${orderRows}` : '<div class="map-sec-h">Commandes en cours</div><div class="empty">Aucune commande en cours.</div>'}`;
 }
 
 // Barre latérale : surligne la rubrique visible à l'écran

@@ -184,6 +184,7 @@
   .pay-steps { background:var(--surface); border:1px solid var(--mango); border-radius:12px; padding:12px; margin-top:10px; font-size:13px; line-height:1.55; }
   .pay-steps b.mono { color:var(--mango); font-size:15px; }
   .pay-steps input { margin:8px 0 0; }
+  .pay-notice { background:rgba(240,169,154,0.12); border:1px solid #F0A99A; color:#F0A99A; border-radius:10px; padding:10px 12px; font-size:12.5px; line-height:1.45; margin-bottom:10px; }
   .acc-card { background:var(--surface); border:1px solid var(--line); border-radius:14px; padding:14px; margin-bottom:12px; }
   .acc-card h4 { margin:0 0 6px; font-size:14px; }
   .acc-card p { margin:0; font-size:12.5px; color:var(--creamDim); line-height:1.5; }
@@ -1361,14 +1362,20 @@ function orderErrorText(m) {
   if (m.includes('option_manquante')) return "Choisissez les options obligatoires du plat " + (m.split('option_manquante:')[1] || '').trim() + ".";
   if (m.includes('compte_bloque')) return "Votre compte est suspendu après plusieurs commandes non récupérées. Contactez Dallas Bouff' pour le réactiver.";
   if (m.includes('reference_paiement')) return "Indiquez la référence de votre paiement Mobile Money.";
+  if (m.includes('paiement_avance_requis')) return "Suite à une livraison non récupérée, votre prochaine commande doit être payée par Mobile Money avant préparation. Choisissez un moyen de paiement ci-dessus.";
   return "La commande n'est pas partie. Vérifiez votre connexion et réessayez.";
 }
 
+// Un client déjà signalé absent à une livraison doit payer à l'avance par Mobile Money, si disponible
+function mustPrepay() { return !!(currentCustomer && Number(currentCustomer.no_show_count || 0) >= 1 && Object.keys(momoNumbers).length); }
+
 // Paiement : espèces ou Mobile Money (vérifié par Dallas Bouff')
 function paymentHtml() {
-  const avail = Object.keys(PAY_LABEL).filter(k => k === 'cash' || (momoNumbers[k] && String(momoNumbers[k]).trim()));
-  if (avail.length < 2) return '';
-  return `<div class="pay-box"><label>Paiement</label><div class="pay-opts">${avail.map(k => `<button type="button" class="pay-opt ${checkoutPayment === k ? 'on' : ''}" onclick="setPayment('${k}')">${k === 'cash' ? 'Espèces' : PAY_LABEL[k]}<small>${k === 'cash' ? 'Au livreur, à la livraison' : 'Avant la livraison'}</small></button>`).join('')}</div>${payStepsHtml()}</div>`;
+  const forced = mustPrepay();
+  const avail = Object.keys(PAY_LABEL).filter(k => (k === 'cash' && !forced) || (momoNumbers[k] && String(momoNumbers[k]).trim()));
+  if (forced && checkoutPayment === 'cash') checkoutPayment = avail[0] || 'cash';
+  if (avail.length < 2 && !forced) return '';
+  return `<div class="pay-box"><label>Paiement</label>${forced ? `<div class="pay-notice">Suite à une livraison non récupérée, cette commande doit être payée par Mobile Money avant préparation.</div>` : ''}<div class="pay-opts">${avail.map(k => `<button type="button" class="pay-opt ${checkoutPayment === k ? 'on' : ''}" onclick="setPayment('${k}')">${k === 'cash' ? 'Espèces' : PAY_LABEL[k]}<small>${k === 'cash' ? 'Au livreur, à la livraison' : 'Avant la livraison'}</small></button>`).join('')}</div>${payStepsHtml()}</div>`;
 }
 function payStepsHtml() {
   if (checkoutPayment === 'cash') return '<div id="pay-steps"></div>';

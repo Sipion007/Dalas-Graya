@@ -1155,7 +1155,7 @@ const snoozeUntil = {};
 const PREP_CHOICES = [10, 15, 20, 30, 45, 60];
 const prepChoice = {};
 const cancelOpen = {};
-const REFUSE_REASONS = ['Plat épuisé', 'Trop de commandes en ce moment', 'Restaurant fermé', 'Adresse trop éloignée'];
+const REFUSE_REASONS = ['Plat épuisé', 'Trop de commandes en ce moment', 'Restaurant fermé', 'Adresse trop éloignée', 'Client injoignable', "Client n'est pas venu récupérer"];
 const QUICK_REST = [
   'Désolé pour le retard, votre commande arrive très vite.',
   'Votre commande est en préparation.',
@@ -1373,7 +1373,7 @@ function orderCard(o, ownDrivers, freeDrivers) {
         <div class="line-item" style="font-weight:700; color:var(--cream); margin-top:4px;"><span>${o.delivery_fee ? 'Total payé par le client' : 'Total'}</span><span>${money(o.total)}</span></div>
         ${o.payment_method && o.payment_method !== 'cash' ? `<div class="pay-chip ${o.payment_status}">Payé par ${({ wave: 'Wave', orange_money: 'Orange Money', mtn_money: 'MTN MoMo', moov_money: 'Moov Money' })[o.payment_method] || 'Mobile Money'} · ${o.payment_status === 'confirme' ? 'paiement confirmé' : o.payment_status === 'refuse' ? 'paiement non trouvé, le client réglera au livreur' : 'vérification en cours par Dallas Bouff\''}</div>` : ''}
       </div>
-      ${o.needs_call && !cancelled && !done ? `<div class="call-first">Première commande importante de ce client : appelez-le au <a class="tel" href="tel:${escHtml(o.phone)}">${escHtml(o.phone)}</a> pour confirmer avant de préparer.</div>` : ''}
+      ${o.needs_call && !cancelled && !done ? `<div class="call-first">Appelez ce client au <a class="tel" href="tel:${escHtml(o.phone)}">${escHtml(o.phone)}</a> pour confirmer avant de préparer (première grosse commande, ou client déjà signalé absent à une livraison).</div>` : ''}
       ${cancelReq}
       ${actionZone}
       ${showThread ? `<div class="card-foot"><button type="button" class="msg-toggle" data-toggle-thread="${o.id}">${unread ? '<span class="dotnew"></span>' : ''}${threadOpen ? 'Fermer les messages' : (o.customer_id ? 'Écrire au client' : 'Messages')}${msgs.length ? ' (' + msgs.length + ')' : ''}</button>${cancelZone}</div>` : cancelZone}

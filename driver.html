@@ -210,6 +210,9 @@
 
     <div id="alert-panel"></div>
 
+    <div class="section-title" id="section-messages">Messages de l'administration</div>
+    <div id="admin-thread"><div class="thread-empty">Chargement…</div></div>
+
     <div class="section-title" id="section-en-cours">Ma livraison en cours</div>
     <div id="current-delivery"></div>
 
@@ -223,6 +226,11 @@
 </div>
 
 <nav class="bottom-nav" id="bottom-nav" style="display:none;">
+  <button class="nav-item" style="position:relative;" onclick="document.getElementById('section-messages').scrollIntoView({behavior:'smooth'})">
+    <svg viewBox="0 0 24 24"><path d="M4 5h16v11H8l-4 4V5z"/></svg>
+    <span>Messages</span>
+    <span id="admin-msg-badge" style="display:none; position:absolute; top:-2px; right:10px; background:#F0A99A; color:#111; font-size:10px; font-weight:700; border-radius:10px; min-width:16px; height:16px; align-items:center; justify-content:center; padding:0 4px;">0</span>
+  </button>
   <button class="nav-item active" onclick="document.getElementById('section-en-cours').scrollIntoView({behavior:'smooth'})">
     <svg viewBox="0 0 24 24"><circle cx="6" cy="18" r="2.6"/><circle cx="17" cy="18" r="2.6"/><path d="M6 18l3-7h4l2 4h2"/><path d="M9 11l2-4h3"/></svg>
     <span>En cours</span>
@@ -1083,6 +1091,9 @@ async function afterLogin() {
   loadLeaderboard();
   if (window.__lbTimer) clearInterval(window.__lbTimer);
   window.__lbTimer = setInterval(loadLeaderboard, 120000);
+  loadAdminThread();
+  if (window.__adminMsgTimer) clearInterval(window.__adminMsgTimer);
+  window.__adminMsgTimer = setInterval(loadAdminThread, 10000);
 
   Alerts.init({
     panelId: 'alert-panel',
@@ -1170,6 +1181,50 @@ async function sendThreadMessage(orderId, text, onDone) {
   if (ta) ta.value = '';
   if (onDone) onDone();
 }
+
+// ---------- Messages de l'administration (toujours visibles, sans lien avec une commande) ----------
+let adminMsgDraft = '';
+function adminThreadHtml(msgs) {
+  const list = (msgs || []).map(m => {
+    const mine = m.sender_role === 'driver';
+    return `<div class="msg ${mine ? 'mine' : ''}"><div class="msg-meta">${escHtml(mine ? 'Vous' : (m.sender_name || "Dallas Bouff'"))} · ${hhmm(m.created_at)}</div><div class="msg-body">${escHtml(m.body)}</div></div>`;
+  }).join('');
+  return `<div class="thread" data-admin-thread="1">
+    <div class="thread-list" id="admin-thread-list">${list || "<div class=\"thread-empty\">Aucun message de l'administration pour le moment.</div>"}</div>
+    <div class="thread-send">
+      <textarea id="admin-msg-input" maxlength="500" rows="2" placeholder="Écrire à l'administration…">${escHtml(adminMsgDraft)}</textarea>
+      <button type="button" class="send-btn" onclick="sendAdminMessage()">Envoyer</button>
+    </div>
+  </div>`;
+}
+async function sendAdminMessage() {
+  if (!myDriver) return;
+  const ta = document.getElementById('admin-msg-input');
+  const body = String((ta && ta.value) || '').trim();
+  if (!body) return;
+  const { error } = await client.rpc('send_driver_message', { p_driver: myDriver.id, p_body: body });
+  if (error) { alert("Le message n'est pas parti. Vérifiez votre connexion et réessayez."); return; }
+  adminMsgDraft = '';
+  await loadAdminThread();
+}
+async function loadAdminThread() {
+  if (!myDriver) return;
+  const el = document.getElementById('admin-thread');
+  if (!el) return;
+  const ta0 = document.getElementById('admin-msg-input');
+  if (ta0) adminMsgDraft = ta0.value;
+  const { data } = await client.from('driver_messages').select('*').eq('driver_id', myDriver.id).order('created_at');
+  const scroller = document.getElementById('admin-thread-list');
+  const atBottom = !scroller || (scroller.scrollHeight - scroller.scrollTop - scroller.clientHeight < 40);
+  el.innerHTML = adminThreadHtml(data || []);
+  const list = document.getElementById('admin-thread-list');
+  if (list && atBottom) list.scrollTop = list.scrollHeight;
+  const unread = (data || []).filter(m => m.sender_role === 'admin' && !m.read_by_driver_at).length;
+  const badge = document.getElementById('admin-msg-badge');
+  if (badge) { badge.style.display = unread ? 'inline-flex' : 'none'; badge.textContent = unread > 9 ? '9+' : String(unread); }
+  if (unread) client.rpc('mark_driver_messages_read', { p_driver: myDriver.id }).catch(() => {});
+}
+document.addEventListener('input', (e) => { if (e.target && e.target.id === 'admin-msg-input') adminMsgDraft = e.target.value; });
 
 function bindThreadEvents(onSent) {
   document.addEventListener('input', (e) => {
