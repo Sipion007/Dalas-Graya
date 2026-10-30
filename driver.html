@@ -104,6 +104,12 @@
   .lb-me { font-size:13px; color:var(--cream); margin-bottom:8px; line-height:1.5; }
   .lb-row { display:flex; justify-content:space-between; font-size:12.5px; padding:5px 0; border-top:1px solid #1d1d1d; color:var(--creamDim); }
   .lb-row.me { color:var(--cream); font-weight:700; }
+  .place-box { border:1px solid var(--line); background:var(--raised); border-radius:11px; padding:11px 12px; margin:10px 0; }
+  .place-title { font-size:11.5px; letter-spacing:0.06em; text-transform:uppercase; color:var(--creamDim); margin-bottom:5px; }
+  .place-line { font-size:13px; line-height:1.5; color:var(--cream); }
+  .place-add { display:flex; gap:8px; margin-top:9px; }
+  .place-add input { flex:1; min-width:0; margin:0; }
+  .btn-place { flex:0 0 auto; border:1px solid var(--mango); background:none; color:var(--mango); border-radius:9px; padding:0 12px; font-family:inherit; font-size:12.5px; font-weight:700; cursor:pointer; }
   .nogps { margin-top:10px; font-size:12.5px; color:#F5D58A; border:1px solid rgba(245,192,74,.4); background:rgba(245,192,74,.08); border-radius:9px; padding:9px 11px; line-height:1.4; }
   .chips { display:flex; flex-wrap:wrap; gap:6px; margin-bottom:10px; }
   .chip-s { border:1px solid #333; background:#141414; color:#E6E6E6; border-radius:999px; padding:9px 12px; font-size:12.5px; cursor:pointer; font-family:inherit; }
@@ -1318,6 +1324,7 @@ async function refreshOrders() {
       currentDeliveryOrderId = o0.id;
       resetDeliveryMap();
       curEl.innerHTML = leg === 'restaurant' ? restaurantLegHtml(o0) : clientLegHtml(o0);
+      if (leg === 'client' && o0.location && o0.location.type === 'gps') fillPlaceBox(o0);
       const dest = legDestination(o0, leg);
       if (dest) updateDeliveryMap(dest, leg === 'restaurant' ? 'Restaurant' : 'Client');
       if (legChanged && leg === 'client') speakInstruction('Commande récupérée. Direction le client.');
@@ -1439,7 +1446,8 @@ function clientLegHtml(o) {
     <div class="order">
       ${legStepsHtml('client')}
       <div style="font-weight:700; font-size:15px;">${escHtml(o.customer_name || 'Client')}</div>
-      ${o.address ? `<div style="font-size:12.5px; color:var(--creamDim); margin-top:2px;">${escHtml(o.address)}</div>` : ''}
+      ${o.address ? `<div style="font-size:13px; color:var(--cream); margin-top:4px;">Repère du client : ${escHtml(o.address)}</div>` : '<div style="font-size:12.5px; color:var(--mango); margin-top:4px;">Le client n\'a écrit aucun repère.</div>'}
+      ${gps ? `<div class="place-box"><div class="place-title">Lieu de livraison</div><div class="place-line" id="place-txt-${o.id}">Recherche du nom du lieu…</div><div class="place-add"><input id="place-in-${o.id}" maxlength="80" placeholder="Ex. derrière la pharmacie, portail bleu"><button type="button" class="btn-place" onclick="nameThisPlace('${o.id}', ${o.location.lat}, ${o.location.lng})">Enregistrer</button></div></div>` : ''}
       <div style="font-size:12.5px; color:var(--creamDim); margin-top:2px;">Commande ${o.restaurants ? escHtml(o.restaurants.name) : ''}</div>
       ${moneyLine(o)}
       ${requestsHtmlDriver(o)}
@@ -1451,6 +1459,42 @@ function clientLegHtml(o) {
       <div id="cur-extra"></div>
     </div>`;
 }
+// ---------- Mémoire des lieux : noms de quartiers et repères donnés par les livreurs ----------
+// Un nom enregistré par un livreur sert ensuite à tous les livreurs qui vont au même endroit.
+async function reverseName(lat, lng) {
+  const key = 'dbf-rev-' + lat.toFixed(4) + ',' + lng.toFixed(4);
+  try { const cached = localStorage.getItem(key); if (cached) return cached; } catch (e) {}
+  try {
+    const r = await fetch('https://nominatim.openstreetmap.org/reverse?format=jsonv2&zoom=18&accept-language=fr&lat=' + lat + '&lon=' + lng);
+    if (!r.ok) return '';
+    const j = await r.json();
+    const a = j.address || {};
+    const name = [...new Set([a.road, a.neighbourhood || a.suburb || a.quarter, a.village || a.town || a.city].filter(Boolean))].join(', ');
+    if (name) { try { localStorage.setItem(key, name); } catch (e) {} }
+    return name;
+  } catch (e) { return ''; }
+}
+async function fillPlaceBox(o) {
+  const lat = o.location.lat, lng = o.location.lng;
+  let known = null;
+  try { const { data } = await client.rpc('get_place_notes', { p_lat: lat, p_lng: lng }); known = (data || [])[0] || null; } catch (e) {}
+  const name = known ? '' : await reverseName(lat, lng);
+  const el = document.getElementById('place-txt-' + o.id);
+  if (!el) return;
+  if (known) el.innerHTML = '<b>' + escHtml(known.label) + '</b> <span style="color:var(--creamDim)">(nommé par un livreur, à ' + Math.round(known.dist_m) + ' m)</span>';
+  else if (name) el.innerHTML = 'Quartier ou rue estimé : <b>' + escHtml(name) + '</b><br><span style="color:var(--creamDim)">Estimation automatique : confirmez avec le client, puis enregistrez le nom ci-dessous.</span>';
+  else el.innerHTML = '<span style="color:var(--creamDim)">Aucun nom connu pour ce lieu. Demandez le repère au client, puis enregistrez-le pour les prochaines livraisons.</span>';
+}
+async function nameThisPlace(orderId, lat, lng) {
+  const input = document.getElementById('place-in-' + orderId);
+  const label = (input ? input.value : '').trim();
+  if (label.length < 2) { toastDriver('Écrivez au moins 2 caractères.'); return; }
+  const { error } = await client.rpc('add_place_note', { p_lat: lat, p_lng: lng, p_label: label });
+  if (error) { toastDriver('Enregistrement impossible. Vérifiez votre connexion et réessayez.'); return; }
+  toastDriver('Lieu enregistré. Il apparaîtra pour les prochaines livraisons ici.');
+  fillPlaceBox({ id: orderId, location: { lat, lng } });
+}
+
 async function markCollected(id) {
   primeSpeech();
   const { error } = await client.rpc('driver_mark_collected', { p_order: id });
