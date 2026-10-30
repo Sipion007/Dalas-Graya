@@ -2487,7 +2487,7 @@ function renderCheckout() {
       <label>Nom</label>
       <input id="f-name" placeholder="Votre nom" value="${currentCustomer.name || ''}" />
       <label>Téléphone</label>
-      <input id="f-phone" placeholder="07 00 00 00 00" value="${currentCustomer.phone || ''}" />
+      <input id="f-phone" inputmode="tel" autocomplete="tel" placeholder="07 00 00 00 00" value="${currentCustomer.phone || ''}" />
 
       <label>Position de livraison</label>
       <button type="button" class="gps-cta" id="btn-gps" onclick="useGPS()">Partager ma position GPS (recommandé)</button>
@@ -2575,19 +2575,37 @@ document.addEventListener('input', (e) => {
   }
 });
 
+// Position précise : on garde la meilleure lecture pendant quelques secondes (et on s'arrête dès qu'elle est très précise)
 function useGPS() {
-  document.getElementById('loc-status').innerHTML = 'Recherche de votre position…';
+  const status = document.getElementById('loc-status');
+  status.innerHTML = 'Recherche de votre position précise…';
   if (!navigator.geolocation) { toast("Géolocalisation non disponible sur cet appareil"); return; }
-  navigator.geolocation.getCurrentPosition(
+  let best = null, done = false, watchId = null, timer = null;
+  const stop = () => { done = true; clearTimeout(timer); if (watchId !== null) navigator.geolocation.clearWatch(watchId); };
+  const finish = () => {
+    if (done) return;
+    stop();
+    if (!best) { status.innerHTML = `<div style="font-size:12px; color:#F0A99A; line-height:1.45;">Position introuvable pour le moment. Décrivez votre repère ci-dessous.</div>`; return; }
+    const acc = Math.round(best.acc);
+    location_ = { type: 'gps', lat: best.lat, lng: best.lng, acc };
+    const warn = acc > 60 ? `<div style="font-size:12px; color:var(--mango); line-height:1.45; margin-top:4px;">Position approximative (environ ${acc} m). Allez à découvert, ou décrivez précisément votre repère ci-dessous.</div>` : '';
+    status.innerHTML = `<div class="mono" style="font-size:11.5px; color:var(--palm);">GPS : ${best.lat.toFixed(5)}, ${best.lng.toFixed(5)} (± ${acc} m)</div>${warn}`;
+    document.getElementById('btn-gps').classList.add('active');
+  };
+  timer = setTimeout(finish, 12000);
+  watchId = navigator.geolocation.watchPosition(
     (pos) => {
-      location_ = { type: 'gps', lat: pos.coords.latitude, lng: pos.coords.longitude };
-      document.getElementById('loc-status').innerHTML = `<div class="mono" style="font-size:11.5px; color:var(--palm);">GPS : ${location_.lat.toFixed(4)}, ${location_.lng.toFixed(4)}</div>`;
-      document.getElementById('btn-gps').classList.add('active');
+      const f = { lat: pos.coords.latitude, lng: pos.coords.longitude, acc: pos.coords.accuracy || 9999 };
+      if (!best || f.acc < best.acc) best = f;
+      if (best.acc <= 25) finish();
     },
     (err) => {
-      document.getElementById('loc-status').innerHTML = `<div style="font-size:12px; color:#F0A99A; line-height:1.45;">${err && err.code === 1 ? (isIOS() ? "Position refusée. Sur iPhone : Réglages, puis Confidentialité et sécurité, puis Service de localisation, puis Safari : « Lorsque l'app est active ». Sinon, décrivez votre repère ci-dessous." : "Position refusée. Autorisez la position pour ce site, ou décrivez votre repère ci-dessous.") : "Position introuvable pour le moment. Décrivez votre repère ci-dessous."}</div>`;
+      if (err && err.code === 1) {
+        stop();
+        status.innerHTML = `<div style="font-size:12px; color:#F0A99A; line-height:1.45;">${isIOS() ? "Position refusée. Sur iPhone : Réglages, puis Confidentialité et sécurité, puis Service de localisation, puis Safari : « Lorsque l'app est active ». Sinon, décrivez votre repère ci-dessous." : "Position refusée. Autorisez la position pour ce site, ou décrivez votre repère ci-dessous."}</div>`;
+      }
     },
-    { enableHighAccuracy: true, timeout: 8000 }
+    { enableHighAccuracy: true, maximumAge: 0, timeout: 12000 }
   );
 }
 
@@ -2595,9 +2613,10 @@ async function placeOrder() {
   if (!currentCustomer) { openAccount(); return; }
   if (!isRestaurantOpen(currentRestaurant)) { toast("Ce restaurant est fermé pour le moment."); show('menu'); renderMenu(); return; }
   const name = document.getElementById('f-name').value.trim();
-  const phone = document.getElementById('f-phone').value.trim();
+  const phone = document.getElementById('f-phone').value.trim().replace(/[\s.\-]/g, '');
   const address = document.getElementById('f-address').value.trim();
   if (!name || !phone || !(location_ || address)) { toast("Complétez au moins le nom, le téléphone et une position"); return; }
+  if (!/^\+?\d{8,14}$/.test(phone)) { toast("Numéro invalide : utilisez uniquement des chiffres, par exemple 07 00 00 00 00."); return; }
   if (!location_ && address.length < 8) { toast("Sans GPS, décrivez précisément votre repère (quartier, rue, couleur du portail…)."); return; }
   let scheduledFor = null;
   if (checkoutScheduled) {
