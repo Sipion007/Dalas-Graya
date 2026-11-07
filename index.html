@@ -154,6 +154,7 @@
   .dish-link.on { color:#E0705A; } .dish-link.on svg { fill:#E0705A; stroke:#E0705A; }
   .opt-hint { font-size:11.5px; color:var(--mango); }
   .is-soldout { opacity:.55; }
+  .service-note { font-size:12.5px; color:var(--creamDim); border:1px dashed var(--line); border-radius:12px; padding:10px 12px; margin-bottom:14px; }
   .soldout-tag { font-size:11px; font-weight:700; color:#F0A99A; border:1px solid rgba(224,112,90,.5); border-radius:20px; padding:5px 10px; white-space:nowrap; }
   .happy-badge { display:inline-block; margin:6px 0 0 6px; font-size:10.5px; font-weight:800; padding:3px 9px; border-radius:20px; background:#E0705A; color:#fff; }
   .happy-banner { display:flex; gap:12px; align-items:center; background:linear-gradient(135deg, rgba(224,112,90,.22), rgba(245,192,74,.12)); border:1px solid rgba(224,112,90,.55); border-radius:14px; padding:12px 14px; margin-bottom:12px; }
@@ -1260,7 +1261,7 @@ async function loadGrowthData() {
     const { data: mm } = await client.from('app_settings').select('value').eq('key', 'momo_numbers').maybeSingle();
     momoNumbers = (mm && mm.value && typeof mm.value === 'object') ? mm.value : {};
   } catch (e) {}
-  try { const { data: tr } = await client.rpc('trending_dishes'); trendingDishes = tr || []; } catch (e) { trendingDishes = []; }
+  try { const { data: tr } = await client.rpc('trending_dishes_pct'); trendingDishes = tr || []; } catch (e) { trendingDishes = []; }
 }
 
 // Heures creuses : actives maintenant ? (heure d'Abidjan = UTC)
@@ -1283,6 +1284,24 @@ function happyBannerHtml(rid) {
   if (q && q.active) return `<div class="happy-banner" style="opacity:.8"><b>-${q.percent} %</b><span>${escHtml(q.label || 'Heures creuses')} : tous les jours de ${String(q.start_time).slice(0, 5).replace(':', ' h ')} à ${String(q.end_time).slice(0, 5).replace(':', ' h ')}.</span></div>`;
   return '';
 }
+
+// Plats de jour et plats de nuit (heure de Daloa = UTC)
+function hmToMin(v, def) { const m = /^(\d{1,2}):(\d{2})/.exec(String(v || def)); return m ? Number(m[1]) * 60 + Number(m[2]) : hmToMin(def, '00:00'); }
+function abidjanNowMin() { const d = new Date(); return d.getUTCHours() * 60 + d.getUTCMinutes(); }
+function isDayFor(r) {
+  const ds = hmToMin(r && r.day_starts_at, '06:00'), ns = hmToMin(r && r.night_starts_at, '18:00'), t = abidjanNowMin();
+  if (ds === ns) return true;
+  return ds < ns ? (t >= ds && t < ns) : (t >= ds || t < ns);
+}
+function dishServedNow(d) {
+  const sv = (d && d.service) || 'all';
+  if (sv === 'all') return true;
+  const r = restaurants.find(x => x.id === d.restaurant_id) || currentRestaurant || {};
+  const day = isDayFor(r);
+  return sv === 'day' ? day : !day;
+}
+function hmLabel(v, def) { const m = hmToMin(v, def); return String(Math.floor(m / 60)).padStart(2, '0') + ' h ' + String(m % 60).padStart(2, '0'); }
+function trendShareText(p) { const n = Number(p) || 0; return n >= 5 ? 'environ ' + n + ' % des commandes' : 'moins de 5 % des commandes'; }
 
 // Plats épuisés et options
 function todayAbidjan() { return new Date().toISOString().slice(0, 10); }
@@ -1367,6 +1386,8 @@ function orderErrorText(m) {
   if (m.includes('restaurant_en_pause')) return "Ce restaurant vient de mettre les commandes en pause. Réessayez plus tard.";
   if (m.includes('plat_epuise')) return "Un plat de votre panier vient d'être épuisé : " + (m.split('plat_epuise:')[1] || '').trim() + ". Retirez-le pour continuer.";
   if (m.includes('plat_indisponible')) return "Un plat de votre panier n'est plus au menu. Retirez-le pour continuer.";
+  if (m.includes('plat_jour')) return "« " + (m.split('plat_jour:')[1] || 'Un plat').trim() + " » n'est servi que la journée. Retirez-le de votre panier pour continuer.";
+  if (m.includes('plat_nuit')) return "« " + (m.split('plat_nuit:')[1] || 'Un plat').trim() + " » n'est servi que la nuit. Retirez-le de votre panier pour continuer.";
   if (m.includes('option_manquante')) return "Choisissez les options obligatoires du plat " + (m.split('option_manquante:')[1] || '').trim() + ".";
   if (m.includes('compte_bloque')) return "Votre compte est suspendu après plusieurs commandes non récupérées. Contactez Dallas Bouff' pour le réactiver.";
   if (m.includes('reference_paiement')) return "Indiquez la référence de votre paiement Mobile Money.";
@@ -1482,17 +1503,17 @@ function favoritesRailHtml() {
   if (!currentCustomer) return '';
   const f = favs();
   const rs = f.restaurants.map(id => restaurants.find(r => r.id === id)).filter(Boolean);
-  const ds = f.dishes.map(id => allDishPhotos.find(d => d.id === id)).filter(Boolean);
+  const ds = f.dishes.map(id => allDishPhotos.find(d => d.id === id)).filter(d => d && dishServedNow(d));
   if (!rs.length && !ds.length) return '';
   return `<div class="section-header"><div class="section-title2">Vos favoris</div></div>
     <div class="rail">${rs.map(r => { const c = restaurantCoverMap[r.id]; return `<button class="rail-card" onclick="openRestaurant('${r.id}')">${c ? `<img src="${c.photo_url}" alt="" loading="lazy">` : '<span class="rc-ph"></span>'}<div><b>${escHtml(r.name)}</b><small>${escHtml(r.category || 'Restaurant')}</small></div></button>`; }).join('')}
     ${ds.map(d => { const r = restaurants.find(x => x.id === d.restaurant_id) || {}; return `<button class="rail-card" onclick="openRestaurant('${d.restaurant_id}', '${d.id}')"><img src="${d.photo_url}" alt="" loading="lazy"><div><b>${escHtml(d.name)}</b><small>${escHtml(r.name || '')}</small><em>${money(d.price)}</em></div></button>`; }).join('')}</div>`;
 }
 function trendingRailHtml() {
-  const list = (trendingDishes || []).filter(t => restaurants.some(r => r.id === t.restaurant_id)).slice(0, 8);
+  const list = (trendingDishes || []).filter(t => restaurants.some(r => r.id === t.restaurant_id) && dishServedNow(t)).slice(0, 8);
   if (list.length < 2) return '';
   return `<div class="section-header"><div class="section-title2">Tendances à Daloa cette semaine</div></div>
-    <div class="rail">${list.map((t, i) => { const r = restaurants.find(x => x.id === t.restaurant_id) || {}; return `<button class="rail-card" onclick="openRestaurant('${t.restaurant_id}', '${t.item_id}')">${t.photo_url ? `<img src="${t.photo_url}" alt="" loading="lazy">` : '<span class="rc-ph"></span>'}<div><b>${i + 1}. ${escHtml(t.name)}</b><small>${escHtml(r.name || '')} · ${t.orders} commande${t.orders > 1 ? 's' : ''}</small><em>${money(t.price)}</em></div></button>`; }).join('')}</div>`;
+    <div class="rail">${list.map((t, i) => { const r = restaurants.find(x => x.id === t.restaurant_id) || {}; return `<button class="rail-card" onclick="openRestaurant('${t.restaurant_id}', '${t.item_id}')">${t.photo_url ? `<img src="${t.photo_url}" alt="" loading="lazy">` : '<span class="rc-ph"></span>'}<div><b>${i + 1}. ${escHtml(t.name)}</b><small>${escHtml(r.name || '')} · ${trendShareText(t.pct)}</small><em>${money(t.price)}</em></div></button>`; }).join('')}</div>`;
 }
 
 // Partage sur WhatsApp
@@ -1972,6 +1993,7 @@ const Showcase = (() => {
     const byRest = {};
     allDishPhotos.forEach(p => {
       if (!restaurants.some(r => r.id === p.restaurant_id)) return;
+      if (!dishServedNow(p)) return;
       (byRest[p.restaurant_id] = byRest[p.restaurant_id] || []).push(p);
     });
     let ids = shuffle(Object.keys(byRest));
@@ -2161,14 +2183,14 @@ const Showcase = (() => {
 })();
 
 async function loadRestaurants() {
-  const { data, error } = await client.from('restaurants').select('*').order('created_at');
+  const { data, error } = await client.from('restaurants').select('*').order('sort_order', { ascending: true, nullsFirst: false }).order('created_at');
   if (error) { document.getElementById('view-list').innerHTML = '<div class="empty">Erreur de connexion à la base.</div>'; return; }
   restaurants = data;
 
   const { data: feeRow } = await client.from('app_settings').select('value').eq('key', 'delivery_fee').maybeSingle();
   if (feeRow && Number.isFinite(Number(feeRow.value)) && Number(feeRow.value) >= 0) DELIVERY_FEE = Number(feeRow.value);
 
-  const { data: photos } = await client.from('menu_items').select('id, restaurant_id, name, price, photo_url').not('photo_url', 'is', null).order('created_at');
+  const { data: photos } = await client.from('menu_items').select('id, restaurant_id, name, price, photo_url, service').not('photo_url', 'is', null).order('created_at');
   allDishPhotos = (photos || []).filter(p => p.photo_url);
   allDishPhotos.forEach(p => { if (!restaurantCoverMap[p.restaurant_id]) restaurantCoverMap[p.restaurant_id] = p; });
 
@@ -2331,7 +2353,11 @@ function openPhotoViewer(url, name) {
 function renderMenuItems() {
   const r = currentRestaurant;
   const open = isRestaurantOpen(r);
-  document.getElementById('menu-items').innerHTML = menuItems.map(item => {
+  const shown = menuItems.filter(dishServedNow);
+  const hidden = menuItems.length - shown.length;
+  const dayNow = isDayFor(r);
+  const serviceNote = hidden ? `<div class="service-note">${dayNow ? `D'autres plats sont proposés le soir, à partir de ${hmLabel(r.night_starts_at, '18:00')}.` : `D'autres plats sont proposés en journée, à partir de ${hmLabel(r.day_starts_at, '06:00')}.`}</div>` : '';
+  document.getElementById('menu-items').innerHTML = serviceNote + shown.map(item => {
     const inCart = cartQtyOf(item.id) ? { qty: cartQtyOf(item.id) } : null;
     const soldOut = isSoldOut(item);
     const control = soldOut ? `<span class="soldout-tag">Épuisé aujourd'hui</span>` : !open ? `<button class="qty-btn" style="background:var(--line); color:var(--creamDim); cursor:not-allowed;" disabled>+</button>` : !inCart ? `
@@ -2382,6 +2408,7 @@ function addItem(id) {
   const item = menuItems.find(i => i.id === id);
   if (!item) return;
   if (isSoldOut(item)) { toast("Ce plat est épuisé pour aujourd'hui."); return; }
+  if (!dishServedNow(item)) { toast(item.service === 'day' ? "Ce plat n'est servi que la journée." : "Ce plat n'est servi que la nuit."); renderMenuItems(); return; }
   if (itemOptionGroups(item).length) { openOptionsSheet(item); return; }
   addCartLine(item, []);
 }

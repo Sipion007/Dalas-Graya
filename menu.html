@@ -52,6 +52,19 @@
   .opt-g-flags { display:flex; gap:14px; flex-wrap:wrap; font-size:12.5px; color:var(--creamDim); margin:8px 0 2px; }
   .opt-g-flags input { width:auto; margin:0 4px 0 0; }
   .opt-g > .btn-outline { margin-top:8px; }
+  .svc { border-top:1px solid var(--line); margin:12px 0; padding-top:12px; }
+  .svc-title { font-weight:700; font-size:13.5px; margin-bottom:8px; }
+  .svc-seg { display:grid; grid-template-columns:repeat(3, 1fr); gap:6px; }
+  .svc-seg label { display:flex; align-items:center; justify-content:center; text-align:center; min-height:44px; border:1px solid var(--line); border-radius:9px; padding:8px 6px; font-size:12.5px; color:var(--creamDim); cursor:pointer; line-height:1.25; }
+  .svc-seg input { position:absolute; opacity:0; width:1px; height:1px; margin:0; pointer-events:none; }
+  .svc-seg label.on { border-color:var(--mango); color:var(--cream); background:rgba(245,192,74,.08); font-weight:700; }
+  .svc-seg label:focus-within { outline:2px solid var(--mango); outline-offset:1px; }
+  .svc-hint { font-size:12px; color:var(--creamDim); margin-top:8px; line-height:1.45; }
+  .svc-tag { display:inline-block; margin-top:6px; margin-right:6px; font-size:11px; font-weight:700; color:var(--mango); border:1px solid rgba(245,192,74,.5); border-radius:20px; padding:3px 9px; }
+  .hours-box { background: var(--surface); border:1px solid var(--line); border-radius:12px; padding:16px; margin-bottom:20px; }
+  .hours-row { display:grid; grid-template-columns:1fr 1fr; gap:10px; }
+  .hours-row label { font-size:12px; color:var(--creamDim); display:grid; gap:4px; }
+  .hours-row input { margin:0; }
   .header-row { display:flex; justify-content:space-between; align-items:center; margin-bottom:14px; }
   a.back { color: var(--creamDim); font-size:12px; text-decoration:none; }
   .form-box { background: var(--surface); border:1px solid var(--line); border-radius:12px; padding:16px; margin-bottom:20px; }
@@ -122,10 +135,30 @@
         <div id="opt-groups"></div>
         <button type="button" class="btn-outline" onclick="addOptGroup()">Ajouter un groupe d'options</button>
       </div>
+      <div class="svc">
+        <div class="svc-title">Quand ce plat est-il proposé ?</div>
+        <div class="svc-seg" role="radiogroup" aria-label="Moment où le plat est proposé">
+          <label class="on"><input type="radio" name="dish-service" id="svc-all" value="all" checked>Journée et nuit</label>
+          <label><input type="radio" name="dish-service" id="svc-day" value="day">Journée seulement</label>
+          <label><input type="radio" name="dish-service" id="svc-night" value="night">Nuit seulement</label>
+        </div>
+        <div class="svc-hint" id="svc-hint"></div>
+      </div>
       <div style="display:flex; gap:8px;">
         <button class="btn-primary" onclick="saveDish()" id="save-btn">Ajouter le plat</button>
         <button class="btn-outline" style="display:none;" id="cancel-edit-btn" onclick="cancelEdit()">Annuler</button>
       </div>
+    </div>
+
+    <div class="hours-box">
+      <div class="form-title">Horaires des plats de jour et de nuit</div>
+      <div id="hours-status" class="status-msg"></div>
+      <div class="hours-row">
+        <label for="day-start">La journée commence à<input id="day-start" type="time" value="06:00"></label>
+        <label for="night-start">La nuit commence à<input id="night-start" type="time" value="18:00"></label>
+      </div>
+      <div class="svc-hint">Les plats « Journée seulement » sont visibles et commandables de l'heure de début de journée à l'heure de début de nuit. Les plats « Nuit seulement », le reste du temps.</div>
+      <button class="btn-primary" style="margin-top:10px;" onclick="saveServiceHours()" id="hours-btn">Enregistrer les horaires</button>
     </div>
 
     <div id="dishes-list"></div>
@@ -244,6 +277,40 @@ function cleanOptGroups() {
     choices: g.choices.map(c => ({ label: String(c.label || '').trim().slice(0, 40), price: Math.max(0, parseInt(c.price, 10) || 0) })).filter(c => c.label) }))
     .filter(g => g.name && g.choices.length);
 }
+const SERVICE_LABEL = { day: 'Plat de jour', night: 'Plat de nuit' };
+function hm(v, def) { return String(v || def).slice(0, 5); }
+function hmText(v, def) { return hm(v, def).replace(':', ' h '); }
+function selectedService() { const c = document.querySelector('input[name="dish-service"]:checked'); return c ? c.value : 'all'; }
+function paintService() { document.querySelectorAll('.svc-seg label').forEach(l => { const i = l.querySelector('input'); l.classList.toggle('on', !!(i && i.checked)); }); }
+function setService(v) { const el = document.getElementById('svc-' + (v === 'day' || v === 'night' ? v : 'all')); if (el) el.checked = true; paintService(); }
+document.addEventListener('change', (e) => { if (e.target && e.target.name === 'dish-service') paintService(); });
+function renderServiceHint() {
+  const el = document.getElementById('svc-hint'); if (!el || !myRestaurant) return;
+  el.textContent = `Journée : de ${hmText(myRestaurant.day_starts_at, '06:00')} à ${hmText(myRestaurant.night_starts_at, '18:00')}. Nuit : de ${hmText(myRestaurant.night_starts_at, '18:00')} à ${hmText(myRestaurant.day_starts_at, '06:00')}. Le client ne voit un plat qu'aux heures choisies.`;
+}
+function fillServiceHours() {
+  document.getElementById('day-start').value = hm(myRestaurant.day_starts_at, '06:00');
+  document.getElementById('night-start').value = hm(myRestaurant.night_starts_at, '18:00');
+  renderServiceHint();
+}
+function showHoursStatus(msg, ok) {
+  const el = document.getElementById('hours-status');
+  el.textContent = msg; el.className = 'status-msg ' + (ok ? 'ok' : 'err'); el.style.display = 'block';
+  setTimeout(() => { el.style.display = 'none'; }, 4000);
+}
+async function saveServiceHours() {
+  const d = document.getElementById('day-start').value, n = document.getElementById('night-start').value;
+  if (!d || !n) { showHoursStatus('Indiquez les deux heures.', false); return; }
+  if (d === n) { showHoursStatus('La journée et la nuit doivent commencer à des heures différentes.', false); return; }
+  const btn = document.getElementById('hours-btn'); btn.disabled = true; btn.textContent = 'Enregistrement...';
+  const { error } = await client.rpc('set_service_hours', { p_restaurant: myRestaurant.id, p_day: d, p_night: n });
+  btn.disabled = false; btn.textContent = 'Enregistrer les horaires';
+  if (error) { showHoursStatus("Les horaires n'ont pas été enregistrés. Vérifiez votre connexion et réessayez.", false); return; }
+  myRestaurant.day_starts_at = d + ':00'; myRestaurant.night_starts_at = n + ':00';
+  fillServiceHours();
+  showHoursStatus('Horaires enregistrés.', true);
+  loadDishes();
+}
 function todayStr() { return new Date().toISOString().slice(0, 10); }
 async function toggleSoldOut(id, on) {
   const { error } = await client.from('menu_items').update({ sold_out_date: on ? todayStr() : null }).eq('id', id);
@@ -331,6 +398,7 @@ async function afterLogin() {
   document.getElementById('menu-screen').style.display = 'block';
   document.getElementById('bottom-nav').style.display = 'flex';
   document.getElementById('restaurant-name').textContent = rest.name;
+  fillServiceHours();
   loadDishes();
 }
 
@@ -364,6 +432,7 @@ async function loadDishes() {
         ${d.description ? `<div style="font-size:12.5px; color:var(--creamDim); margin-top:2px;">${d.description}</div>` : ''}
         <div class="mono" style="font-size:13px; color:var(--mango); margin-top:4px;">${money(d.price)}</div>
         ${Array.isArray(d.options) && d.options.length ? `<div style="font-size:12px; color:var(--creamDim); margin-top:4px;">Options : ${d.options.map(g => g.name).join(', ')}</div>` : ''}
+        ${SERVICE_LABEL[d.service] ? `<div class="svc-tag">${SERVICE_LABEL[d.service]} · ${d.service === 'day' ? hmText(myRestaurant.day_starts_at, '06:00') + ' à ' + hmText(myRestaurant.night_starts_at, '18:00') : hmText(myRestaurant.night_starts_at, '18:00') + ' à ' + hmText(myRestaurant.day_starts_at, '06:00')}</div>` : ''}
         ${d.sold_out_date && d.sold_out_date >= todayStr() ? `<div class="sold-tag">Épuisé aujourd'hui</div>` : ''}
         <div class="dish-actions">
           ${d.sold_out_date && d.sold_out_date >= todayStr() ? `<button class="btn-outline" style="border-color:var(--palm); color:var(--palm);" onclick="toggleSoldOut('${d.id}', false)">Remettre en vente</button>` : `<button class="btn-outline" onclick="toggleSoldOut('${d.id}', true)">Épuisé aujourd'hui</button>`}
@@ -381,6 +450,7 @@ function editDish(d) {
   document.getElementById('dish-name').value = d.name || '';
   document.getElementById('dish-desc').value = d.description || '';
   document.getElementById('dish-price').value = d.price || '';
+  setService(d.service);
   optGroups = (Array.isArray(d.options) ? d.options : []).map(g => ({ name: g.name, required: !!g.required, multiple: !!g.multiple, choices: (g.choices || []).map(c => ({ label: c.label, price: c.price || 0 })) }));
   renderOptGroups();
   document.getElementById('save-btn').textContent = 'Enregistrer les modifications';
@@ -395,6 +465,7 @@ function cancelEdit() {
   document.getElementById('dish-desc').value = '';
   document.getElementById('dish-price').value = '';
   document.getElementById('dish-photo').value = '';
+  setService('all');
   optGroups = []; renderOptGroups();
   document.getElementById('save-btn').textContent = 'Ajouter le plat';
   document.getElementById('cancel-edit-btn').style.display = 'none';
@@ -449,7 +520,7 @@ async function saveDish() {
   document.getElementById('save-btn').textContent = 'Enregistrement...';
   const photoUrl = await uploadPhotoIfAny();
 
-  const payload = { name, description, price, options: cleanOptGroups() };
+  const payload = { name, description, price, options: cleanOptGroups(), service: selectedService() };
   if (photoUrl) payload.photo_url = photoUrl;
 
   let error;

@@ -129,7 +129,7 @@
     .pn-map { grid-area:map; } .pn-pay { grid-area:pay; } .pn-cash { grid-area:cash; } .pn-report { grid-area:report; } .pn-lb { grid-area:lb; } .pn-promo { grid-area:promo; } .pn-fraud { grid-area:fraud; }
     #live-map { height:460px; }
     .pr-grid { display:grid; grid-template-columns: minmax(0,1fr) minmax(0,1fr); gap:20px; align-items:start; }
-    #manage-box { display:grid; grid-template-columns: repeat(auto-fill, minmax(420px, 1fr)); gap:8px; }
+    #manage-box { display:grid; grid-template-columns: 1fr; gap:8px; }
     #manage-box .mg-row { margin:0; }
     #clients-box { display:grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap:8px; align-content:start; }
     #clients-box .cl-row { margin:0; }
@@ -219,6 +219,10 @@
   .mg-row { display:flex; align-items:center; gap:10px; flex-wrap:wrap; background:var(--surface); border:1px solid var(--line); border-radius:10px; padding:10px 12px; margin-bottom:8px; }
   .mg-row b { flex:1; min-width:120px; font-size:13.5px; }
   .mg-row small { color:var(--creamDim); font-size:11.5px; display:block; font-weight:500; }
+  .mg-pos { font-family:'JetBrains Mono', monospace; font-size:13px; font-weight:700; color:var(--mango); min-width:26px; text-align:center; }
+  .mg-move { display:flex; gap:6px; }
+  .mg-move .w-btn:disabled { opacity:.35; cursor:default; }
+  .mg-hint { font-size:12.5px; color:var(--creamDim); margin:0 0 10px; grid-column:1 / -1; }
   .cl-count { font-size:12px; color:var(--creamDim); margin-bottom:10px; }
   #cl-search { margin-bottom:10px; }
   .cl-row { width:100%; text-align:left; display:grid; grid-template-columns: 1fr auto; gap:2px 10px; background:var(--surface); border:1px solid var(--line); border-radius:10px; padding:10px 12px; margin-bottom:7px; color:var(--cream); font-family:inherit; cursor:pointer; }
@@ -1532,12 +1536,41 @@ async function adminSendMsg(id) {
 }
 
 // ----- Gérer chaque restaurant comme son propriétaire -----
+// Ordre d'affichage des restaurants chez les clients
+function restaurantsInDisplayOrder() {
+  return restaurants.slice().sort((a, b) => {
+    const x = a.sort_order == null ? 1e9 : a.sort_order, y = b.sort_order == null ? 1e9 : b.sort_order;
+    return x - y || String(a.created_at || '').localeCompare(String(b.created_at || ''));
+  });
+}
+let movingRestaurant = false;
+async function moveRestaurant(id, dir) {
+  if (movingRestaurant) return;
+  const list = restaurantsInDisplayOrder();
+  const i = list.findIndex(r => r.id === id), j = i + dir;
+  if (i < 0 || j < 0 || j >= list.length) return;
+  const before = list.map(r => ({ id: r.id, sort_order: r.sort_order }));
+  [list[i], list[j]] = [list[j], list[i]];
+  list.forEach((r, k) => { r.sort_order = k + 1; });
+  movingRestaurant = true;
+  renderManage();
+  const { error } = await client.rpc('admin_set_restaurant_order', { p_ids: list.map(r => r.id) });
+  movingRestaurant = false;
+  if (error) {
+    before.forEach(b => { const r = restaurants.find(x => x.id === b.id); if (r) r.sort_order = b.sort_order; });
+    alert("Le nouvel ordre n'a pas été enregistré. Vérifiez votre connexion et réessayez.");
+  }
+  renderManage();
+}
 function renderManage() {
   const el = document.getElementById('manage-box');
   if (!el) return;
   if (!restaurants.length) { el.innerHTML = '<div class="empty">Aucun restaurant.</div>'; return; }
-  el.innerHTML = restaurants.map(r => `<div class="mg-row">
+  const ordered = restaurantsInDisplayOrder();
+  el.innerHTML = `<p class="mg-hint">Les restaurants s'affichent chez les clients dans cet ordre. Utilisez « Monter » et « Descendre » pour le changer : c'est enregistré aussitôt.</p>` + ordered.map((r, k) => `<div class="mg-row">
+      <span class="mg-pos">${k + 1}</span>
       <b>${escHtml(r.name)}<small>${r.accepting_orders === false ? 'En pause' : 'Ouvert aux commandes'}${typeof r.lat === 'number' ? '' : ' · position non enregistrée'}</small></b>
+      <span class="mg-move"><button class="w-btn" ${k === 0 || movingRestaurant ? 'disabled' : ''} onclick="moveRestaurant('${r.id}', -1)" aria-label="Monter ${escHtml(r.name)}">Monter</button><button class="w-btn" ${k === ordered.length - 1 || movingRestaurant ? 'disabled' : ''} onclick="moveRestaurant('${r.id}', 1)" aria-label="Descendre ${escHtml(r.name)}">Descendre</button></span>
       <a class="w-btn go" href="dashboard.html?as=${r.id}">Commandes et stories</a>
       <a class="w-btn" href="menu.html?as=${r.id}">Menu</a>
       <a class="w-btn" href="stats.html?as=${r.id}">Statistiques</a>
@@ -1676,7 +1709,7 @@ async function adminBlock(id, blocked) {
   if (error) { alert('Action impossible pour le moment.'); return; }
   await loadClients(); renderFraud(); openCustomer(id);
 }
-function closeCustomer() { if (driverThreadTimer) { clearInterval(driverThreadTimer); driverThreadTimer = null; driverThreadId = null; } const m = document.getElementById('cp-modal'); if (m) m.remove(); }
+function closeCustomer() { if (driverThreadTimer) { clearInterval(driverThreadTimer); driverThreadTimer = null; } driverThreadId = null; driverThreadSig = ''; const m = document.getElementById('cp-modal'); if (m) m.remove(); }
 
 // ---------- Messagerie admin ↔ livreurs (indépendante des commandes) ----------
 let driverUnread = {}, driverUnreadTimer = null, driverThreadTimer = null, driverThreadId = null;
@@ -1690,58 +1723,76 @@ async function loadDriverUnread() {
     b.textContent = n > 9 ? '9+' : String(n);
   });
 }
-function driverThreadHtml(driverId, msgs) {
+let driverThreadSig = '';
+function driverMsgListHtml(msgs) {
   const list = (msgs || []).map(m => {
     const mine = m.sender_role === 'admin';
     return `<div class="msg ${mine ? 'mine' : ''}"><div class="msg-meta">${escHtml(mine ? 'Vous' : (m.sender_name || 'Livreur'))} · ${hhmm(m.created_at)}</div><div class="msg-body">${escHtml(m.body)}</div></div>`;
   }).join('');
-  return `<div class="thread" data-driver-thread="${driverId}">
-    <div class="thread-list" id="dthread-list-${driverId}">${list || '<div class="thread-empty">Aucun message avec ce livreur pour le moment.</div>'}</div>
-    <div class="thread-send">
-      <textarea id="dmsg-input-${driverId}" maxlength="500" rows="2" placeholder="Écrire au livreur…"></textarea>
-      <button type="button" class="send-btn" onclick="sendDriverThreadMessage('${driverId}')">Envoyer</button>
-    </div>
-  </div>`;
+  return list || '<div class="thread-empty">Aucun message avec ce livreur pour le moment.</div>';
 }
-async function sendDriverThreadMessage(driverId) {
-  const ta = document.getElementById('dmsg-input-' + driverId);
+async function sendDriverThreadMessage() {
+  const driverId = driverThreadId;
+  const ta = document.getElementById('dmsg-input');
+  const btn = document.getElementById('dmsg-send');
   const body = String((ta && ta.value) || '').trim();
-  if (!body) return;
-  const { error } = await client.rpc('send_driver_message', { p_driver: driverId, p_body: body });
+  if (!driverId || !body || (btn && btn.disabled)) return;
+  if (btn) { btn.disabled = true; btn.textContent = 'Envoi…'; }
+  let error = null;
+  try { ({ error } = await client.rpc('send_driver_message', { p_driver: driverId, p_body: body })); } catch (e) { error = e; }
+  if (btn) { btn.disabled = false; btn.textContent = 'Envoyer'; }
   if (error) { alert("Le message n'est pas parti. Vérifiez votre connexion et réessayez."); return; }
-  if (ta) ta.value = '';
-  await refreshDriverThread();
+  if (ta && driverThreadId === driverId) { ta.value = ''; ta.focus(); }
+  await refreshDriverThread(true);
 }
-async function refreshDriverThread() {
-  if (!driverThreadId) return;
-  const { data } = await client.from('driver_messages').select('*').eq('driver_id', driverThreadId).order('created_at');
-  const body = document.getElementById('driver-thread-body');
-  if (!body) return;
-  const draft = (document.getElementById('dmsg-input-' + driverThreadId) || {}).value || '';
-  body.innerHTML = driverThreadHtml(driverThreadId, data || []);
-  const ta = document.getElementById('dmsg-input-' + driverThreadId); if (ta) ta.value = draft;
-  const list = document.getElementById('dthread-list-' + driverThreadId);
-  if (list) list.scrollTop = list.scrollHeight;
-  await client.rpc('mark_driver_messages_read', { p_driver: driverThreadId }).catch(() => {});
-  driverUnread[driverThreadId] = 0;
-  document.querySelectorAll('[data-driver-badge="' + driverThreadId + '"]').forEach(b => { b.style.display = 'none'; });
+async function refreshDriverThread(scrollToEnd) {
+  const driverId = driverThreadId;
+  if (!driverId) return;
+  let data = null;
+  try { ({ data } = await client.from('driver_messages').select('*').eq('driver_id', driverId).order('created_at')); } catch (e) { return; }
+  if (driverThreadId !== driverId || !data) return;
+  const list = document.getElementById('dthread-list');
+  if (!list) return;
+  // On ne redessine que la liste, et seulement si elle a changé : le champ de saisie n'est jamais touché
+  const sig = data.map(m => m.id).join(',');
+  if (sig !== driverThreadSig) {
+    const nearEnd = list.scrollHeight - list.scrollTop - list.clientHeight < 60;
+    const first = driverThreadSig === '';
+    driverThreadSig = sig;
+    list.innerHTML = driverMsgListHtml(data);
+    if (first || nearEnd || scrollToEnd) list.scrollTop = list.scrollHeight;
+  }
+  if (data.some(m => m.sender_role === 'driver' && !m.read_by_admin_at)) {
+    try { await client.rpc('mark_driver_messages_read', { p_driver: driverId }); } catch (e) {}
+  }
+  driverUnread[driverId] = 0;
+  document.querySelectorAll('[data-driver-badge="' + driverId + '"]').forEach(b => { b.style.display = 'none'; });
 }
 function openDriverThread(driverId) {
   const d = (allDrivers || []).find(x => x.id === driverId);
   if (!d) return;
   closeCustomer();
   driverThreadId = driverId;
+  driverThreadSig = '';
   const m = document.createElement('div');
   m.id = 'cp-modal'; m.className = 'cp-modal';
   m.addEventListener('click', (e) => { if (e.target === m) closeCustomer(); });
   m.innerHTML = `<div class="cp-sheet" role="dialog" aria-label="Messages livreur">
     <div class="cp-head"><div><div class="cp-name">Message au livreur</div><div class="cp-sub">${escHtml(d.name)}${d.phone ? ' · ' + escHtml(d.phone) : ''}</div></div>
     <button class="cp-close" onclick="closeCustomer()">Fermer</button></div>
-    <div id="driver-thread-body"><div class="thread-empty">Chargement…</div></div>
+    <div class="thread">
+      <div class="thread-list" id="dthread-list"><div class="thread-empty">Chargement…</div></div>
+      <div class="thread-send">
+        <textarea id="dmsg-input" maxlength="500" rows="2" placeholder="Écrire au livreur…"></textarea>
+        <button type="button" class="send-btn" id="dmsg-send" onclick="sendDriverThreadMessage()">Envoyer</button>
+      </div>
+    </div>
   </div>`;
   document.body.appendChild(m);
-  refreshDriverThread();
-  driverThreadTimer = setInterval(refreshDriverThread, 4000);
+  const ta = document.getElementById('dmsg-input');
+  ta.addEventListener('keydown', (e) => { if (e.key === 'Enter' && (e.ctrlKey || e.metaKey)) { e.preventDefault(); sendDriverThreadMessage(); } });
+  refreshDriverThread(true);
+  driverThreadTimer = setInterval(() => refreshDriverThread(false), 4000);
 }
 document.addEventListener('keydown', (e) => { if (e.key === 'Escape') closeCustomer(); });
 

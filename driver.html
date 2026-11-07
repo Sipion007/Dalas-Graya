@@ -1189,46 +1189,69 @@ async function sendThreadMessage(orderId, text, onDone) {
 }
 
 // ---------- Messages de l'administration (toujours visibles, sans lien avec une commande) ----------
-let adminMsgDraft = '';
-function adminThreadHtml(msgs) {
+let adminMsgDraft = '', adminThreadSig = '', adminThreadBusy = false;
+function adminMsgListHtml(msgs) {
   const list = (msgs || []).map(m => {
     const mine = m.sender_role === 'driver';
     return `<div class="msg ${mine ? 'mine' : ''}"><div class="msg-meta">${escHtml(mine ? 'Vous' : (m.sender_name || "Dallas Bouff'"))} · ${hhmm(m.created_at)}</div><div class="msg-body">${escHtml(m.body)}</div></div>`;
   }).join('');
-  return `<div class="thread" data-admin-thread="1">
-    <div class="thread-list" id="admin-thread-list">${list || "<div class=\"thread-empty\">Aucun message de l'administration pour le moment.</div>"}</div>
-    <div class="thread-send">
-      <textarea id="admin-msg-input" maxlength="500" rows="2" placeholder="Écrire à l'administration…">${escHtml(adminMsgDraft)}</textarea>
-      <button type="button" class="send-btn" onclick="sendAdminMessage()">Envoyer</button>
-    </div>
-  </div>`;
+  return list || "<div class=\"thread-empty\">Aucun message de l'administration pour le moment.</div>";
+}
+// La zone est construite une seule fois : le champ de saisie n'est jamais redessiné pendant qu'on écrit
+function ensureAdminThreadShell() {
+  const el = document.getElementById('admin-thread');
+  if (!el) return null;
+  if (!document.getElementById('admin-thread-list')) {
+    adminThreadSig = '';
+    el.innerHTML = `<div class="thread" data-admin-thread="1">
+      <div class="thread-list" id="admin-thread-list"><div class="thread-empty">Chargement…</div></div>
+      <div class="thread-send">
+        <textarea id="admin-msg-input" maxlength="500" rows="2" placeholder="Écrire à l'administration…"></textarea>
+        <button type="button" class="send-btn" id="admin-msg-send" onclick="sendAdminMessage()">Envoyer</button>
+      </div>
+    </div>`;
+    const ta = document.getElementById('admin-msg-input');
+    ta.value = adminMsgDraft;
+  }
+  return el;
 }
 async function sendAdminMessage() {
   if (!myDriver) return;
   const ta = document.getElementById('admin-msg-input');
+  const btn = document.getElementById('admin-msg-send');
   const body = String((ta && ta.value) || '').trim();
-  if (!body) return;
-  const { error } = await client.rpc('send_driver_message', { p_driver: myDriver.id, p_body: body });
+  if (!body || (btn && btn.disabled)) return;
+  if (btn) { btn.disabled = true; btn.textContent = 'Envoi…'; }
+  let error = null;
+  try { ({ error } = await client.rpc('send_driver_message', { p_driver: myDriver.id, p_body: body })); } catch (e) { error = e; }
+  if (btn) { btn.disabled = false; btn.textContent = 'Envoyer'; }
   if (error) { alert("Le message n'est pas parti. Vérifiez votre connexion et réessayez."); return; }
   adminMsgDraft = '';
-  await loadAdminThread();
+  if (ta) ta.value = '';
+  await loadAdminThread(true);
 }
-async function loadAdminThread() {
-  if (!myDriver) return;
-  const el = document.getElementById('admin-thread');
-  if (!el) return;
-  const ta0 = document.getElementById('admin-msg-input');
-  if (ta0) adminMsgDraft = ta0.value;
-  const { data } = await client.from('driver_messages').select('*').eq('driver_id', myDriver.id).order('created_at');
-  const scroller = document.getElementById('admin-thread-list');
-  const atBottom = !scroller || (scroller.scrollHeight - scroller.scrollTop - scroller.clientHeight < 40);
-  el.innerHTML = adminThreadHtml(data || []);
+async function loadAdminThread(scrollToEnd) {
+  if (!myDriver || adminThreadBusy) return;
+  if (!ensureAdminThreadShell()) return;
+  adminThreadBusy = true;
+  let data = null;
+  try { ({ data } = await client.from('driver_messages').select('*').eq('driver_id', myDriver.id).order('created_at')); } catch (e) { data = null; }
+  adminThreadBusy = false;
+  if (!data) return;
   const list = document.getElementById('admin-thread-list');
-  if (list && atBottom) list.scrollTop = list.scrollHeight;
-  const unread = (data || []).filter(m => m.sender_role === 'admin' && !m.read_by_driver_at).length;
+  if (!list) return;
+  const sig = data.map(m => m.id).join(',');
+  if (sig !== adminThreadSig) {
+    const nearEnd = list.scrollHeight - list.scrollTop - list.clientHeight < 60;
+    const first = adminThreadSig === '';
+    adminThreadSig = sig;
+    list.innerHTML = adminMsgListHtml(data);
+    if (first || nearEnd || scrollToEnd === true) list.scrollTop = list.scrollHeight;
+  }
+  const unread = data.filter(m => m.sender_role === 'admin' && !m.read_by_driver_at).length;
   const badge = document.getElementById('admin-msg-badge');
   if (badge) { badge.style.display = unread ? 'inline-flex' : 'none'; badge.textContent = unread > 9 ? '9+' : String(unread); }
-  if (unread) client.rpc('mark_driver_messages_read', { p_driver: myDriver.id }).catch(() => {});
+  if (unread) { try { await client.rpc('mark_driver_messages_read', { p_driver: myDriver.id }); } catch (e) {} }
 }
 document.addEventListener('input', (e) => { if (e.target && e.target.id === 'admin-msg-input') adminMsgDraft = e.target.value; });
 
