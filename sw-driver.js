@@ -41,8 +41,13 @@ self.addEventListener('push', (event) => {
       }
     }
     const late = data.ts ? Date.now() - Number(data.ts) : 0;
-    if (!quiet && late > 120000) body = '(envoyée il y a ' + ago(late) + ') ' + body;
-    const options = quiet ? {
+    if (!quiet && !data.promo && late > 120000) body = '(envoyée il y a ' + ago(late) + ') ' + body;
+    // Plat du jour : notification discrète avec l'affiche, sans alarme
+    const options = data.promo ? {
+      body, icon: 'icons/icon-192.png', badge: 'icons/icon-192.png', tag: data.tag,
+      image: data.image || undefined, renotify: false, requireInteraction: false,
+      vibrate: [200, 100, 200], data: { url: data.url || '/', promo: true }
+    } : quiet ? {
       body, icon: 'icons/icon-192.png', badge: 'icons/icon-192.png', tag: data.tag,
       renotify: false, silent: true, requireInteraction: false, data: { url: data.url || '/' }
     } : {
@@ -60,11 +65,16 @@ self.addEventListener('push', (event) => {
 self.addEventListener('notificationclick', (event) => {
   event.notification.close();
   const url = (event.notification.data && event.notification.data.url) || '/';
+  const promo = !!(event.notification.data && event.notification.data.promo);
   const page = url.split('?')[0];
   event.waitUntil(
     self.clients.matchAll({ type: 'window', includeUncontrolled: true }).then((list) => {
       for (const c of list) {
-        if (c.url.includes(page) && 'focus' in c) return c.focus();
+        if (c.url.includes(page) && 'focus' in c) {
+          // Plat du jour : on ouvre directement la fiche du plat dans l'appli déjà ouverte
+          if (promo && 'navigate' in c) return c.navigate(url).then((w) => (w || c).focus()).catch(() => c.focus());
+          return c.focus();
+        }
       }
       if (self.clients.openWindow) return self.clients.openWindow(url);
     })

@@ -123,9 +123,11 @@
     .dash { display:grid; gap:20px; grid-template-columns: repeat(3, minmax(0,1fr));
       grid-template-rows: auto auto auto min-content 1fr auto auto auto auto auto auto auto auto auto auto;
     .pn-wa { grid-area:wa; }
+    .pn-daily { grid-area:daily; }
+    .dp-grid { display:grid; grid-template-columns: minmax(0,1.4fr) minmax(0,1fr); gap:20px; align-items:start; }
     .wa-grid { display:grid; grid-template-columns: minmax(0,1.3fr) minmax(0,1fr); gap:20px; align-items:start; }
     .wa-list { max-height:520px; }
-      grid-template-areas: "caticker caticker caticker" "kpi kpi kpi" "live live live" "map map map" "watch watch alerts" "watch watch acc" "pay pay cash" "report lb lb" "manage manage manage" "clients clients clients" "wa wa wa" "promo promo fraud" "rev dish photo" "avis avis avis" "drv drv drv" "hist hist hist"; align-items:start; }
+      grid-template-areas: "caticker caticker caticker" "kpi kpi kpi" "live live live" "map map map" "watch watch alerts" "watch watch acc" "pay pay cash" "report lb lb" "manage manage manage" "clients clients clients" "wa wa wa" "daily daily daily" "promo promo fraud" "rev dish photo" "avis avis avis" "drv drv drv" "hist hist hist"; align-items:start; }
     .pn-map { grid-area:map; } .pn-pay { grid-area:pay; } .pn-cash { grid-area:cash; } .pn-report { grid-area:report; } .pn-lb { grid-area:lb; } .pn-promo { grid-area:promo; } .pn-fraud { grid-area:fraud; }
     #live-map { height:460px; }
     .pr-grid { display:grid; grid-template-columns: minmax(0,1fr) minmax(0,1fr); gap:20px; align-items:start; }
@@ -176,8 +178,28 @@
     .pn-kpi .stats-grid { grid-template-columns: repeat(6, minmax(0,1fr)); }
     .stat-value { font-size:30px; }
     .dash { grid-template-columns: repeat(4, minmax(0,1fr));
-      grid-template-areas: "caticker caticker caticker caticker" "kpi kpi kpi kpi" "live live live live" "map map map map" "watch watch watch alerts" "watch watch watch acc" "pay pay cash cash" "report report lb lb" "manage manage manage manage" "clients clients clients clients" "wa wa wa wa" "promo promo fraud fraud" "rev dish photo photo" "avis avis avis avis" "drv drv drv drv" "hist hist hist hist"; }
+      grid-template-areas: "caticker caticker caticker caticker" "kpi kpi kpi kpi" "live live live live" "map map map map" "watch watch watch alerts" "watch watch watch acc" "pay pay cash cash" "report report lb lb" "manage manage manage manage" "clients clients clients clients" "wa wa wa wa" "daily daily daily daily" "promo promo fraud fraud" "rev dish photo photo" "avis avis avis avis" "drv drv drv drv" "hist hist hist hist"; }
   }
+  .w-label { font-size:11.5px; text-transform:uppercase; letter-spacing:.08em; color:var(--creamDim); font-weight:700; }
+  .dp-top { display:flex; align-items:center; justify-content:space-between; gap:12px; padding:12px 14px; border:1px solid var(--line); border-radius:12px; margin-bottom:14px; }
+  .dp-top b { font-size:13.5px; display:block; } .dp-top span { font-size:12px; color:var(--creamDim); }
+  .dp-switch { position:relative; width:48px; height:28px; flex-shrink:0; border-radius:14px; border:1px solid var(--line); background:var(--raised); cursor:pointer; padding:0; }
+  .dp-switch::after { content:''; position:absolute; top:3px; left:3px; width:20px; height:20px; border-radius:50%; background:var(--creamDim); transition:transform .2s; }
+  .dp-switch[aria-checked="true"] { background:var(--mango); border-color:var(--mango); }
+  .dp-switch[aria-checked="true"]::after { transform:translateX(20px); background:#080808; }
+  .dp-switch:focus-visible { outline:2px solid var(--mango); outline-offset:2px; }
+  .dp-img { width:100%; aspect-ratio:2/1; object-fit:cover; border-radius:12px; border:1px solid var(--line); display:block; background:var(--raised); }
+  .dp-notif { margin-top:10px; padding:10px 12px; border-radius:12px; background:var(--raised); border:1px solid var(--line); font-size:12.5px; line-height:1.45; }
+  .dp-notif b { display:block; font-size:13px; margin-bottom:2px; }
+  .dp-status { margin:10px 0; font-size:12.5px; color:var(--creamDim); }
+  .dp-status.ok { color:#8FC79A; } .dp-status.bad { color:#E38A79; }
+  .dp-actions { display:flex; flex-wrap:wrap; gap:8px; }
+  .dp-hist { display:grid; gap:8px; }
+  .dp-row { display:grid; grid-template-columns:72px minmax(0,1fr); gap:10px; align-items:center; font-size:12.5px; padding:8px; border:1px solid var(--line); border-radius:10px; }
+  .dp-row img, .dp-row .dp-ph { width:72px; height:36px; object-fit:cover; border-radius:6px; background:var(--raised); display:block; }
+  .dp-row b { display:block; font-size:12.5px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+  .dp-row span { color:var(--creamDim); font-size:11.5px; }
+  @media (max-width: 899px) { .dp-grid { grid-template-columns: 1fr; } }
   .pn-caticker { background: linear-gradient(135deg, #1C2A1E, var(--surface)); border:1px solid #2E4531; }
   .ca-ticker-box { display:flex; flex-direction:column; align-items:flex-start; gap:4px; }
   .ca-ticker-label { font-size:12px; letter-spacing:0.04em; color:var(--creamDim); text-transform:uppercase; }
@@ -470,6 +492,10 @@
     <div class="pn-head2"><div class="section-title" id="section-wa">Communication WhatsApp</div><span class="cl-count" id="wa-count"></span></div>
     <div id="wa-box"></div>
     </section>
+    <section class="pn pn-daily">
+    <div class="pn-head2"><div class="section-title" id="section-daily">Affiche du jour</div><span class="cl-count" id="daily-reach"></span></div>
+    <div id="daily-box"><div class="empty">Chargement…</div></div>
+    </section>
     <section class="pn pn-promo">
     <div class="section-title" id="section-promo">Codes promo et parrainage</div>
     <div id="promo-box"><div class="empty">Chargement…</div></div>
@@ -553,6 +579,10 @@
   <button class="nav-item desk-only" data-target="section-wa" onclick="document.getElementById('section-wa').scrollIntoView({behavior:'smooth'})">
     <svg viewBox="0 0 24 24"><path d="M4 20l1.3-3.9A8 8 0 1 1 8 19z"/><path d="M9 10c.5 2 2 3.5 4 4l1.2-1.2 2 1-.6 1.6c-3.6.2-7-3.2-6.8-6.8l1.6-.6 1 2z"/></svg>
     <span>WhatsApp</span>
+  </button>
+  <button class="nav-item desk-only" data-target="section-daily" onclick="document.getElementById('section-daily').scrollIntoView({behavior:'smooth'})">
+    <svg viewBox="0 0 24 24"><rect x="3" y="5" width="18" height="14" rx="2"/><circle cx="9" cy="10" r="2"/><path d="M21 16l-5-5-7 8"/></svg>
+    <span>Affiche du jour</span>
   </button>
   <button class="nav-item" data-target="section-livreurs" onclick="document.getElementById('section-livreurs').scrollIntoView({behavior:'smooth'})">
     <svg viewBox="0 0 24 24"><circle cx="12" cy="8" r="4"/><path d="M4 21c0-4 4-7 8-7s8 3 8 7"/></svg>
@@ -2126,6 +2156,7 @@ async function loadData() {
   loadLive();
   loadDrivers();
   loadGrowth();
+  loadDaily();
 
   const sel = document.getElementById('restaurant-filter');
   sel.innerHTML = '<option value="">Tous les restaurants</option>' +
@@ -2229,6 +2260,95 @@ function renderOrdersList() {
 let promoCodes = [], momoSettings = {}, driverBonus = {}, leaderboard = [], payQueue = [], blocklist = [], backupFiles = [];
 let restRefBonus = 2000, restRefThreshold = 10;
 const promoForm = { kind: 'percent' };
+// ---------- Affiche du jour (notification à 10 h) ----------
+let dailyPosters = [], dailyReach = null, dailyEnabled = true, dailyBusy = false, dailyPollTimer = null;
+function posterUrl(p) { return p ? SUPABASE_URL + '/storage/v1/object/public/posters/' + p : ''; }
+function dailyToday() { return new Date().toISOString().slice(0, 10); }
+function dailyDayLabel(d) { return new Date(d + 'T12:00:00Z').toLocaleDateString('fr-FR', { weekday: 'long', day: 'numeric', month: 'long', timeZone: 'UTC' }); }
+async function loadDaily() {
+  const since = new Date(Date.now() - 8 * 864e5).toISOString().slice(0, 10);
+  const [p, r, st] = await Promise.all([
+    client.from('daily_posters').select('*').gte('day', since).order('day', { ascending: false }),
+    client.rpc('admin_daily_poster_reach'),
+    client.from('app_settings').select('value').eq('key', 'daily_poster_enabled').maybeSingle(),
+  ]);
+  dailyPosters = p.data || [];
+  dailyReach = r.data || null;
+  dailyEnabled = !(st.data && st.data.value === false);
+  renderDaily();
+}
+function renderDaily() {
+  const box = document.getElementById('daily-box');
+  if (!box) return;
+  const reach = dailyReach ? dailyReach.phones : 0;
+  const rc = document.getElementById('daily-reach');
+  if (rc) rc.textContent = dailyReach ? `${dailyReach.customers} client${dailyReach.customers > 1 ? 's' : ''} joignable${dailyReach.customers > 1 ? 's' : ''}` : '';
+  const today = dailyPosters.find(p => p.day === dailyToday());
+  const hasImg = !!(today && today.image_path);
+  let status = '', cls = '';
+  if (!today) status = dailyEnabled ? "L'affiche d'aujourd'hui sera préparée automatiquement à 9 h, puis envoyée à 10 h." : 'Envoi automatique suspendu.';
+  else if (today.status === 'sent') { status = `Envoyée à ${hhmm(today.sent_at)} : ${escHtml(today.note || today.sent_count + ' téléphone(s)')}.`; cls = 'ok'; }
+  else if (today.status === 'ready') status = dailyEnabled ? `Prête. Elle partira à 10 h vers ${reach} téléphone${reach > 1 ? 's' : ''}.` + (today.note ? ` Dernier essai : ${escHtml(today.note)}` : '') : "Prête, mais l'envoi automatique est suspendu.";
+  else if (today.status === 'skipped') { status = "Non envoyée aujourd'hui : envoi automatique suspendu."; cls = 'bad'; }
+  else { status = 'Problème : ' + escHtml(today.note || "l'affiche n'a pas pu être préparée") + '.'; cls = 'bad'; }
+  const sent = !!(today && today.status === 'sent');
+  const hist = dailyPosters.filter(p => p.day !== dailyToday()).slice(0, 7);
+  box.innerHTML = `
+    <div class="dp-top"><div><b>Envoi automatique chaque jour à 10 h</b><span>Une notification avec l'affiche du jour, envoyée aux clients qui ont activé les notifications.</span></div>
+      <button type="button" class="dp-switch" role="switch" aria-checked="${dailyEnabled}" aria-label="Envoi automatique de l'affiche du jour" onclick="toggleDailyEnabled()" ${dailyBusy ? 'disabled' : ''}></button></div>
+    <div class="dp-grid">
+      <div>
+        <div class="w-label" style="margin-bottom:8px;">Aujourd'hui, ${escHtml(dailyDayLabel(dailyToday()))}</div>
+        ${hasImg ? `<img class="dp-img" src="${posterUrl(today.image_path)}" alt="Affiche du jour : ${escHtml(today.title)}">
+          <div class="dp-notif"><b>${escHtml(today.title)}</b>${escHtml(today.body)}</div>` : `<div class="dp-img" style="display:flex;align-items:center;justify-content:center;color:var(--creamDim);font-size:12.5px;">Pas encore d'affiche</div>`}
+        <div class="dp-status ${cls}" id="daily-status">${status}</div>
+        <div class="dp-actions">
+          ${sent ? '' : `<button class="w-btn" onclick="dailyAction('regenerate')" ${dailyBusy ? 'disabled' : ''}>${hasImg ? 'Choisir un autre plat' : 'Préparer maintenant'}</button>`}
+          ${sent || !dailyEnabled ? '' : `<button class="w-btn go" onclick="dailyAction('send')" ${dailyBusy ? 'disabled' : ''}>Envoyer maintenant</button>`}
+          ${hasImg && today.portrait_path ? `<a class="w-btn" href="${posterUrl(today.portrait_path)}" target="_blank" rel="noopener" download>Image pour WhatsApp</a>` : ''}
+        </div>
+      </div>
+      <div>
+        <div class="w-label" style="margin-bottom:8px;">Les 7 derniers jours</div>
+        <div class="dp-hist">${hist.length ? hist.map(p => `<div class="dp-row">${p.image_path ? `<img src="${posterUrl(p.image_path)}" alt="" loading="lazy">` : '<span class="dp-ph"></span>'}<div><b>${escHtml(p.title && p.title !== '-' ? p.title : 'Aucune affiche')}</b><span>${escHtml(dailyDayLabel(p.day))} · ${p.status === 'sent' ? 'envoyée à ' + p.sent_count + ' téléphone(s)' : p.status === 'skipped' ? 'non envoyée (suspendu)' : p.status === 'failed' ? 'échec' : 'non envoyée'}</span></div></div>`).join('') : '<div class="empty">Aucun envoi pour le moment.</div>'}</div>
+      </div>
+    </div>`;
+}
+async function toggleDailyEnabled() {
+  if (dailyBusy) return;
+  dailyBusy = true;
+  const next = !dailyEnabled;
+  const { error } = await client.rpc('admin_set_setting', { p_key: 'daily_poster_enabled', p_value: next });
+  dailyBusy = false;
+  if (error) { alert("Le réglage n'a pas été enregistré. Vérifiez votre connexion."); renderDaily(); return; }
+  dailyEnabled = next;
+  renderDaily();
+}
+function dailySig(p) { return p ? [p.image_path, p.status, p.note || ''].join('|') : ''; }
+async function dailyAction(mode) {
+  if (dailyBusy) return;
+  if (mode === 'send' && !confirm(`Envoyer l'affiche maintenant à ${dailyReach ? dailyReach.phones : 0} téléphone(s) ? L'envoi de 10 h n'aura alors pas lieu aujourd'hui.`)) return;
+  const before = dailySig(dailyPosters.find(p => p.day === dailyToday()));
+  dailyBusy = true;
+  renderDaily();
+  const st = document.getElementById('daily-status');
+  if (st) { st.className = 'dp-status'; st.textContent = mode === 'send' ? 'Envoi en cours…' : "Préparation de l'affiche, quelques secondes…"; }
+  const { error } = await client.rpc('admin_daily_poster', { p_mode: mode });
+  if (error) { dailyBusy = false; renderDaily(); alert("L'action n'a pas pu être lancée. Vérifiez votre connexion."); return; }
+  const t0 = Date.now();
+  clearInterval(dailyPollTimer);
+  dailyPollTimer = setInterval(async () => {
+    const { data } = await client.from('daily_posters').select('*').eq('day', dailyToday()).maybeSingle();
+    const changed = !!data && dailySig(data) !== before && (mode !== 'send' || data.status !== 'ready' || !!data.note);
+    if (changed || Date.now() - t0 > 60000) {
+      clearInterval(dailyPollTimer); dailyPollTimer = null;
+      dailyBusy = false;
+      await loadDaily();
+      if (!changed) { const s2 = document.getElementById('daily-status'); if (s2) { s2.className = 'dp-status bad'; s2.textContent = 'Pas de réponse du serveur. Réessayez dans un instant.'; } }
+    }
+  }, 3000);
+}
+
 async function loadGrowth() {
   if (!adminLoggedIn) return;
   const [pc, st, lb, pq, bl, bk] = await Promise.all([

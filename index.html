@@ -408,6 +408,19 @@
   .chip2 { border:1px solid #333; background:#141414; color:#E6E6E6; border-radius:999px; padding:9px 12px; font-size:12.5px; cursor:pointer; font-family:inherit; }
   .link-btn2 { background:none; border:none; color:var(--creamDim); font-size:12.5px; text-decoration:underline; cursor:pointer; padding:10px 0 0; font-family:inherit; }
   .link-btn2.danger { color:#E0705A; }
+  .daily-invite { display:grid; grid-template-columns:1fr auto; gap:12px; align-items:center; margin:18px 20px 4px; padding:14px 16px; border-radius:14px; border:1px solid rgba(245,192,74,.4); background:linear-gradient(150deg, rgba(245,192,74,.12), rgba(245,192,74,.03)); }
+  .daily-invite b { display:block; font-size:14.5px; } .daily-invite span { display:block; font-size:12px; color:var(--creamDim); margin-top:3px; line-height:1.45; }
+  .daily-invite .di-actions { display:flex; flex-direction:column; gap:6px; }
+  .daily-invite .di-on { border:none; background:var(--mango); color:#080808; font-weight:700; border-radius:9px; padding:10px 14px; font-size:12.5px; cursor:pointer; }
+  .daily-invite .di-later { border:none; background:none; color:var(--creamDim); font-size:11.5px; cursor:pointer; padding:4px; }
+  .daily-card { background:var(--surface); border:1px solid var(--line); border-radius:14px; padding:14px 16px; margin-bottom:14px; display:grid; gap:10px; }
+  .daily-card .dc-row { display:flex; align-items:center; justify-content:space-between; gap:12px; }
+  .daily-card b { font-size:14px; } .daily-card p { margin:0; font-size:12px; color:var(--creamDim); line-height:1.45; }
+  .dc-switch { position:relative; width:48px; height:28px; flex-shrink:0; border-radius:14px; border:1px solid var(--line); background:var(--raised); cursor:pointer; padding:0; }
+  .dc-switch::after { content:''; position:absolute; top:3px; left:3px; width:20px; height:20px; border-radius:50%; background:var(--creamDim); transition:transform .2s; }
+  .dc-switch[aria-checked="true"] { background:var(--mango); border-color:var(--mango); }
+  .dc-switch[aria-checked="true"]::after { transform:translateX(20px); background:#080808; }
+  .dc-switch:focus-visible { outline:2px solid var(--mango); outline-offset:2px; }
   .push-card { display:flex; align-items:center; justify-content:space-between; gap:12px; background:rgba(245,192,74,.08); border:1px solid rgba(245,192,74,.35); border-radius:12px; padding:12px 14px; margin-bottom:14px; }
   .push-card b { display:block; font-size:13.5px; } .push-card span { display:block; font-size:11.5px; color:var(--creamDim); margin-top:2px; line-height:1.4; }
   .push-card button { border:none; background:var(--mango); color:#080808; font-weight:700; border-radius:9px; padding:10px 13px; font-size:12.5px; cursor:pointer; flex-shrink:0; }
@@ -751,6 +764,7 @@ function renderAccount() {
           <div class="mono" style="font-size:13px; color:var(--creamDim); margin-top:2px;">${currentCustomer.phone}</div>
         </div>
         ${loyaltyCardHtml()}
+        ${dailyCardHtml()}
         ${reliabilityCardHtml()}
         ${referralCardHtml()}
         <button class="btn-secondary" style="margin-bottom:10px;" onclick="show('orders'); renderOrders();">Mes commandes</button>
@@ -977,7 +991,7 @@ async function registerClientPush() {
   clientPushOn = true;
 }
 async function syncClientPush() {
-  try { if (currentCustomer && clientPushSupported() && Notification.permission === 'granted') await registerClientPush(); } catch (e) {}
+  try { if (currentCustomer && clientPushSupported() && Notification.permission === 'granted') { await registerClientPush(); document.querySelectorAll('.push-card, .daily-invite').forEach(c => c.remove()); if (document.getElementById('daily-card')) refreshDailyCard(); } } catch (e) {}
 }
 function enableClientPush() {
   if (!clientPushSupported()) { toast(isIOS() && !isStandalone() ? "Ajoutez d'abord l'appli à l'écran d'accueil (Partager, puis Sur l'écran d'accueil)." : "Les notifications ne sont pas disponibles sur ce téléphone."); return; }
@@ -985,13 +999,49 @@ function enableClientPush() {
   Promise.resolve(p).then(async (perm) => {
     perm = perm || Notification.permission;
     if (perm !== 'granted') { toast("Notifications refusées. Vous pouvez les autoriser dans les réglages du téléphone."); return; }
-    try { await registerClientPush(); toast("C'est noté : vous serez prévenu sur ce téléphone."); document.querySelectorAll('.push-card').forEach(c => c.remove()); }
+    try { await registerClientPush(); toast("C'est noté : vous serez prévenu sur ce téléphone."); document.querySelectorAll('.push-card, .daily-invite').forEach(c => c.remove()); if (document.getElementById('daily-card')) refreshDailyCard(); }
     catch (e) { toast("Activation impossible pour le moment. Réessayez."); }
   });
 }
 function clientPushCard() {
   if (clientPushOn || !clientPushSupported() || (window.Notification && Notification.permission === 'denied')) return '';
-  return `<div class="push-card"><div><b>Être prévenu sur ce téléphone</b><span>Acceptation, départ du livreur, messages du restaurant.</span></div><button type="button" onclick="enableClientPush()">Activer</button></div>`;
+  return `<div class="push-card"><div><b>Être prévenu sur ce téléphone</b><span>Plat du jour à 10 h, acceptation, départ du livreur, messages du restaurant.</span></div><button type="button" onclick="enableClientPush()">Activer</button></div>`;
+}
+
+// ---------- Plat du jour à 10 h (notification quotidienne) ----------
+function dailyInviteHidden() { try { return Number(localStorage.getItem('dbf-daily-later') || 0) > Date.now(); } catch (e) { return false; } }
+function dailyInviteHtml() {
+  if (!currentCustomer || clientPushOn || !clientPushSupported() || !window.Notification || Notification.permission !== 'default' || dailyInviteHidden()) return '';
+  return `<div class="daily-invite"><div><b>Le plat du jour, chaque matin à 10 h</b><span>Une notification avec l'offre du jour et le suivi de vos commandes. Vous pouvez l'arrêter quand vous voulez.</span></div>
+    <div class="di-actions"><button type="button" class="di-on" onclick="enableClientPush()">Activer</button><button type="button" class="di-later" onclick="laterDailyInvite()">Plus tard</button></div></div>`;
+}
+function mountDailyInvite() {
+  if (document.querySelector('.daily-invite')) return;
+  const hero = document.querySelector('#view-list .hero');
+  const html = dailyInviteHtml();
+  if (hero && html) hero.insertAdjacentHTML('afterend', html);
+}
+function laterDailyInvite() { try { localStorage.setItem('dbf-daily-later', String(Date.now() + 7 * 864e5)); } catch (e) {} document.querySelectorAll('.daily-invite').forEach(c => c.remove()); }
+function dailyCardInner() {
+  const on = !currentCustomer || currentCustomer.daily_offers !== false;
+  const pushOk = clientPushOn || (window.Notification && Notification.permission === 'granted');
+  return `<div class="dc-row"><b>Le plat du jour à 10 h</b><button type="button" class="dc-switch" role="switch" aria-checked="${on}" aria-label="Recevoir le plat du jour à 10 h" onclick="toggleDailyOffers()"></button></div>
+    <p>${on ? 'Chaque matin, une notification avec le plat du jour d’un restaurant de Daloa.' : 'Vous ne recevez plus le plat du jour. Les notifications de vos commandes continuent.'}</p>
+    ${on && !pushOk && clientPushSupported() ? `<button type="button" class="btn-secondary" style="margin:0;" onclick="enableClientPush()">Activer les notifications sur ce téléphone</button>` : ''}`;
+}
+function dailyCardHtml() { return currentCustomer ? `<div class="daily-card" id="daily-card">${dailyCardInner()}</div>` : ''; }
+function refreshDailyCard() { const el = document.getElementById('daily-card'); if (el) el.innerHTML = dailyCardInner(); }
+let dailyBusy = false;
+async function toggleDailyOffers() {
+  if (!currentCustomer || dailyBusy) return;
+  const next = currentCustomer.daily_offers === false;
+  dailyBusy = true;
+  const { error } = await client.rpc('set_daily_offers', { p_on: next });
+  dailyBusy = false;
+  if (error) { toast("Le réglage n'a pas été enregistré. Vérifiez votre connexion."); return; }
+  currentCustomer.daily_offers = next;
+  refreshDailyCard();
+  toast(next ? 'Vous recevrez le plat du jour à 10 h.' : 'Vous ne recevrez plus le plat du jour.');
 }
 
 // ---------- Mes commandes : suivi, annulation, messages ----------
@@ -2225,6 +2275,7 @@ function renderList() {
 
     </div>
 
+    ${dailyInviteHtml()}
     ${favoritesRailHtml()}
     ${trendingRailHtml()}
     <div class="section-header">
@@ -2796,7 +2847,8 @@ function dismissInstallBanner() {
 (async () => {
   await loadRestaurants();
   await refreshCustomer();
-  if (!currentCustomer && hasSessionBackup()) restoreSession(async () => { await refreshCustomer(); syncClientPush(); });
+  if (!currentCustomer && hasSessionBackup()) restoreSession(async () => { await refreshCustomer(); mountDailyInvite(); syncClientPush(); });
+  mountDailyInvite();
   syncClientPush();
   if (location.hash === '#commandes') navTo('commandes');
   handleDeepLinks();
