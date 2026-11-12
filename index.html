@@ -1012,7 +1012,7 @@ function clientPushCard() {
 function dailyInviteHidden() { try { return Number(localStorage.getItem('dbf-daily-later') || 0) > Date.now(); } catch (e) { return false; } }
 function dailyInviteHtml() {
   if (!currentCustomer || clientPushOn || !clientPushSupported() || !window.Notification || Notification.permission !== 'default' || dailyInviteHidden()) return '';
-  return `<div class="daily-invite"><div><b>Les bons plats du jour sur votre téléphone</b><span>Les offres des restaurants de Daloa, du matin au soir, et le suivi de vos commandes. Vous pouvez arrêter les offres quand vous voulez.</span></div>
+  return `<div class="daily-invite"><div><b>Les bons plats du jour sur votre téléphone</b><span>Les offres des restaurants de Daloa, du matin au soir, et le suivi de vos commandes.</span></div>
     <div class="di-actions"><button type="button" class="di-on" onclick="enableClientPush()">Activer</button><button type="button" class="di-later" onclick="laterDailyInvite()">Plus tard</button></div></div>`;
 }
 function mountDailyInvite() {
@@ -1022,27 +1022,17 @@ function mountDailyInvite() {
   if (hero && html) hero.insertAdjacentHTML('afterend', html);
 }
 function laterDailyInvite() { try { localStorage.setItem('dbf-daily-later', String(Date.now() + 7 * 864e5)); } catch (e) {} document.querySelectorAll('.daily-invite').forEach(c => c.remove()); }
+// Carte du compte : visible seulement tant que les notifications ne sont pas activées sur ce téléphone
 function dailyCardInner() {
-  const on = !currentCustomer || currentCustomer.daily_offers !== false;
+  return `<b>Les offres du jour</b>
+    <p>Activez les notifications pour recevoir les offres des restaurants de Daloa et le suivi de vos commandes.</p>
+    <button type="button" class="btn-secondary" style="margin:0;" onclick="enableClientPush()">Activer les notifications sur ce téléphone</button>`;
+}
+function dailyCardHtml() {
   const pushOk = clientPushOn || (window.Notification && Notification.permission === 'granted');
-  return `<div class="dc-row"><b>Les offres du jour</b><button type="button" class="dc-switch" role="switch" aria-checked="${on}" aria-label="Recevoir les offres du jour" onclick="toggleDailyOffers()"></button></div>
-    <p>${on ? 'Quelques notifications par jour, du matin au soir, avec les offres des restaurants de Daloa.' : 'Vous ne recevez plus les offres du jour. Les notifications de vos commandes continuent.'}</p>
-    ${on && !pushOk && clientPushSupported() ? `<button type="button" class="btn-secondary" style="margin:0;" onclick="enableClientPush()">Activer les notifications sur ce téléphone</button>` : ''}`;
+  return currentCustomer && !pushOk && clientPushSupported() ? `<div class="daily-card" id="daily-card">${dailyCardInner()}</div>` : '';
 }
-function dailyCardHtml() { return currentCustomer ? `<div class="daily-card" id="daily-card">${dailyCardInner()}</div>` : ''; }
-function refreshDailyCard() { const el = document.getElementById('daily-card'); if (el) el.innerHTML = dailyCardInner(); }
-let dailyBusy = false;
-async function toggleDailyOffers() {
-  if (!currentCustomer || dailyBusy) return;
-  const next = currentCustomer.daily_offers === false;
-  dailyBusy = true;
-  const { error } = await client.rpc('set_daily_offers', { p_on: next });
-  dailyBusy = false;
-  if (error) { toast("Le réglage n'a pas été enregistré. Vérifiez votre connexion."); return; }
-  currentCustomer.daily_offers = next;
-  refreshDailyCard();
-  toast(next ? 'Vous recevrez les offres du jour.' : 'Vous ne recevrez plus les offres du jour.');
-}
+function refreshDailyCard() { const el = document.getElementById('daily-card'); const pushOk = clientPushOn || (window.Notification && Notification.permission === 'granted'); if (el && pushOk) el.remove(); }
 
 // ---------- Mes commandes : suivi, annulation, messages ----------
 let myOrders = [];
