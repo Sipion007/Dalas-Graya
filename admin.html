@@ -199,6 +199,20 @@
   .dp-row img, .dp-row .dp-ph { width:72px; height:36px; object-fit:cover; border-radius:6px; background:var(--raised); display:block; }
   .dp-row b { display:block; font-size:12.5px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
   .dp-row span { color:var(--creamDim); font-size:11.5px; }
+  .crea-hint { color:var(--creamDim); font-size:12px; line-height:1.5; margin:6px 0 12px; }
+  .crea-list { display:grid; gap:10px; }
+  .crea-row { display:grid; grid-template-columns:92px minmax(0,1fr); gap:12px; padding:10px; border:1px solid var(--line); border-radius:12px; }
+  .crea-row.off { opacity:.55; }
+  .crea-row img { width:92px; height:115px; object-fit:cover; border-radius:8px; background:var(--raised); display:block; }
+  .crea-txt { min-width:0; font-size:12.5px; }
+  .crea-txt b { display:block; font-size:13px; }
+  .crea-txt span { display:block; color:var(--cream); margin-top:2px; }
+  .crea-txt small { display:block; color:var(--creamDim); font-size:11.5px; margin-top:4px; }
+  .crea-row .w-btn:disabled { opacity:.35; cursor:default; }
+  .crea-form { display:grid; gap:10px; padding:12px; border:1px solid var(--line); border-radius:12px; margin-bottom:12px; background:var(--raised); }
+  .crea-field { display:grid; gap:5px; font-size:12px; color:var(--creamDim); font-weight:700; }
+  .crea-field input, .crea-field select, .crea-field textarea { width:100%; box-sizing:border-box; background:#0f0f0f; color:#fff; border:1px solid #3A3A3A; border-radius:8px; padding:9px 10px; font:inherit; font-size:13px; font-weight:400; }
+  .crea-prev { max-width:180px; border-radius:8px; border:1px solid var(--line); }
   @media (max-width: 899px) { .dp-grid { grid-template-columns: 1fr; } }
   .pn-caticker { background: linear-gradient(135deg, #1C2A1E, var(--surface)); border:1px solid #2E4531; }
   .ca-ticker-box { display:flex; flex-direction:column; align-items:flex-start; gap:4px; }
@@ -495,6 +509,7 @@
     <section class="pn pn-daily">
     <div class="pn-head2"><div class="section-title" id="section-daily">Affiche du jour</div><span class="cl-count" id="daily-reach"></span></div>
     <div id="daily-box"><div class="empty">Chargement…</div></div>
+    <div id="crea-box"></div>
     </section>
     <section class="pn pn-promo">
     <div class="section-title" id="section-promo">Codes promo et parrainage</div>
@@ -2276,6 +2291,7 @@ async function loadDaily() {
   dailyReach = r.data || null;
   dailyEnabled = !(st.data && st.data.value === false);
   renderDaily();
+  if (!creas.length) loadCreas();
 }
 function renderDaily() {
   const box = document.getElementById('daily-box');
@@ -2284,7 +2300,7 @@ function renderDaily() {
   const rc = document.getElementById('daily-reach');
   if (rc) rc.textContent = dailyReach ? `${dailyReach.customers} client${dailyReach.customers > 1 ? 's' : ''} joignable${dailyReach.customers > 1 ? 's' : ''}` : '';
   const today = dailyPosters.find(p => p.day === dailyToday());
-  const hasImg = !!(today && today.image_path);
+  const hasImg = !!(today && (today.image_url || today.image_path));
   let status = '', cls = '';
   if (!today) status = dailyEnabled ? "L'affiche d'aujourd'hui sera préparée automatiquement à 9 h, puis envoyée à 10 h." : 'Envoi automatique suspendu.';
   else if (today.status === 'sent') { status = `Envoyée à ${hhmm(today.sent_at)} : ${escHtml(today.note || today.sent_count + ' téléphone(s)')}.`; cls = 'ok'; }
@@ -2299,20 +2315,21 @@ function renderDaily() {
     <div class="dp-grid">
       <div>
         <div class="w-label" style="margin-bottom:8px;">Aujourd'hui, ${escHtml(dailyDayLabel(dailyToday()))}</div>
-        ${hasImg ? `<img class="dp-img" src="${posterUrl(today.image_path)}" alt="Affiche du jour : ${escHtml(today.title)}">
+        ${hasImg ? `<img class="dp-img" src="${escHtml(posterImg(today))}" alt="Affiche du jour : ${escHtml(today.title)}">
           <div class="dp-notif"><b>${escHtml(today.title)}</b>${escHtml(today.body)}</div>` : `<div class="dp-img" style="display:flex;align-items:center;justify-content:center;color:var(--creamDim);font-size:12.5px;">Pas encore d'affiche</div>`}
         <div class="dp-status ${cls}" id="daily-status">${status}</div>
         <div class="dp-actions">
-          ${sent ? '' : `<button class="w-btn" onclick="dailyAction('regenerate')" ${dailyBusy ? 'disabled' : ''}>${hasImg ? 'Choisir un autre plat' : 'Préparer maintenant'}</button>`}
+          ${sent ? '' : `<button class="w-btn" onclick="dailyAction('regenerate')" ${dailyBusy ? 'disabled' : ''}>${hasImg ? 'Passer à une autre affiche' : 'Préparer maintenant'}</button>`}
           ${sent || !dailyEnabled ? '' : `<button class="w-btn go" onclick="dailyAction('send')" ${dailyBusy ? 'disabled' : ''}>Envoyer maintenant</button>`}
-          ${hasImg && today.portrait_path ? `<a class="w-btn" href="${posterUrl(today.portrait_path)}" target="_blank" rel="noopener" download>Image pour WhatsApp</a>` : ''}
+          ${hasImg && (today.portrait_url || today.portrait_path) ? `<a class="w-btn" href="${escHtml(posterImg(today, 'portrait'))}" target="_blank" rel="noopener" download>Image pour WhatsApp</a>` : ''}
         </div>
       </div>
       <div>
         <div class="w-label" style="margin-bottom:8px;">Les 7 derniers jours</div>
-        <div class="dp-hist">${hist.length ? hist.map(p => `<div class="dp-row">${p.image_path ? `<img src="${posterUrl(p.image_path)}" alt="" loading="lazy">` : '<span class="dp-ph"></span>'}<div><b>${escHtml(p.title && p.title !== '-' ? p.title : 'Aucune affiche')}</b><span>${escHtml(dailyDayLabel(p.day))} · ${p.status === 'sent' ? 'envoyée à ' + p.sent_count + ' téléphone(s)' : p.status === 'skipped' ? 'non envoyée (suspendu)' : p.status === 'failed' ? 'échec' : 'non envoyée'}</span></div></div>`).join('') : '<div class="empty">Aucun envoi pour le moment.</div>'}</div>
+        <div class="dp-hist">${hist.length ? hist.map(p => `<div class="dp-row">${(p.image_url || p.image_path) ? `<img src="${escHtml(posterImg(p))}" alt="" loading="lazy">` : '<span class="dp-ph"></span>'}<div><b>${escHtml(p.title && p.title !== '-' ? p.title : 'Aucune affiche')}</b><span>${escHtml(dailyDayLabel(p.day))} · ${p.status === 'sent' ? 'envoyée à ' + p.sent_count + ' téléphone(s)' : p.status === 'skipped' ? 'non envoyée (suspendu)' : p.status === 'failed' ? 'échec' : 'non envoyée'}</span></div></div>`).join('') : '<div class="empty">Aucun envoi pour le moment.</div>'}</div>
       </div>
     </div>`;
+  renderCreas();
 }
 async function toggleDailyEnabled() {
   if (dailyBusy) return;
@@ -2324,7 +2341,7 @@ async function toggleDailyEnabled() {
   dailyEnabled = next;
   renderDaily();
 }
-function dailySig(p) { return p ? [p.image_path, p.status, p.note || ''].join('|') : ''; }
+function dailySig(p) { return p ? [p.image_url || p.image_path, p.title, p.status, p.note || ''].join('|') : ''; }
 async function dailyAction(mode) {
   if (dailyBusy) return;
   if (mode === 'send' && !confirm(`Envoyer l'affiche maintenant à ${dailyReach ? dailyReach.phones : 0} téléphone(s) ? L'envoi de 10 h n'aura alors pas lieu aujourd'hui.`)) return;
@@ -2347,6 +2364,160 @@ async function dailyAction(mode) {
       if (!changed) { const s2 = document.getElementById('daily-status'); if (s2) { s2.className = 'dp-status bad'; s2.textContent = 'Pas de réponse du serveur. Réessayez dans un instant.'; } }
     }
   }, 3000);
+}
+
+// ---------- Bibliothèque de créas (envoyées à tour de rôle) ----------
+let creas = [], creaBusy = false, creaForm = { open: false, file: null, preview: '', rid: '', mid: '', title: '', body: '', items: [] };
+function posterImg(p, kind) { return kind === 'portrait' ? (p.portrait_url || posterUrl(p.portrait_path)) : (p.image_url || posterUrl(p.image_path)); }
+async function loadCreas() {
+  const { data } = await client.from('poster_library').select('*').order('sort');
+  creas = data || [];
+  renderCreas();
+}
+function creaRestName(id) { const r = (restaurants || []).find(x => x.id === id); return r ? r.name : 'Tous les restaurants'; }
+function renderCreas() {
+  const box = document.getElementById('crea-box');
+  if (!box) return;
+  const today = dailyPosters.find(p => p.day === dailyToday());
+  const sentToday = !!(today && today.status === 'sent');
+  const active = creas.filter(c => c.active).length;
+  box.innerHTML = `
+    <div class="pn-head2" style="margin-top:22px;"><div class="w-label">Vos créas · ${active} en rotation sur ${creas.length}</div>
+      <button class="w-btn go" onclick="toggleCreaForm()">${creaForm.open ? 'Fermer' : 'Ajouter une créa'}</button></div>
+    <p class="crea-hint">Chaque jour à 10 h, la créa active la moins récemment envoyée part automatiquement. Une créa est sautée ce jour-là si son restaurant est en pause ou fermé à midi, ou si son plat est épuisé. Sans créa disponible, une affiche est créée automatiquement à partir des plats.</p>
+    ${creaForm.open ? creaFormHtml() : ''}
+    <div class="crea-list">${creas.length ? creas.map((c, k) => `<div class="crea-row ${c.active ? '' : 'off'}">
+        <img src="${escHtml(c.full_url)}" alt="${escHtml(c.title)}" loading="lazy">
+        <div class="crea-txt"><b>${escHtml(c.title)}</b><span>${escHtml(c.body)}</span>
+          <small>${escHtml(creaRestName(c.restaurant_id))} · ${c.active ? (c.last_used ? 'dernier envoi le ' + escHtml(dailyDayLabel(c.last_used)) : 'jamais envoyée') : 'en pause'}${today && today.library_id === c.id && !sentToday ? ' · prévue aujourd’hui' : ''}</small>
+          <div class="dp-actions" style="margin-top:8px;">
+            ${!sentToday && c.active && !(today && today.library_id === c.id) ? `<button class="w-btn" onclick="useCreaToday('${c.id}')" ${creaBusy ? 'disabled' : ''}>Utiliser aujourd'hui</button>` : ''}
+            <button class="w-btn" onclick="toggleCrea('${c.id}')" ${creaBusy ? 'disabled' : ''}>${c.active ? 'Mettre en pause' : 'Réactiver'}</button>
+            <button class="w-btn" onclick="moveCrea('${c.id}', -1)" ${k === 0 || creaBusy ? 'disabled' : ''}>Monter</button>
+            <button class="w-btn" onclick="moveCrea('${c.id}', 1)" ${k === creas.length - 1 || creaBusy ? 'disabled' : ''}>Descendre</button>
+            <a class="w-btn" href="${escHtml(c.full_url)}" target="_blank" rel="noopener" download>Image</a>
+            <button class="w-btn danger" onclick="deleteCrea('${c.id}')" ${creaBusy ? 'disabled' : ''}>Supprimer</button>
+          </div>
+        </div></div>`).join('') : '<div class="empty">Aucune créa pour le moment.</div>'}</div>`;
+}
+function creaFormHtml() {
+  const f = creaForm;
+  return `<div class="crea-form">
+    <label class="crea-field">Image de la créa (JPG ou PNG)<input type="file" id="crea-file" accept="image/jpeg,image/png,image/webp" onchange="creaPickFile(this)"></label>
+    ${f.preview ? `<img class="crea-prev" src="${f.preview}" alt="Aperçu de la créa">` : ''}
+    <label class="crea-field">Restaurant<select id="crea-rest" onchange="creaPickRest(this.value)"><option value="">Choisir…</option>${(restaurants || []).map(r => `<option value="${r.id}" ${r.id === f.rid ? 'selected' : ''}>${escHtml(r.name)}</option>`).join('')}</select></label>
+    <label class="crea-field">Plat ouvert au toucher (facultatif)<select id="crea-dish" onchange="creaPickDish(this.value)" ${f.rid ? '' : 'disabled'}><option value="">Toute la carte du restaurant</option>${f.items.map(m => `<option value="${m.id}" ${m.id === f.mid ? 'selected' : ''}>${escHtml(m.name)} · ${money(m.price)}</option>`).join('')}</select></label>
+    <label class="crea-field">Titre de la notification<input id="crea-title" maxlength="80" value="${escHtml(f.title)}" oninput="creaForm.title=this.value" placeholder="Ex. Le Garba du Garba Center"></label>
+    <label class="crea-field">Texte de la notification<textarea id="crea-body" maxlength="180" rows="2" oninput="creaForm.body=this.value" placeholder="Ex. Le kit à seulement 500 F. Commandez maintenant.">${escHtml(f.body)}</textarea></label>
+    <p class="crea-hint">Vérifiez que le prix écrit sur la créa est le même que dans l'application.</p>
+    <button class="w-btn go" onclick="saveCrea()" ${creaBusy ? 'disabled' : ''}>${creaBusy ? 'Envoi…' : 'Ajouter à la rotation'}</button>
+  </div>`;
+}
+function toggleCreaForm() { creaForm.open = !creaForm.open; if (!creaForm.open) creaForm = { open: false, file: null, preview: '', rid: '', mid: '', title: '', body: '', items: [] }; renderCreas(); }
+function creaPickFile(inp) {
+  const f = inp.files && inp.files[0];
+  if (!f) return;
+  if (!/^image\//.test(f.type)) { alert('Choisissez une image (JPG ou PNG).'); return; }
+  creaForm.file = f;
+  if (creaForm.preview) URL.revokeObjectURL(creaForm.preview);
+  creaForm.preview = URL.createObjectURL(f);
+  renderCreas();
+}
+async function creaPickRest(rid) {
+  creaForm.rid = rid; creaForm.mid = ''; creaForm.items = [];
+  if (rid) { const { data } = await client.from('menu_items').select('id,name,price').eq('restaurant_id', rid).order('name'); creaForm.items = data || []; }
+  if (!creaForm.title && rid) creaForm.title = 'Le meilleur de ' + creaRestName(rid);
+  renderCreas();
+}
+function creaPickDish(mid) {
+  creaForm.mid = mid;
+  const m = creaForm.items.find(x => x.id === mid);
+  if (m) { creaForm.title = (m.name + ' chez ' + creaRestName(creaForm.rid)).slice(0, 80); creaForm.body = `Seulement ${money(m.price)}. Commandez maintenant, livré chez vous à Daloa.`; }
+  renderCreas();
+}
+function loadImg(file) { return new Promise((res, rej) => { const u = URL.createObjectURL(file); const i = new Image(); i.onload = () => { res(i); }; i.onerror = () => rej(new Error('image')); i.src = u; }); }
+function canvasBlob(cv, q) { return new Promise((res, rej) => cv.toBlob(b => b ? res(b) : rej(new Error('compression')), 'image/jpeg', q)); }
+// Version portrait (max 1080 px) et version notification 1200 x 600 : créa entière au centre, fond flouté
+async function buildCreaImages(file) {
+  const img = await loadImg(file);
+  const fw = Math.min(1080, img.naturalWidth), fh = Math.round(img.naturalHeight * fw / img.naturalWidth);
+  const full = document.createElement('canvas'); full.width = fw; full.height = fh;
+  full.getContext('2d').drawImage(img, 0, 0, fw, fh);
+  const W = 1200, H = 600;
+  const small = document.createElement('canvas'); small.width = 30; small.height = 15;
+  const sx = small.getContext('2d');
+  const s = Math.max(30 / img.naturalWidth, 15 / img.naturalHeight);
+  sx.drawImage(img, (30 - img.naturalWidth * s) / 2, (15 - img.naturalHeight * s) / 2, img.naturalWidth * s, img.naturalHeight * s);
+  const notif = document.createElement('canvas'); notif.width = W; notif.height = H;
+  const nx = notif.getContext('2d');
+  nx.imageSmoothingEnabled = true; nx.imageSmoothingQuality = 'high';
+  nx.drawImage(small, 0, 0, W, H);
+  nx.fillStyle = 'rgba(0,0,0,0.45)'; nx.fillRect(0, 0, W, H);
+  const h2 = H, w2 = Math.round(img.naturalWidth * h2 / img.naturalHeight);
+  const dw = Math.min(W, w2), dh = Math.round(dw === w2 ? h2 : img.naturalHeight * W / img.naturalWidth);
+  nx.drawImage(img, (W - dw) / 2, (H - dh) / 2, dw, dh);
+  return { full: await canvasBlob(full, 0.86), notif: await canvasBlob(notif, 0.84) };
+}
+async function saveCrea() {
+  const f = creaForm;
+  const title = String(f.title || '').trim(), body = String(f.body || '').trim();
+  if (!f.file) { alert("Choisissez l'image de la créa."); return; }
+  if (!f.rid) { alert('Choisissez le restaurant de la créa.'); return; }
+  if (title.length < 2 || body.length < 2) { alert('Écrivez le titre et le texte de la notification.'); return; }
+  creaBusy = true; renderCreas();
+  try {
+    const imgs = await buildCreaImages(f.file);
+    const id = crypto.randomUUID();
+    const up1 = await client.storage.from('posters').upload(`library/${id}-full.jpg`, imgs.full, { contentType: 'image/jpeg' });
+    const up2 = await client.storage.from('posters').upload(`library/${id}-notif.jpg`, imgs.notif, { contentType: 'image/jpeg' });
+    if (up1.error || up2.error) throw new Error('upload');
+    const sort = creas.reduce((m, c) => Math.max(m, c.sort || 0), 0) + 1;
+    const { error } = await client.from('poster_library').insert({ id, title, body, notif_url: posterUrl(`library/${id}-notif.jpg`), full_url: posterUrl(`library/${id}-full.jpg`), restaurant_id: f.rid, item_id: f.mid || null, active: true, sort });
+    if (error) throw error;
+    creaForm = { open: false, file: null, preview: '', rid: '', mid: '', title: '', body: '', items: [] };
+  } catch (e) {
+    alert("La créa n'a pas été ajoutée. Vérifiez votre connexion et réessayez.");
+  }
+  creaBusy = false;
+  await loadCreas();
+}
+async function toggleCrea(id) {
+  const c = creas.find(x => x.id === id); if (!c || creaBusy) return;
+  creaBusy = true;
+  const { error } = await client.from('poster_library').update({ active: !c.active }).eq('id', id);
+  creaBusy = false;
+  if (error) { alert('Action impossible pour le moment.'); return; }
+  await loadCreas();
+}
+async function moveCrea(id, dir) {
+  const i = creas.findIndex(x => x.id === id), j = i + dir;
+  if (creaBusy || i < 0 || j < 0 || j >= creas.length) return;
+  creaBusy = true;
+  const a = creas[i], b = creas[j];
+  const sa = a.sort, sb2 = b.sort === sa ? sa + dir : b.sort;
+  const r1 = await client.from('poster_library').update({ sort: sb2 }).eq('id', a.id);
+  const r2 = await client.from('poster_library').update({ sort: sa }).eq('id', b.id);
+  creaBusy = false;
+  if (r1.error || r2.error) alert('Action impossible pour le moment.');
+  await loadCreas();
+}
+async function deleteCrea(id) {
+  const c = creas.find(x => x.id === id); if (!c || creaBusy) return;
+  if (!confirm(`Supprimer la créa « ${c.title} » ? Elle ne sera plus envoyée.`)) return;
+  creaBusy = true;
+  const { error } = await client.from('poster_library').delete().eq('id', id);
+  if (!error && /\/posters\/library\//.test(c.full_url)) await client.storage.from('posters').remove([`library/${id}-full.jpg`, `library/${id}-notif.jpg`]);
+  creaBusy = false;
+  if (error) { alert('Suppression impossible pour le moment.'); return; }
+  await loadCreas();
+}
+async function useCreaToday(id) {
+  if (creaBusy) return;
+  creaBusy = true;
+  const { error } = await client.rpc('admin_use_creative_today', { p_id: id });
+  creaBusy = false;
+  if (error) { alert(/deja_envoyee/.test(error.message || '') ? "L'affiche d'aujourd'hui est déjà partie." : 'Action impossible pour le moment.'); return; }
+  await loadDaily();
 }
 
 async function loadGrowth() {
