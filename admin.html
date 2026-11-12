@@ -199,6 +199,18 @@
   .dp-row img, .dp-row .dp-ph { width:72px; height:36px; object-fit:cover; border-radius:6px; background:var(--raised); display:block; }
   .dp-row b { display:block; font-size:12.5px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
   .dp-row span { color:var(--creamDim); font-size:11.5px; }
+  .dp-hours { display:grid; gap:10px; justify-items:start; }
+  .dp-hlist { display:flex; flex-wrap:wrap; gap:8px; }
+  .dp-h { display:flex; gap:6px; align-items:center; }
+  .dp-h input { background:#0f0f0f; color:#fff; border:1px solid #3A3A3A; border-radius:8px; padding:8px 10px; font:inherit; font-size:14px; color-scheme:dark; }
+  .dp-slots { display:grid; grid-template-columns:repeat(auto-fill, minmax(260px, 1fr)); gap:12px; }
+  .dp-slot { border:1px solid var(--line); border-radius:12px; padding:10px; display:grid; gap:8px; align-content:start; }
+  .dp-slot.done { border-color:rgba(143,199,154,.35); }
+  .dp-time { font-family:inherit; font-weight:800; font-size:18px; color:var(--mango); }
+  .dp-time small { display:block; font-size:11px; font-weight:400; color:var(--creamDim); }
+  .dp-empty { display:flex; align-items:center; justify-content:center; color:var(--creamDim); font-size:12.5px; }
+  .dp-slot .dp-status { margin:6px 0 8px; }
+  .dp-slot .dp-notif { margin-top:0; }
   .crea-hint { color:var(--creamDim); font-size:12px; line-height:1.5; margin:6px 0 12px; }
   .crea-list { display:grid; gap:10px; }
   .crea-row { display:grid; grid-template-columns:92px minmax(0,1fr); gap:12px; padding:10px; border:1px solid var(--line); border-radius:12px; }
@@ -2276,60 +2288,104 @@ let promoCodes = [], momoSettings = {}, driverBonus = {}, leaderboard = [], payQ
 let restRefBonus = 2000, restRefThreshold = 10;
 const promoForm = { kind: 'percent' };
 // ---------- Affiche du jour (notification à 10 h) ----------
-let dailyPosters = [], dailyReach = null, dailyEnabled = true, dailyBusy = false, dailyPollTimer = null;
+let dailyPosters = [], dailyReach = null, dailyEnabled = true, dailyBusy = false, dailyPollTimer = null, dailyBusySlot = null;
+let dailySlots = ['09:30', '11:45', '16:00', '19:00'], slotEdit = null;
 function posterUrl(p) { return p ? SUPABASE_URL + '/storage/v1/object/public/posters/' + p : ''; }
+function posterImg(p, kind) { return kind === 'portrait' ? (p.portrait_url || posterUrl(p.portrait_path)) : (p.image_url || posterUrl(p.image_path)); }
 function dailyToday() { return new Date().toISOString().slice(0, 10); }
-function dailyDayLabel(d) { return new Date(d + 'T12:00:00Z').toLocaleDateString('fr-FR', { weekday: 'long', day: 'numeric', month: 'long', timeZone: 'UTC' }); }
+function dailyDayLabel(d) { return new Date(String(d).slice(0, 10) + 'T12:00:00Z').toLocaleDateString('fr-FR', { weekday: 'long', day: 'numeric', month: 'long', timeZone: 'UTC' }); }
+function slotTxt(t) { const m = /^(\d{1,2}):(\d{2})/.exec(t || ''); return m ? Number(m[1]) + ' h' + (m[2] !== '00' ? ' ' + m[2] : '') : ''; }
+function slotMin(t) { const m = /^(\d{1,2}):(\d{2})/.exec(t || ''); return m ? Number(m[1]) * 60 + Number(m[2]) : 0; }
+function nowMin() { const d = new Date(); return d.getUTCHours() * 60 + d.getUTCMinutes(); }
+function slotsSentence(list) { const l = list.map(slotTxt); return l.length === 1 ? l[0] : l.slice(0, -1).join(', ') + ' et ' + l[l.length - 1]; }
 async function loadDaily() {
   const since = new Date(Date.now() - 8 * 864e5).toISOString().slice(0, 10);
-  const [p, r, st] = await Promise.all([
+  const [p, r, st, sl] = await Promise.all([
     client.from('daily_posters').select('*').gte('day', since).order('day', { ascending: false }),
     client.rpc('admin_daily_poster_reach'),
     client.from('app_settings').select('value').eq('key', 'daily_poster_enabled').maybeSingle(),
+    client.from('app_settings').select('value').eq('key', 'daily_poster_slots').maybeSingle(),
   ]);
-  dailyPosters = p.data || [];
+  dailyPosters = (p.data || []).slice().sort((a, b) => a.day < b.day ? 1 : a.day > b.day ? -1 : (a.slot || 1) - (b.slot || 1));
   dailyReach = r.data || null;
   dailyEnabled = !(st.data && st.data.value === false);
+  if (sl.data && Array.isArray(sl.data.value) && sl.data.value.length) dailySlots = sl.data.value.slice();
   renderDaily();
   if (!creas.length) loadCreas();
 }
+function todayRow(slot) { return dailyPosters.find(p => p.day === dailyToday() && (p.slot || 1) === slot) || null; }
+function nextSlot() {
+  const n = nowMin();
+  for (let i = 1; i <= dailySlots.length; i++) { const r = todayRow(i); if ((!r || r.status === 'ready' || r.status === 'failed') && slotMin(dailySlots[i - 1]) + 40 > n) return i; }
+  return null;
+}
+function slotCard(i) {
+  const time = dailySlots[i - 1], row = todayRow(i), reach = dailyReach ? dailyReach.phones : 0;
+  const late = nowMin() > slotMin(time) + 40;
+  const hasImg = !!(row && (row.image_url || row.image_path));
+  const sent = !!(row && row.status === 'sent');
+  const busy = dailyBusy && dailyBusySlot === i;
+  let status = '', cls = '';
+  if (busy) status = dailyBusyText;
+  else if (!row) status = late ? 'Pas d’envoi à ce créneau aujourd’hui.' : (dailyEnabled ? 'L’affiche sera choisie automatiquement.' : 'Envoi automatique suspendu.');
+  else if (sent) { status = `Envoyée à ${hhmm(row.sent_at)} : ${escHtml(row.note || row.sent_count + ' téléphone(s)')}.`; cls = 'ok'; }
+  else if (row.status === 'ready') status = late ? 'Non envoyée.' : dailyEnabled ? `Prête. Partira à ${slotTxt(time)} vers ${reach} téléphone${reach > 1 ? 's' : ''}.` + (row.note ? ` Dernier essai : ${escHtml(row.note)}` : '') : 'Prête, mais l’envoi automatique est suspendu.';
+  else if (row.status === 'skipped') { status = 'Non envoyée : envoi automatique suspendu.'; cls = 'bad'; }
+  else { status = 'Problème : ' + escHtml(row.note || 'l’affiche n’a pas pu être préparée') + '.'; cls = 'bad'; }
+  const canAct = !sent && !late && (!row || row.status !== 'skipped');
+  return `<div class="dp-slot ${sent ? 'done' : ''}" data-slot="${i}">
+    <div class="dp-time">${slotTxt(time)}${row && row.send_at && row.send_at !== time ? `<small>prévue à ${slotTxt(row.send_at)}</small>` : ''}</div>
+    ${hasImg ? `<img class="dp-img" src="${escHtml(posterImg(row))}" alt="Affiche de ${slotTxt(time)} : ${escHtml(row.title)}">` : `<div class="dp-img dp-empty">${late ? 'Pas d’affiche' : 'À venir'}</div>`}
+    <div class="dp-body">
+      ${hasImg ? `<div class="dp-notif"><b>${escHtml(row.title)}</b>${escHtml(row.body)}</div>` : ''}
+      <div class="dp-status ${cls}">${status}</div>
+      <div class="dp-actions">
+        ${canAct ? `<button class="w-btn" onclick="dailyAction('regenerate', ${i})" ${dailyBusy ? 'disabled' : ''}>${hasImg ? 'Changer d’affiche' : 'Choisir maintenant'}</button>` : ''}
+        ${canAct && dailyEnabled ? `<button class="w-btn go" onclick="dailyAction('send', ${i})" ${dailyBusy ? 'disabled' : ''}>Envoyer maintenant</button>` : ''}
+        ${hasImg && (row.portrait_url || row.portrait_path) ? `<a class="w-btn" href="${escHtml(posterImg(row, 'portrait'))}" target="_blank" rel="noopener" download>Image pour WhatsApp</a>` : ''}
+      </div>
+    </div>
+  </div>`;
+}
+let dailyBusyText = '';
 function renderDaily() {
   const box = document.getElementById('daily-box');
   if (!box) return;
-  const reach = dailyReach ? dailyReach.phones : 0;
   const rc = document.getElementById('daily-reach');
   if (rc) rc.textContent = dailyReach ? `${dailyReach.customers} client${dailyReach.customers > 1 ? 's' : ''} joignable${dailyReach.customers > 1 ? 's' : ''}` : '';
-  const today = dailyPosters.find(p => p.day === dailyToday());
-  const hasImg = !!(today && (today.image_url || today.image_path));
-  let status = '', cls = '';
-  if (!today) status = dailyEnabled ? "L'affiche d'aujourd'hui sera préparée automatiquement à 9 h, puis envoyée à 10 h." : 'Envoi automatique suspendu.';
-  else if (today.status === 'sent') { status = `Envoyée à ${hhmm(today.sent_at)} : ${escHtml(today.note || today.sent_count + ' téléphone(s)')}.`; cls = 'ok'; }
-  else if (today.status === 'ready') status = dailyEnabled ? `Prête. Elle partira à 10 h vers ${reach} téléphone${reach > 1 ? 's' : ''}.` + (today.note ? ` Dernier essai : ${escHtml(today.note)}` : '') : "Prête, mais l'envoi automatique est suspendu.";
-  else if (today.status === 'skipped') { status = "Non envoyée aujourd'hui : envoi automatique suspendu."; cls = 'bad'; }
-  else { status = 'Problème : ' + escHtml(today.note || "l'affiche n'a pas pu être préparée") + '.'; cls = 'bad'; }
-  const sent = !!(today && today.status === 'sent');
-  const hist = dailyPosters.filter(p => p.day !== dailyToday()).slice(0, 7);
+  // Envois d'aujourd'hui faits à une heure qui n'est plus dans la liste (après un changement d'horaires)
+  const extra = dailyPosters.filter(p => p.day === dailyToday() && (p.slot || 1) > dailySlots.length && p.status === 'sent');
+  const hist = dailyPosters.filter(p => p.day !== dailyToday()).slice(0, 28);
+  const se = slotEdit || dailySlots;
   box.innerHTML = `
-    <div class="dp-top"><div><b>Envoi automatique chaque jour à 10 h</b><span>Une notification avec l'affiche du jour, envoyée aux clients qui ont activé les notifications.</span></div>
-      <button type="button" class="dp-switch" role="switch" aria-checked="${dailyEnabled}" aria-label="Envoi automatique de l'affiche du jour" onclick="toggleDailyEnabled()" ${dailyBusy ? 'disabled' : ''}></button></div>
-    <div class="dp-grid">
-      <div>
-        <div class="w-label" style="margin-bottom:8px;">Aujourd'hui, ${escHtml(dailyDayLabel(dailyToday()))}</div>
-        ${hasImg ? `<img class="dp-img" src="${escHtml(posterImg(today))}" alt="Affiche du jour : ${escHtml(today.title)}">
-          <div class="dp-notif"><b>${escHtml(today.title)}</b>${escHtml(today.body)}</div>` : `<div class="dp-img" style="display:flex;align-items:center;justify-content:center;color:var(--creamDim);font-size:12.5px;">Pas encore d'affiche</div>`}
-        <div class="dp-status ${cls}" id="daily-status">${status}</div>
-        <div class="dp-actions">
-          ${sent ? '' : `<button class="w-btn" onclick="dailyAction('regenerate')" ${dailyBusy ? 'disabled' : ''}>${hasImg ? 'Passer à une autre affiche' : 'Préparer maintenant'}</button>`}
-          ${sent || !dailyEnabled ? '' : `<button class="w-btn go" onclick="dailyAction('send')" ${dailyBusy ? 'disabled' : ''}>Envoyer maintenant</button>`}
-          ${hasImg && (today.portrait_url || today.portrait_path) ? `<a class="w-btn" href="${escHtml(posterImg(today, 'portrait'))}" target="_blank" rel="noopener" download>Image pour WhatsApp</a>` : ''}
-        </div>
-      </div>
-      <div>
-        <div class="w-label" style="margin-bottom:8px;">Les 7 derniers jours</div>
-        <div class="dp-hist">${hist.length ? hist.map(p => `<div class="dp-row">${(p.image_url || p.image_path) ? `<img src="${escHtml(posterImg(p))}" alt="" loading="lazy">` : '<span class="dp-ph"></span>'}<div><b>${escHtml(p.title && p.title !== '-' ? p.title : 'Aucune affiche')}</b><span>${escHtml(dailyDayLabel(p.day))} · ${p.status === 'sent' ? 'envoyée à ' + p.sent_count + ' téléphone(s)' : p.status === 'skipped' ? 'non envoyée (suspendu)' : p.status === 'failed' ? 'échec' : 'non envoyée'}</span></div></div>`).join('') : '<div class="empty">Aucun envoi pour le moment.</div>'}</div>
-      </div>
-    </div>`;
+    <div class="dp-top"><div><b>${dailySlots.length} envoi${dailySlots.length > 1 ? 's' : ''} automatique${dailySlots.length > 1 ? 's' : ''} par jour : ${slotsSentence(dailySlots)}</b><span>Une notification avec une affiche, envoyée aux clients qui ont activé les notifications. Une créa différente à chaque envoi.</span></div>
+      <button type="button" class="dp-switch" role="switch" aria-checked="${dailyEnabled}" aria-label="Envois automatiques des affiches" onclick="toggleDailyEnabled()" ${dailyBusy ? 'disabled' : ''}></button></div>
+    <div class="dp-hours">
+      ${slotEdit ? `<div class="w-label">Heures d’envoi (6 au maximum)</div>
+        <div class="dp-hlist">${se.map((t, k) => `<span class="dp-h"><input type="time" value="${t}" aria-label="Heure d’envoi ${k + 1}" onchange="slotEdit[${k}]=this.value"><button class="w-btn" onclick="slotEditRemove(${k})" ${se.length < 2 ? 'disabled' : ''} aria-label="Retirer cette heure">Retirer</button></span>`).join('')}</div>
+        <div class="dp-actions">${se.length < 6 ? `<button class="w-btn" onclick="slotEditAdd()">Ajouter une heure</button>` : ''}<button class="w-btn go" onclick="saveSlots()">Enregistrer</button><button class="w-btn" onclick="slotEdit=null;renderDaily()">Annuler</button></div>`
+      : `<button class="w-btn" onclick="slotEdit=dailySlots.slice();renderDaily()">Modifier les heures d’envoi</button>`}
+    </div>
+    <div class="w-label" style="margin:16px 0 8px;">Aujourd’hui, ${escHtml(dailyDayLabel(dailyToday()))}</div>
+    <div class="dp-slots">${dailySlots.map((_, k) => slotCard(k + 1)).join('')}</div>
+    ${extra.length ? `<div class="dp-hist" style="margin-top:10px;">${extra.map(histRow).join('')}</div>` : ''}
+    <div class="w-label" style="margin:18px 0 8px;">Les 7 derniers jours</div>
+    <div class="dp-hist">${hist.length ? hist.map(histRow).join('') : '<div class="empty">Aucun envoi pour le moment.</div>'}</div>`;
   renderCreas();
+}
+function histRow(p) {
+  return `<div class="dp-row">${(p.image_url || p.image_path) ? `<img src="${escHtml(posterImg(p))}" alt="" loading="lazy">` : '<span class="dp-ph"></span>'}<div><b>${escHtml(p.title && p.title !== '-' ? p.title : 'Aucune affiche')}</b><span>${escHtml(dailyDayLabel(p.day))}${p.send_at ? ' à ' + slotTxt(p.send_at) : ''} · ${p.status === 'sent' ? 'envoyée à ' + p.sent_count + ' téléphone(s)' : p.status === 'skipped' ? 'non envoyée (suspendu)' : p.status === 'failed' ? 'échec' : 'non envoyée'}</span></div></div>`;
+}
+function slotEditRemove(k) { if (slotEdit.length > 1) { slotEdit.splice(k, 1); renderDaily(); } }
+function slotEditAdd() { if (slotEdit.length < 6) { slotEdit.push('12:00'); renderDaily(); } }
+async function saveSlots() {
+  const list = [...new Set(slotEdit.filter(t => /^\d{2}:\d{2}$/.test(t)))].sort();
+  if (!list.length) { alert('Gardez au moins une heure d’envoi.'); return; }
+  if (list.length !== slotEdit.length) { alert('Deux heures sont identiques ou une heure est vide. Corrigez puis enregistrez.'); return; }
+  const { error } = await client.rpc('admin_set_setting', { p_key: 'daily_poster_slots', p_value: list });
+  if (error) { alert('Les heures n’ont pas été enregistrées. Vérifiez votre connexion.'); return; }
+  dailySlots = list; slotEdit = null;
+  await loadDaily();
 }
 async function toggleDailyEnabled() {
   if (dailyBusy) return;
@@ -2342,33 +2398,31 @@ async function toggleDailyEnabled() {
   renderDaily();
 }
 function dailySig(p) { return p ? [p.image_url || p.image_path, p.title, p.status, p.note || ''].join('|') : ''; }
-async function dailyAction(mode) {
+async function dailyAction(mode, slot) {
   if (dailyBusy) return;
-  if (mode === 'send' && !confirm(`Envoyer l'affiche maintenant à ${dailyReach ? dailyReach.phones : 0} téléphone(s) ? L'envoi de 10 h n'aura alors pas lieu aujourd'hui.`)) return;
-  const before = dailySig(dailyPosters.find(p => p.day === dailyToday()));
-  dailyBusy = true;
+  if (mode === 'send' && !confirm(`Envoyer l'affiche de ${slotTxt(dailySlots[slot - 1])} maintenant à ${dailyReach ? dailyReach.phones : 0} téléphone(s) ? Elle ne repartira pas à ${slotTxt(dailySlots[slot - 1])}.`)) return;
+  const before = dailySig(todayRow(slot));
+  dailyBusy = true; dailyBusySlot = slot;
+  dailyBusyText = mode === 'send' ? 'Envoi en cours…' : 'Préparation de l’affiche, quelques secondes…';
   renderDaily();
-  const st = document.getElementById('daily-status');
-  if (st) { st.className = 'dp-status'; st.textContent = mode === 'send' ? 'Envoi en cours…' : "Préparation de l'affiche, quelques secondes…"; }
-  const { error } = await client.rpc('admin_daily_poster', { p_mode: mode });
-  if (error) { dailyBusy = false; renderDaily(); alert("L'action n'a pas pu être lancée. Vérifiez votre connexion."); return; }
+  const { error } = await client.rpc('admin_daily_poster', { p_mode: mode, p_slot: slot });
+  if (error) { dailyBusy = false; dailyBusySlot = null; renderDaily(); alert("L'action n'a pas pu être lancée. Vérifiez votre connexion."); return; }
   const t0 = Date.now();
   clearInterval(dailyPollTimer);
   dailyPollTimer = setInterval(async () => {
-    const { data } = await client.from('daily_posters').select('*').eq('day', dailyToday()).maybeSingle();
+    const { data } = await client.from('daily_posters').select('*').eq('day', dailyToday()).eq('slot', slot).maybeSingle();
     const changed = !!data && dailySig(data) !== before && (mode !== 'send' || data.status !== 'ready' || !!data.note);
     if (changed || Date.now() - t0 > 60000) {
       clearInterval(dailyPollTimer); dailyPollTimer = null;
-      dailyBusy = false;
+      dailyBusy = false; dailyBusySlot = null;
       await loadDaily();
-      if (!changed) { const s2 = document.getElementById('daily-status'); if (s2) { s2.className = 'dp-status bad'; s2.textContent = 'Pas de réponse du serveur. Réessayez dans un instant.'; } }
+      if (!changed) { const s2 = document.querySelector(`.dp-slot[data-slot="${slot}"] .dp-status`); if (s2) { s2.className = 'dp-status bad'; s2.textContent = 'Pas de réponse du serveur. Réessayez dans un instant.'; } }
     }
   }, 3000);
 }
 
 // ---------- Bibliothèque de créas (envoyées à tour de rôle) ----------
 let creas = [], creaBusy = false, creaForm = { open: false, file: null, preview: '', rid: '', mid: '', title: '', body: '', items: [] };
-function posterImg(p, kind) { return kind === 'portrait' ? (p.portrait_url || posterUrl(p.portrait_path)) : (p.image_url || posterUrl(p.image_path)); }
 async function loadCreas() {
   const { data } = await client.from('poster_library').select('*').order('sort');
   creas = data || [];
@@ -2378,20 +2432,21 @@ function creaRestName(id) { const r = (restaurants || []).find(x => x.id === id)
 function renderCreas() {
   const box = document.getElementById('crea-box');
   if (!box) return;
-  const today = dailyPosters.find(p => p.day === dailyToday());
-  const sentToday = !!(today && today.status === 'sent');
+  const ns = nextSlot();
+  const planned = {};
+  dailyPosters.filter(p => p.day === dailyToday() && p.status === 'ready' && p.library_id && slotMin(p.send_at || dailySlots[(p.slot || 1) - 1]) + 40 > nowMin()).forEach(p => { planned[p.library_id] = p.send_at || dailySlots[(p.slot || 1) - 1]; });
   const active = creas.filter(c => c.active).length;
   box.innerHTML = `
     <div class="pn-head2" style="margin-top:22px;"><div class="w-label">Vos créas · ${active} en rotation sur ${creas.length}</div>
       <button class="w-btn go" onclick="toggleCreaForm()">${creaForm.open ? 'Fermer' : 'Ajouter une créa'}</button></div>
-    <p class="crea-hint">Chaque jour à 10 h, la créa active la moins récemment envoyée part automatiquement. Une créa est sautée ce jour-là si son restaurant est en pause ou fermé à midi, ou si son plat est épuisé. Sans créa disponible, une affiche est créée automatiquement à partir des plats.</p>
+    <p class="crea-hint">À chaque heure d’envoi, la créa active la moins récemment envoyée part automatiquement, jamais deux fois la même dans la journée. Une créa est sautée si son restaurant est en pause ou fermé à cette heure-là, ou si son plat est épuisé ou réservé au jour ou à la nuit. Sans créa disponible, une affiche est créée automatiquement à partir des plats.</p>
     ${creaForm.open ? creaFormHtml() : ''}
     <div class="crea-list">${creas.length ? creas.map((c, k) => `<div class="crea-row ${c.active ? '' : 'off'}">
         <img src="${escHtml(c.full_url)}" alt="${escHtml(c.title)}" loading="lazy">
         <div class="crea-txt"><b>${escHtml(c.title)}</b><span>${escHtml(c.body)}</span>
-          <small>${escHtml(creaRestName(c.restaurant_id))} · ${c.active ? (c.last_used ? 'dernier envoi le ' + escHtml(dailyDayLabel(c.last_used)) : 'jamais envoyée') : 'en pause'}${today && today.library_id === c.id && !sentToday ? ' · prévue aujourd’hui' : ''}</small>
+          <small>${escHtml(creaRestName(c.restaurant_id))} · ${c.active ? (c.last_used ? 'dernier envoi le ' + escHtml(dailyDayLabel(c.last_used)) : 'jamais envoyée') : 'en pause'}${planned[c.id] ? ' · prévue aujourd’hui à ' + slotTxt(planned[c.id]) : ''}</small>
           <div class="dp-actions" style="margin-top:8px;">
-            ${!sentToday && c.active && !(today && today.library_id === c.id) ? `<button class="w-btn" onclick="useCreaToday('${c.id}')" ${creaBusy ? 'disabled' : ''}>Utiliser aujourd'hui</button>` : ''}
+            ${ns && c.active && !planned[c.id] ? `<button class="w-btn" onclick="useCreaToday('${c.id}')" ${creaBusy ? 'disabled' : ''}>Envoyer à ${slotTxt(dailySlots[ns - 1])}</button>` : ''}
             <button class="w-btn" onclick="toggleCrea('${c.id}')" ${creaBusy ? 'disabled' : ''}>${c.active ? 'Mettre en pause' : 'Réactiver'}</button>
             <button class="w-btn" onclick="moveCrea('${c.id}', -1)" ${k === 0 || creaBusy ? 'disabled' : ''}>Monter</button>
             <button class="w-btn" onclick="moveCrea('${c.id}', 1)" ${k === creas.length - 1 || creaBusy ? 'disabled' : ''}>Descendre</button>
@@ -2514,9 +2569,9 @@ async function deleteCrea(id) {
 async function useCreaToday(id) {
   if (creaBusy) return;
   creaBusy = true;
-  const { error } = await client.rpc('admin_use_creative_today', { p_id: id });
+  const { error } = await client.rpc('admin_use_creative_today', { p_id: id, p_slot: nextSlot() });
   creaBusy = false;
-  if (error) { alert(/deja_envoyee/.test(error.message || '') ? "L'affiche d'aujourd'hui est déjà partie." : 'Action impossible pour le moment.'); return; }
+  if (error) { alert(/deja_envoyee|plus_de_creneau/.test(error.message || '') ? "Cet envoi est déjà parti. Rechargez la page pour voir le suivant." : 'Action impossible pour le moment.'); await loadDaily(); return; }
   await loadDaily();
 }
 
