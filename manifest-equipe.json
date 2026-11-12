@@ -1,0 +1,16 @@
+{
+  "id": "/equipe.html",
+  "name": "Dallas Bouff' — Équipe",
+  "short_name": "DB Équipe",
+  "description": "Espace équipe Dallas Bouff' : commandes, paiements, messages et restaurants.",
+  "start_url": "/equipe.html",
+  "scope": "/",
+  "display": "standalone",
+  "orientation": "portrait",
+  "background_color": "#080808",
+  "theme_color": "#080808",
+  "icons": [
+    { "src": "icons/equipe-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any" },
+    { "src": "icons/equipe-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any" }
+  ]
+}

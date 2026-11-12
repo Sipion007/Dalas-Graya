@@ -62,12 +62,19 @@ self.addEventListener('push', (event) => {
   })());
 });
 
+// Téléphone de l'équipe : les alertes de l'administrateur s'ouvrent dans l'espace équipe
+async function spaceFlag() {
+  try { const c = await caches.open('dbf-flags'); const r = await c.match('/__space'); return r ? await r.text() : ''; } catch (e) { return ''; }
+}
 self.addEventListener('notificationclick', (event) => {
   event.notification.close();
-  const url = (event.notification.data && event.notification.data.url) || '/';
+  const raw = (event.notification.data && event.notification.data.url) || '/';
+  event.waitUntil(spaceFlag().then((space) => openFromNotification(event, space === 'equipe' && /admin\.html/.test(raw) ? '/equipe.html' : raw)));
+});
+function openFromNotification(event, url) {
   const promo = !!(event.notification.data && event.notification.data.promo);
   const page = url.split('?')[0];
-  event.waitUntil(
+  return (
     self.clients.matchAll({ type: 'window', includeUncontrolled: true }).then((list) => {
       for (const c of list) {
         if (c.url.includes(page) && 'focus' in c) {
@@ -79,4 +86,4 @@ self.addEventListener('notificationclick', (event) => {
       if (self.clients.openWindow) return self.clients.openWindow(url);
     })
   );
-});
+}
